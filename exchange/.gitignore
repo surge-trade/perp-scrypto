@@ -1,1 +1,8 @@
-/target
+.DS_Store
+.vscode
+.history
+target/
+Cargo.lock
+**/*.rs.bk
+.venv/
+__pycache__/
