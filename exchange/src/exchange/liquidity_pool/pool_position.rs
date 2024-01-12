@@ -4,7 +4,6 @@ use scrypto::prelude::*;
 pub struct PoolPosition {
     pub long_oi: Decimal,
     pub short_oi: Decimal,
-    pub long_funding_checkpoint: Decimal,
-    pub short_funding_checkpoint: Decimal,
-    pub borrowing_checkpoint: Decimal,
+    pub interest_long_checkpoint: Decimal,
+    pub interest_short_checkpoint: Decimal,
 }

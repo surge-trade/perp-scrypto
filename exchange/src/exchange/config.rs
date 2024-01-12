@@ -1,22 +1,30 @@
 use scrypto::prelude::*;
 
 #[derive(ScryptoSbor, Default)]
-pub struct Config {
+pub struct ExchangeConfig {
+    pub resource_configs: Vec<ResourceConfig>,
     pub max_price_age_seconds: i64,
     pub keeper_fee: Decimal,
     pub min_collateral_ratio: Decimal,
-    pub max_loss_factor: Decimal,
+    pub collateral_buffer: Decimal,
+    pub max_pool_loss: Decimal,
+    pub funding_rate: Decimal,
+    pub swap_fee: Decimal,
+    pub swap_impact: Decimal,
+    pub swap_impact_exp: Decimal,
+    pub margin_fee: Decimal,
+    pub margin_impact: Decimal,
+    pub margin_impact_exp: Decimal,
+    pub borrowing_long_rate: Decimal,
+    pub borrowing_short_rate: Decimal,
+    pub borrowing_discount: Decimal,
+}
+
+#[derive(ScryptoSbor, Clone)]
+pub struct ResourceConfig {
+    pub resource: ResourceAddress,
+    pub weight: Decimal,
     pub max_oi_long_factor: Decimal,
     pub max_oi_short_factor: Decimal,
     pub max_oi_net_factor: Decimal,
-    pub funding_rate_factor: Decimal,
-    pub borrowing_long_rate_factor: Decimal,
-    pub borrowing_short_rate_factor: Decimal,
-    pub borrowing_smaller_side_discount_factor: Decimal,
-    pub swap_fee_factor: Decimal,
-    pub swap_impact_factor: Decimal,
-    pub swap_impact_exp: Decimal,
-    pub margin_fee_factor: Decimal,
-    pub margin_impact_factor: Decimal,
-    pub margin_impact_exp: Decimal,
 }

@@ -1,14 +1,14 @@
 pub mod pool_position;
+pub use self::pool_position::PoolPosition;
 
 use scrypto::prelude::*;
 use crate::utils::Vaults;
-use self::pool_position::PoolPosition;
 
 #[derive(ScryptoSbor)]
 pub struct LiquidityPool {
     pub vaults: Vaults,
     pub positions: HashMap<ResourceAddress, PoolPosition>,
-    pub unrealized_fees: Decimal,
+    pub unrealized_borrowing: Decimal,
     pub last_update: Instant,
     pub lp_token_manager: ResourceManager,
 }
@@ -39,7 +39,7 @@ impl LiquidityPool {
         Self {
             vaults: Vaults::new(),
             positions: resources.into_iter().map(|r| (r, PoolPosition::default())).collect(),
-            unrealized_fees: dec!(0),
+            unrealized_borrowing: dec!(0),
             last_update: Clock::current_time_rounded_to_minutes(),
             lp_token_manager,
         }

@@ -1,9 +1,9 @@
 pub mod account_position;
+pub use self::account_position::AccountPosition;
 
 use scrypto::prelude::*;
 use crate::utils::{List, Vaults};
 use super::keeper_request::KeeperRequest;
-use self::account_position::AccountPosition;
 
 #[derive(ScryptoSbor)]
 pub struct MarginAccount {
@@ -11,6 +11,7 @@ pub struct MarginAccount {
     pub positions: HashMap<ResourceAddress, AccountPosition>,
     pub collateral: Vault,
     pub requests: List<KeeperRequest>,
+    pub last_update: Instant,
 }
 
 impl MarginAccount {
@@ -19,7 +20,8 @@ impl MarginAccount {
             vaults: Vaults::new(),
             positions: HashMap::new(),
             collateral: Vault::new(resource_collateral),
-            requests: List::new()
+            requests: List::new(),
+            last_update: Clock::current_time_rounded_to_minutes(),
         }
     }
 }
@@ -61,8 +63,12 @@ impl MarginAccountManager {
         }
     }
 
-    pub fn get(&mut self, id: NonFungibleLocalId) -> Option<KeyValueEntryRefMut<MarginAccount>> {
-        self.accounts.get_mut(&id)
+    pub fn get(&self, id: &NonFungibleLocalId) -> Option<KeyValueEntryRef<MarginAccount>> {
+        self.accounts.get(id)
+    }
+
+    pub fn get_mut(&mut self, id: &NonFungibleLocalId) -> Option<KeyValueEntryRefMut<MarginAccount>> {
+        self.accounts.get_mut(id)
     }
 
     pub fn create_account(&mut self, resource_collateral: ResourceAddress) -> Bucket {
