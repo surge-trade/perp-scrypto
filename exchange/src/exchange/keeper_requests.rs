@@ -115,7 +115,6 @@ pub enum Request {
 #[derive(ScryptoSbor, Clone)]
 pub enum Status {
     Pending,
-    Standing(Decimal),
     Completed,
     Cancelled,
 }

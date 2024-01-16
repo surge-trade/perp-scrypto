@@ -3,7 +3,7 @@ pub use self::account_position::AccountPosition;
 
 use scrypto::prelude::*;
 use crate::utils::{List, Vaults};
-use super::keeper_request::KeeperRequest;
+use super::keeper_requests::KeeperRequest;
 
 #[derive(ScryptoSbor)]
 pub struct MarginAccount {
