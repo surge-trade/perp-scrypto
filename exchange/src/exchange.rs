@@ -23,33 +23,47 @@ pub struct PoolInfo {
     pub position_info_map: HashMap<ResourceAddress, PoolPositionInfo>
 }
 
-#[derive(ScryptoSbor)]
+#[derive(ScryptoSbor, Clone)]
 pub struct PoolPositionInfo {
     pub target_weight: Decimal,
-    pub position_value: Decimal,
+    pub value: Decimal,
     pub amount_borrowing: Decimal,
     pub amount_funding: Decimal,
     pub borrowing_long_rate: Decimal, 
     pub borrowing_short_rate: Decimal,
     pub funding_long_rate: Decimal,
     pub funding_short_rate: Decimal,
-    pub borrowing_long_adjustment: Decimal,
-    pub borrowing_short_adjustment: Decimal,
-    pub funding_long_adjustment: Decimal,
-    pub funding_short_adjustment: Decimal,
+    pub interest_long_checkpoint: Decimal,
+    pub interest_short_checkpoint: Decimal,
 }
 
 #[derive(ScryptoSbor)]
 pub struct AccountInfo {
     pub positions_value: Decimal,
     pub collateral_value: Decimal,
+    pub liquidation_fee: Decimal,
     pub amount_interest: Decimal,
     pub position_info_map: HashMap<ResourceAddress, AccountPositionInfo>
 }
 
-#[derive(ScryptoSbor)]
+#[derive(ScryptoSbor, Clone)]
 pub struct AccountPositionInfo {
-    pub interest_adjustment: Decimal,
+    pub value: Decimal,
+    pub interest_checkpoint: Decimal,
+}
+
+fn calculate_imbalances(position_changes: HashMap<ResourceAddress, Decimal>, pool_info: &PoolInfo) -> (Decimal, Decimal) {
+    let mut pool_imbalance_0 = dec!(0);
+    let mut pool_imbalance_f = dec!(0);
+    let pool_change = position_changes.values().fold(dec!(0), |a, b| a + *b);
+    for (resource, pool_position_info) in pool_info.position_info_map.iter() {
+        let position_change = *position_changes.get(resource).unwrap_or(&dec!(0));
+        let position_imbalance_0 = pool_position_info.value - pool_info.pool_value * pool_position_info.target_weight;
+        let position_imbalance_f = (pool_position_info.value + position_change) - (pool_info.pool_value + pool_change) * pool_position_info.target_weight;
+        pool_imbalance_0 += position_imbalance_0.checked_abs().unwrap();
+        pool_imbalance_f += position_imbalance_f.checked_abs().unwrap();
+    }
+    (pool_imbalance_0, pool_imbalance_f)
 }
 
 #[blueprint]
@@ -143,18 +157,20 @@ mod exchange {
                     resource.clone(),
                     PoolPositionInfo {
                         target_weight: resource_config.weight,
-                        position_value: value,
+                        value: value,
                         amount_borrowing,
                         amount_funding,
                         borrowing_long_rate,
                         borrowing_short_rate,
                         funding_long_rate,
                         funding_short_rate,
-                        borrowing_long_adjustment,
-                        borrowing_short_adjustment,
-                        funding_long_adjustment,
-                        funding_short_adjustment,
-                    }
+                        interest_long_checkpoint: pool_position.interest_long_checkpoint,
+                        interest_short_checkpoint: pool_position.interest_short_checkpoint,
+                    },
+                    (
+                        borrowing_long_adjustment + funding_long_adjustment,
+                        borrowing_short_adjustment + funding_short_adjustment,
+                    )
                 ));
             }
             pool_value += self.pool.unrealized_borrowing;
@@ -165,45 +181,48 @@ mod exchange {
             } else {
                 let lp_token_price = pool_value / lp_token_supply;
 
-                for ((_, position_info), &price) in position_info_list.iter_mut().zip(prices.iter()) {
+                for ((_, position_info, adjustments), &price) in position_info_list.iter_mut().zip(prices.iter()) {
                     let price =  price / lp_token_price;
                     position_info.amount_borrowing *= price;
                     position_info.amount_funding *= price;
-                    position_info.borrowing_long_adjustment *= price;
-                    position_info.borrowing_short_adjustment *= price;
-                    position_info.funding_long_adjustment *= price;
-                    position_info.funding_short_adjustment *= price;
+                    adjustments.0 *= price;
+                    adjustments.1 *= price;
                 }
 
                 lp_token_price
             };
 
+            for (_, position_info, adjustments) in position_info_list.iter_mut() {
+                position_info.interest_long_checkpoint += adjustments.0;
+                position_info.interest_short_checkpoint += adjustments.1;
+            }
+
             PoolInfo {
                 pool_value,
                 lp_token_supply,
                 lp_token_price,
-                position_info_map: position_info_list.into_iter().collect(),
+                position_info_map: position_info_list.into_iter().map(|(r, p, _)| (r , p)).collect(),
             }
         }
 
-        pub fn get_account_info(&self, account_id: NonFungibleLocalId, lp_token_price: Decimal, prices: HashMap<ResourceAddress, Decimal>) -> AccountInfo {
+        pub fn get_info(&self, account_id: NonFungibleLocalId, prices: HashMap<ResourceAddress, Decimal>) -> (AccountInfo, PoolInfo) {
+            let pool_info = self.get_pool_info(prices.clone());
             let account = self.accounts.get(&account_id).expect("Missing account");
 
             let mut positions_value = dec!(0);
             let mut amount_interest = dec!(0);
             let mut position_info_list = Vec::new();
-            for (resource, account_position) in &account.positions {
+            for (resource, account_position) in account.positions.iter() {
                 let price = *prices.get(resource).expect("Missing price");
-                let pool_position = self.pool.positions.get(resource).expect("Missing pool position");
+                let pool_position_info = pool_info.position_info_map.get(resource).expect("Missing pool position info");
 
-                let interest_adjustment = if account_position.amount.is_positive() {
-                    pool_position.interest_long_checkpoint - account_position.interest_checkpoint
-                } else if account_position.amount.is_negative() {
-                    pool_position.interest_short_checkpoint - account_position.interest_checkpoint
+                let interest_checkpoint = if account_position.amount.is_positive() {
+                    pool_position_info.interest_long_checkpoint
                 } else {
-                    dec!(0)
+                    pool_position_info.interest_short_checkpoint
                 };
-                amount_interest += interest_adjustment * account_position.amount;
+                let interest_adjustment = interest_checkpoint - account_position.interest_checkpoint;
+                amount_interest += interest_adjustment * account_position.amount.checked_abs().unwrap();
 
                 let value = account_position.amount * price;
                 positions_value += value;
@@ -211,19 +230,27 @@ mod exchange {
                 position_info_list.push((
                     resource.clone(),
                     AccountPositionInfo {
-                        interest_adjustment,
+                        value,
+                        interest_checkpoint,
                     }
                 ));
             }
 
-            let collateral_value = account.collateral.amount() * lp_token_price;
+            let liquidation_changes: HashMap<ResourceAddress, Decimal> = position_info_list.iter().map(|(r, p)| (r.clone(), p.value)).collect();
+            let (imbalance_0, imbalance_f) = calculate_imbalances(liquidation_changes.clone(), &pool_info);
+            let fee_base = liquidation_changes.values().fold(dec!(0), |a, b| a + b.checked_abs().unwrap()) * self.config.margin_base_fee;
+            let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+            let liquidation_fee = (fee_base + fee_impact).max(dec!(0));
 
-            AccountInfo {
+            let account_info = AccountInfo {
                 positions_value,
-                collateral_value,
+                collateral_value: account.collateral.amount() * pool_info.lp_token_price,
+                liquidation_fee,
                 amount_interest,
                 position_info_map: position_info_list.into_iter().collect(),
-            }
+            };
+
+            (account_info, pool_info)
         }
 
         pub fn assert_pool_integrity(&self) {
@@ -248,8 +275,8 @@ mod exchange {
             let mut unrealized_borrowing = dec!(0);
             for (resource, position_info) in pool_info.position_info_map.iter() {
                 let pool_position = self.pool.positions.get_mut(resource).expect("Missing pool position");
-                pool_position.interest_long_checkpoint += position_info.borrowing_long_adjustment + position_info.funding_long_adjustment;
-                pool_position.interest_short_checkpoint += position_info.borrowing_short_adjustment + position_info.funding_short_adjustment;
+                pool_position.interest_long_checkpoint = position_info.interest_long_checkpoint;
+                pool_position.interest_short_checkpoint = position_info.interest_short_checkpoint;
                 unrealized_borrowing += position_info.amount_borrowing;
             }
             self.pool.unrealized_borrowing = unrealized_borrowing;
@@ -261,7 +288,7 @@ mod exchange {
 
             for (resource, position_info) in account_info.position_info_map.iter() {
                 let account_position = account.positions.get_mut(resource).expect("Missing account position");
-                account_position.interest_checkpoint += position_info.interest_adjustment;
+                account_position.interest_checkpoint = position_info.interest_checkpoint;
             }
 
             if account_info.amount_interest.is_negative() {
@@ -273,39 +300,39 @@ mod exchange {
         }
 
         fn liquidate_account(&mut self, account_id: NonFungibleLocalId, prices: HashMap<ResourceAddress, Decimal>) {
-            let pool_info = self.get_pool_info(prices.clone());
+            let (account_info, pool_info) = self.get_info(account_id.clone(), prices.clone());
             self.update_pool_interest(&pool_info);
-            let account_info = self.get_account_info(account_id.clone(), pool_info.lp_token_price, prices.clone());
             self.update_account_interest(account_id.clone(), &account_info);
             {
                 let mut account = self.accounts.get_mut(&account_id).expect("Missing account");
 
-                let mut fee_impact = dec!(0);
-                for (resource, account_position) in account.positions.iter() {
-                    let price = *prices.get(resource).expect("Missing price");
-                    let pool_position_info = pool_info.position_info_map.get(resource).expect("Missing pool position info");
-
-                    let value = account_position.amount * price;
-                    // TODO: check if this is correct
-                    let imbalance_f = (pool_position_info.position_value + value) - (pool_info.pool_value + account_info.positions_value) * pool_position_info.target_weight;
-                    let imbalance_0 = pool_position_info.position_value - pool_info.pool_value * pool_position_info.target_weight;
-
-                    let fee = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
-                    fee_impact += fee;
-                }
-                let fee_base = account_info.positions_value * self.config.margin_base_fee;
-                let fee = (fee_base + fee_impact).max(dec!(0));
+                let positions_liquidation_value = account_info.positions_value - account_info.liquidation_fee;
+                let account_value = positions_liquidation_value + account_info.collateral_value;
 
                 assert!(
-                    (account_info.positions_value - fee) / account_info.collateral_value < self.config.min_collateral_ratio,
+                    account_value / account_info.collateral_value < self.config.min_collateral_ratio,
                     "Sufficient collateral ratio"
                 );
 
-                // TODO: Update pool positions
+                for (resource, account_position) in account.positions.iter_mut() {
+                    let pool_position = self.pool.positions.get_mut(resource).expect("Missing pool position");
+                    if account_position.amount.is_positive() {
+                        pool_position.long_oi -= account_position.amount;
+                    } else {
+                        pool_position.short_oi += account_position.amount;
+                    }
+                    account_position.amount = dec!(0);
+                }
 
-                // TODO: Take and burn collateral deposit remaining
-
-
+                let liquidation_amount = -positions_liquidation_value / pool_info.lp_token_price;
+                if account_value.is_negative() {
+                    // TODO: bad debt
+                    let bad_debt = -account_value;
+                    info!("Bad debt: {}", bad_debt);
+                    account.collateral.take(liquidation_amount).burn();
+                } else {
+                    account.collateral.take(liquidation_amount).burn();
+                }
             }
         }
 
@@ -321,19 +348,14 @@ mod exchange {
             }
 
             let price = *prices.get(&resource).expect("Missing price");
-
             let value = amount * price;
-            let pool_position_info = pool_info.position_info_map.get(&resource).expect("Missing pool position info");
-            
-            let imbalance_f = (pool_position_info.position_value + value) - (pool_info.pool_value + value) * pool_position_info.target_weight;
-            let imbalance_0 = pool_position_info.position_value - pool_info.pool_value * pool_position_info.target_weight;
-            
+            let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource.clone() => value}, &pool_info);
             let fee_base = value * self.config.swap_base_fee;
             let fee_impact = (imbalance_f.pow(self.config.swap_impact_exp) - imbalance_0.pow(self.config.swap_impact_exp)) * self.config.swap_impact_fee;
             let fee = (fee_base + fee_impact).max(dec!(0));
 
             let amount_mint = if pool_info.lp_token_supply.is_zero() {
-                (value - fee) * pool_info.lp_token_supply / pool_info.pool_value
+                (value - fee) / pool_info.lp_token_price
             } else {
                 value
             };
@@ -367,11 +389,7 @@ mod exchange {
                 }
 
                 let value = amount_lp * pool_info.lp_token_price;
-                let pool_position_info = pool_info.position_info_map.get(&resource).expect("Missing pool position info");
-
-                let imbalance_f = (pool_position_info.position_value - value) - (pool_info.pool_value - value) * pool_position_info.target_weight;
-                let imbalance_0 = pool_position_info.position_value - pool_info.pool_value * pool_position_info.target_weight;
-
+                let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource.clone() => -value}, &pool_info);
                 let fee_base = value * self.config.swap_base_fee;
                 let fee_impact = (imbalance_f.pow(self.config.swap_impact_exp) - imbalance_0.pow(self.config.swap_impact_exp)) * self.config.swap_impact_fee;
                 let fee = (fee_base + fee_impact).max(dec!(0));
@@ -395,9 +413,8 @@ mod exchange {
         }
 
         fn remove_collateral(&mut self, account_id: NonFungibleLocalId, amount_lp: Decimal, prices: HashMap<ResourceAddress, Decimal>) {
-            let pool_info = self.get_pool_info(prices.clone());
+            let (account_info, pool_info) = self.get_info(account_id.clone(), prices.clone());
             self.update_pool_interest(&pool_info);
-            let account_info = self.get_account_info(account_id.clone(), pool_info.lp_token_price, prices.clone());
             self.update_account_interest(account_id.clone(), &account_info);
             {
                 let mut account = self.accounts.get_mut(&account_id).expect("Missing account");
@@ -407,8 +424,10 @@ mod exchange {
                 }
 
                 let value = amount_lp * pool_info.lp_token_price;
+                let positions_liquidation_value = account_info.positions_value - account_info.liquidation_fee;
+                let account_value = positions_liquidation_value + account_info.collateral_value;
                 assert!(
-                    account_info.positions_value / (account_info.collateral_value - value) >= self.config.min_collateral_ratio,
+                    (account_value - value) / (account_info.collateral_value - value) >= self.config.min_collateral_ratio,
                     "Insufficient collateral ratio"
                 );
 
