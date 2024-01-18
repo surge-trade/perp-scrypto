@@ -77,18 +77,21 @@ pub struct RequestSwapOrder {
     pub amount_in: Decimal,
     pub resource_out: ResourceAddress,
     pub price_limit: Limit,
-    pub duration: Duration,
 }
 
 #[derive(ScryptoSbor, Clone)]
 pub struct RequestMarginOrder {
-    pub resource_long: ResourceAddress,
-    pub resource_short: ResourceAddress,
-    pub amount_is_long: bool,
-    pub amount: Decimal,
-    pub reduce_only: bool,
+    pub resource_0: ResourceAddress,
+    pub amount_0: Decimal,
+    pub resource_1: ResourceAddress,
     pub price_limit: Limit,
-    pub duration: Duration,
+}
+
+#[derive(ScryptoSbor, Clone)]
+pub struct RequestClosePosition {
+    pub resource_0: ResourceAddress,
+    pub resource_1: ResourceAddress,
+    pub price_limit: Limit,
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -97,7 +100,6 @@ pub struct RequestRestrike {
     pub amount_rebase: Decimal,
     pub resource_opposing: ResourceAddress,
     pub price_limit: Limit,
-    pub duration: Duration,
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -109,6 +111,7 @@ pub enum Request {
     RemoveCollateralAsToken(RequestRemoveCollateralAsToken),
     SwapOrder(RequestSwapOrder),
     MarginOrder(RequestMarginOrder),
+    ClosePosition(RequestClosePosition),
     Restrike(RequestRestrike),
 }
 
@@ -122,69 +125,80 @@ pub enum Status {
 #[derive(ScryptoSbor, Clone)]
 pub struct KeeperRequest {
     pub request: Request,
+    pub duration: Duration,
     pub status: Status,
 }
 
 impl KeeperRequest {
     pub fn add_liquidity(
         resource_in: ResourceAddress, 
-        amount_in: Decimal
+        amount_in: Decimal,
+        duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::AddLiquidity(RequestAddLiquidity {
                 resource_in,
                 amount_in,
             }),
+            duration,
             status: Status::Pending,
         }
     }
 
     pub fn add_liquidity_as_collateral(
         resource_in: ResourceAddress, 
-        amount_in: Decimal
+        amount_in: Decimal,
+        duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::AddLiquidityAsCollateral(RequestAddLiquidityAsCollateral {
                 resource_in,
                 amount_in,
             }),
+            duration,
             status: Status::Pending,
         }
     }
 
     pub fn remove_liquidity(
         amount_lp: Decimal, 
-        resource_out: ResourceAddress
+        resource_out: ResourceAddress,
+        duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::RemoveLiquidity(RequestRemoveLiquidity {
                 amount_lp,
                 resource_out,
             }),
+            duration,
             status: Status::Pending,
         }
     }
 
     pub fn remove_collateral(
-        amount_lp: Decimal
+        amount_lp: Decimal,
+        duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::RemoveCollateral(RequestRemoveCollateral {
                 amount_lp,
             }),
+            duration,
             status: Status::Pending,
         }
     }
 
     pub fn remove_collateral_as_token(
         amount_lp: Decimal, 
-        resource_out: ResourceAddress
+        resource_out: ResourceAddress,
+        duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::RemoveCollateralAsToken(RequestRemoveCollateralAsToken {
                 amount_lp,
                 resource_out,
             }),
+            duration,
             status: Status::Pending,
         }
     }
@@ -202,31 +216,44 @@ impl KeeperRequest {
                 amount_in,
                 resource_out,
                 price_limit,
-                duration,
             }),
+            duration,
             status: Status::Pending,
         }
     }
 
     pub fn margin_order(
-        resource_long: ResourceAddress,
-        resource_short: ResourceAddress,
-        amount_is_long: bool,
-        amount: Decimal,
-        reduce_only: bool,
+        resource_0: ResourceAddress,
+        amount_0: Decimal,
+        resource_1: ResourceAddress,
         price_limit: Limit,
         duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::MarginOrder(RequestMarginOrder {
-                resource_long,
-                resource_short,
-                amount_is_long,
-                amount,
-                reduce_only,
+                resource_0,
+                amount_0,
+                resource_1,
                 price_limit,
-                duration,
             }),
+            duration,
+            status: Status::Pending,
+        }
+    }
+
+    pub fn close_position(
+        resource_0: ResourceAddress,
+        resource_1: ResourceAddress,
+        price_limit: Limit,
+        duration: Duration,
+    ) -> Self {
+        KeeperRequest {
+            request: Request::ClosePosition(RequestClosePosition {
+                resource_0,
+                resource_1,
+                price_limit,
+            }),
+            duration,
             status: Status::Pending,
         }
     }

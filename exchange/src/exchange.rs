@@ -307,10 +307,10 @@ mod exchange {
                 let mut account = self.accounts.get_mut(&account_id).expect("Missing account");
 
                 let positions_liquidation_value = account_info.positions_value - account_info.liquidation_fee;
-                let account_value = positions_liquidation_value + account_info.collateral_value;
-
+                let collateral_value = account_info.collateral_value;
+                let account_value = positions_liquidation_value + collateral_value;
                 assert!(
-                    account_value / account_info.collateral_value < self.config.min_collateral_ratio,
+                    account_value / collateral_value < self.config.min_collateral_ratio,
                     "Sufficient collateral ratio"
                 );
 
@@ -425,9 +425,10 @@ mod exchange {
 
                 let value = amount_lp * pool_info.lp_token_price;
                 let positions_liquidation_value = account_info.positions_value - account_info.liquidation_fee;
-                let account_value = positions_liquidation_value + account_info.collateral_value;
+                let collateral_value = account_info.collateral_value - value;
+                let account_value = positions_liquidation_value + collateral_value;
                 assert!(
-                    (account_value - value) / (account_info.collateral_value - value) >= self.config.min_collateral_ratio,
+                    account_value / collateral_value >= self.config.min_collateral_ratio,
                     "Insufficient collateral ratio"
                 );
 
@@ -436,11 +437,179 @@ mod exchange {
             }
         }
 
-        // fn swap_order(&mut self, account_id: NonFungibleLocalId, resource_in: ResourceAddress, amount_in: Decimal, resource_out: ResourceAddress, price_limit: Limit, prices: HashMap<ResourceAddress, Decimal>) -> Decimal {
-        // fn margin_order(&mut self, account_id: NonFungibleLocalId, resource_in: ResourceAddress, amount_in: Decimal, resource_out: ResourceAddress, price_limit: Limit, prices: HashMap<ResourceAddress, Decimal>) -> Decimal {
+        fn swap_order(&mut self, account_id: NonFungibleLocalId, resource_in: ResourceAddress, amount_in: Decimal, resource_out: ResourceAddress, price_limit: Limit, prices: HashMap<ResourceAddress, Decimal>) {
+            let price_in = *prices.get(&resource_in).expect("Missing price");
+            let price_out = *prices.get(&resource_out).expect("Missing price");
+            assert!(
+                price_limit.compare(price_in / price_out),
+                "Price limit not met"
+            );
+            
+            let pool_info = self.get_pool_info(prices.clone());
+            self.update_pool_interest(&pool_info);
+            {
+                let mut account = self.accounts.get_mut(&account_id).expect("Missing account");
+
+                if amount_in > account.vaults.amount(&resource_in) {
+                    panic!("Insufficient balance in account");
+                }
+
+                let value = amount_in * price_in;
+                let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource_in.clone() => value, resource_out.clone() => -value}, &pool_info);
+                let fee_base = value * self.config.swap_base_fee;
+                let fee_impact = (imbalance_f.pow(self.config.swap_impact_exp) - imbalance_0.pow(self.config.swap_impact_exp)) * self.config.swap_impact_fee;
+                let fee = (fee_base + fee_impact).max(dec!(0));
+
+                let amount_out = (value - fee) / price_out;
+                if amount_out > self.pool.vaults.amount(&resource_out) {
+                    panic!("Insufficient balance in pool");
+                }
+
+                let tokens_in = account.vaults.take(resource_in, amount_in);
+                let tokens_out = self.pool.vaults.take(resource_out, amount_out);
+                account.vaults.put(tokens_out);
+                self.pool.vaults.put(tokens_in);
+            }
+            self.assert_pool_integrity();
+        }
         
+        fn margin_order(&mut self, account_id: NonFungibleLocalId, resource_0: ResourceAddress, amount_0: Decimal, resource_1: ResourceAddress, price_limit: Limit, prices: HashMap<ResourceAddress, Decimal>) {
+            let price_0 = *prices.get(&resource_0).expect("Missing price");
+            let price_1 = *prices.get(&resource_1).expect("Missing price");
+            assert!(
+                price_limit.compare(price_0 / price_1),
+                "Price limit not met"
+            );
+            
+            let (account_info, pool_info) = self.get_info(account_id.clone(), prices.clone());
+            self.update_pool_interest(&pool_info);
+            self.update_account_interest(account_id.clone(), &account_info);
+            {
+                let mut account = self.accounts.get_mut(&account_id).expect("Missing account");
+
+                let value_0 = amount_0 * price_0;
+                let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource_0.clone() => value_0, resource_1.clone() => -value_0}, &pool_info);
+                let fee_base = dec!(2) * value_0.checked_abs().unwrap() * self.config.margin_base_fee;
+                let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+                let fee = (fee_base + fee_impact).max(dec!(0));
+
+                let value_1 = if value_0.is_positive() {
+                    value_0 - fee
+                } else {
+                    value_0 + fee
+                };
+                let amount_1 = value_1 / price_1;
+                
+                let account_position_0 = account.positions.entry(resource_0.clone()).or_default();
+                let pool_position_0 = self.pool.positions.get_mut(&resource_0).expect("Missing pool position");
+                account_position_0.amount += amount_0;
+                if account_position_0.amount.is_positive() {
+                    account_position_0.interest_checkpoint = pool_position_0.interest_long_checkpoint;
+                } else if account_position_0.amount.is_negative() {
+                    account_position_0.interest_checkpoint = pool_position_0.interest_short_checkpoint;
+                } else {
+                    account.positions.remove(&resource_0);
+                }
+                if amount_0.is_positive() {
+                    pool_position_0.long_oi += amount_0;
+                } else {
+                    pool_position_0.short_oi -= amount_0;
+                }
+
+                let account_position_1 = account.positions.entry(resource_1.clone()).or_default();
+                let pool_position_1 = self.pool.positions.get_mut(&resource_1).expect("Missing pool position");
+                account_position_1.amount -= amount_1;
+                if account_position_1.amount.is_positive() {
+                    account_position_1.interest_checkpoint = pool_position_1.interest_long_checkpoint;
+                } else if account_position_1.amount.is_negative() {
+                    account_position_1.interest_checkpoint = pool_position_1.interest_short_checkpoint;
+                } else {
+                    account.positions.remove(&resource_1);
+                }
+                if amount_1.is_positive() {
+                    pool_position_1.long_oi -= amount_1;
+                } else {
+                    pool_position_1.short_oi += amount_1;
+                }
+
+                // TODO: limit max profit
+
+                let mut liquidation_changes: HashMap<ResourceAddress, Decimal> = account_info.position_info_map.iter().map(|(r, p)| (r.clone(), p.value)).collect();
+                *liquidation_changes.entry(resource_0.clone()).or_default() += value_0;
+                *liquidation_changes.entry(resource_1.clone()).or_default() -= value_1;
+                let (imbalance_0, imbalance_f) = calculate_imbalances(liquidation_changes.clone(), &pool_info);
+                let fee_base = liquidation_changes.values().fold(dec!(0), |a, b| a + b.checked_abs().unwrap()) * self.config.margin_base_fee;
+                let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+                let liquidation_fee = (fee_base + fee_impact).max(dec!(0));
+
+                let positions_liquidation_value = account_info.positions_value + value_0 - value_1 - liquidation_fee;
+                let collateral_value = account_info.collateral_value;
+                let account_value = positions_liquidation_value + collateral_value;
+                assert!(
+                    account_value / collateral_value >= self.config.min_collateral_ratio,
+                    "Insufficient collateral ratio"
+                );
+            }
+            self.assert_pool_integrity();
+        }
+
+        fn close_position(&mut self, account_id: NonFungibleLocalId, resource_0: ResourceAddress, resource_1: ResourceAddress, price_limit: Limit, prices: HashMap<ResourceAddress, Decimal>) {
+            let price_0 = *prices.get(&resource_0).expect("Missing price");
+            let price_1 = *prices.get(&resource_1).expect("Missing price");
+            assert!(
+                price_limit.compare(price_0 / price_1),
+                "Price limit not met"
+            );
+            
+            let (account_info, pool_info) = self.get_info(account_id.clone(), prices.clone());
+            self.update_pool_interest(&pool_info);
+            self.update_account_interest(account_id.clone(), &account_info);
+            {
+                let mut account = self.accounts.get_mut(&account_id).expect("Missing account");
+
+                let value_0 = account_info.position_info_map.get(&resource_0).expect("Missing position info").value;
+                let value_1 = account_info.position_info_map.get(&resource_1).expect("Missing position info").value;
+                let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource_0.clone() => value_0, resource_1.clone() => value_1}, &pool_info);
+                let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+                let fee_base = (value_0.checked_abs().unwrap() + value_1.checked_abs().unwrap()) * self.config.margin_base_fee;
+                let fee = (fee_base + fee_impact).max(dec!(0));
+
+                let account_position_0 = account.positions.entry(resource_0.clone()).or_default();
+                let pool_position_0 = self.pool.positions.get_mut(&resource_0).expect("Missing pool position");
+                if account_position_0.amount.is_positive() {
+                    pool_position_0.long_oi -= account_position_0.amount;
+                } else {
+                    pool_position_0.short_oi += account_position_0.amount;
+                }
+                account.positions.remove(&resource_0);
+
+                let account_position_1 = account.positions.entry(resource_1.clone()).or_default();
+                let pool_position_1 = self.pool.positions.get_mut(&resource_1).expect("Missing pool position");
+                if account_position_1.amount.is_positive() {
+                    pool_position_1.long_oi -= account_position_1.amount;
+                } else {
+                    pool_position_1.short_oi += account_position_1.amount;
+                }
+                account.positions.remove(&resource_1);
+
+                let amount_lp = (value_0 + value_1 - fee) / pool_info.lp_token_price;
+                if amount_lp.is_positive() {
+                    let lp_tokens = account.vaults.take(self.pool.lp_token_manager.address(), amount_lp);
+                    account.collateral.put(lp_tokens);
+                } else {
+                    account.collateral.take(-amount_lp).burn();
+                }
+
+
+                // TODO: limit max profit
+
+                // TODO: check collateral ratio?
+            }
+            self.assert_pool_integrity();
+        }
         
         // fn remove_collateral_as_token(&mut self, account_id: NonFungibleLocalId, amount_lp: Decimal, resource: ResourceAddress, prices: HashMap<ResourceAddress, Decimal>) {
         // fn restrike_order(&mut self, account_id: NonFungibleLocalId, order_id: NonFungibleLocalId, price_limit: Limit, prices: HashMap<ResourceAddress, Decimal>) -> Decimal {
+        // fn automatic_deleverage(&mut self, account_id: NonFungibleLocalId, prices: HashMap<ResourceAddress, Decimal>) {
     }
 }
