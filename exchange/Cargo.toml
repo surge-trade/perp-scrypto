@@ -14,6 +14,7 @@ radix-engine = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1
 scrypto-unit = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.0.0" }
 scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.0.0" }
 radix-engine-interface = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.0.0" }
+rand = "0.8.4"
 exchange = { path = ".", features = ["test"] }
 
 [profile.release]

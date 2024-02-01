@@ -17,7 +17,11 @@ use self::oracle::oracle::Oracle;
 
 #[derive(ScryptoSbor)]
 pub struct PoolInfo {
-    pub pool_value: Decimal, 
+    pub pool_value: Decimal,
+    pub pool_collateral_value: Decimal,
+    pub pool_oi_net_value: Decimal,
+    pub pool_oi_abs_value: Decimal,
+    pub profit_scaler: Decimal,
     pub lp_token_supply: Decimal, 
     pub lp_token_price: Decimal, 
     pub position_info_map: HashMap<ResourceAddress, PoolPositionInfo>
@@ -108,7 +112,9 @@ mod exchange {
 
             let prices: Vec<Decimal> = self.config.resource_configs.iter().map(|c| *prices.get(&c.resource).expect("Missing price")).collect();
 
-            let mut pool_value = dec!(0);
+            let mut pool_collateral_value = dec!(0);
+            let mut pool_oi_net_value = dec!(0);
+            let mut pool_oi_abs_value = dec!(0);
             let mut position_info_list = Vec::new();
             for (resource_config, &price) in self.config.resource_configs.iter().zip(prices.iter()) {
                 let resource = &resource_config.resource;
@@ -130,11 +136,17 @@ mod exchange {
                 
                 let amount_vault = self.pool.vaults.amount(&resource);
                 let amount_oi_net = pool_position.long_oi - pool_position.short_oi;
+                let amount_oi_abs = pool_position.long_oi + pool_position.short_oi;
                 let amount_borrowing = borrowing_long_adjustment * pool_position.long_oi + borrowing_short_adjustment * pool_position.short_oi;
 
-                let amount = amount_vault - amount_oi_net + amount_borrowing;
-                let value = amount * price;
-                pool_value += value;
+                let collateral_value = (amount_vault + amount_borrowing) * price;
+                let oi_net_value = amount_oi_net * price;
+                let oi_abs_value = amount_oi_abs * price;
+                let value = collateral_value + oi_net_value;
+                
+                pool_collateral_value += collateral_value;
+                pool_oi_net_value += oi_net_value;
+                pool_oi_abs_value += oi_abs_value;
 
                 let (amount_funding, funding_long_rate, funding_short_rate) = if pool_position.long_oi.is_zero() || pool_position.short_oi.is_zero() {
                     (dec!(0), dec!(0), dec!(0))
@@ -157,7 +169,7 @@ mod exchange {
                     resource.clone(),
                     PoolPositionInfo {
                         target_weight: resource_config.weight,
-                        value: value,
+                        value,
                         amount_borrowing,
                         amount_funding,
                         borrowing_long_rate,
@@ -173,7 +185,19 @@ mod exchange {
                     )
                 ));
             }
-            pool_value += self.pool.unrealized_borrowing;
+
+            // TODO: check if this is correct
+            pool_collateral_value += self.pool.unrealized_borrowing;
+            let value = pool_collateral_value - pool_oi_net_value;
+            let min_value = pool_collateral_value * (dec!(1) - self.config.max_pool_loss);
+            let (pool_value, profit_scaler) = if value < min_value {
+                let loss = min_value - value;
+                let profit_scaler = (pool_oi_abs_value - loss) / pool_oi_abs_value;
+                (min_value, profit_scaler)
+            } else {
+                (value, dec!(1))
+            };
+    
 
             let lp_token_supply = self.pool.lp_token_manager.total_supply().expect("Missing lp token supply");
             let lp_token_price = if lp_token_supply.is_zero() {
@@ -199,6 +223,10 @@ mod exchange {
 
             PoolInfo {
                 pool_value,
+                pool_collateral_value,
+                pool_oi_net_value,
+                pool_oi_abs_value,
+                profit_scaler,
                 lp_token_supply,
                 lp_token_price,
                 position_info_map: position_info_list.into_iter().map(|(r, p, _)| (r , p)).collect(),
@@ -239,7 +267,7 @@ mod exchange {
             let liquidation_changes: HashMap<ResourceAddress, Decimal> = position_info_list.iter().map(|(r, p)| (r.clone(), p.value)).collect();
             let (imbalance_0, imbalance_f) = calculate_imbalances(liquidation_changes.clone(), &pool_info);
             let fee_base = liquidation_changes.values().fold(dec!(0), |a, b| a + b.checked_abs().unwrap()) * self.config.margin_base_fee;
-            let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+            let fee_impact = (pow(imbalance_f, self.config.margin_impact_exp) - pow(imbalance_0, self.config.margin_impact_exp)) * self.config.margin_impact_fee;
             let liquidation_fee = (fee_base + fee_impact).max(dec!(0));
 
             let account_info = AccountInfo {
@@ -258,6 +286,16 @@ mod exchange {
                 let pool_position = self.pool.positions.get(&resource_config.resource).expect("Missing pool position");
                 let amount_tokens = self.pool.vaults.amount(&resource_config.resource);
 
+                assert!(
+                    pool_position.long_oi > dec!(0), 
+                    "Pool long OI negative for {}",
+                    Runtime::bech32_encode_address(resource_config.resource)
+                );
+                assert!(
+                    pool_position.short_oi > dec!(0), 
+                    "Pool short OI negative for {}",
+                    Runtime::bech32_encode_address(resource_config.resource)
+                );
                 assert!(
                     pool_position.long_oi < amount_tokens * resource_config.max_oi_long_factor, 
                     "Pool long OI too high for {}",
@@ -351,7 +389,7 @@ mod exchange {
             let value = amount * price;
             let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource.clone() => value}, &pool_info);
             let fee_base = value * self.config.swap_base_fee;
-            let fee_impact = (imbalance_f.pow(self.config.swap_impact_exp) - imbalance_0.pow(self.config.swap_impact_exp)) * self.config.swap_impact_fee;
+            let fee_impact = (pow(imbalance_f, self.config.swap_impact_exp) - pow(imbalance_0, self.config.swap_impact_exp)) * self.config.swap_impact_fee;
             let fee = (fee_base + fee_impact).max(dec!(0));
 
             let amount_mint = if pool_info.lp_token_supply.is_zero() {
@@ -391,7 +429,7 @@ mod exchange {
                 let value = amount_lp * pool_info.lp_token_price;
                 let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource.clone() => -value}, &pool_info);
                 let fee_base = value * self.config.swap_base_fee;
-                let fee_impact = (imbalance_f.pow(self.config.swap_impact_exp) - imbalance_0.pow(self.config.swap_impact_exp)) * self.config.swap_impact_fee;
+                let fee_impact = (pow(imbalance_f, self.config.swap_impact_exp) - pow(imbalance_0, self.config.swap_impact_exp)) * self.config.swap_impact_fee;
                 let fee = (fee_base + fee_impact).max(dec!(0));
 
                 let price = *prices.get(&resource).expect("Missing price");
@@ -457,7 +495,7 @@ mod exchange {
                 let value = amount_in * price_in;
                 let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource_in.clone() => value, resource_out.clone() => -value}, &pool_info);
                 let fee_base = value * self.config.swap_base_fee;
-                let fee_impact = (imbalance_f.pow(self.config.swap_impact_exp) - imbalance_0.pow(self.config.swap_impact_exp)) * self.config.swap_impact_fee;
+                let fee_impact = (pow(imbalance_f, self.config.swap_impact_exp) - pow(imbalance_0, self.config.swap_impact_exp)) * self.config.swap_impact_fee;
                 let fee = (fee_base + fee_impact).max(dec!(0));
 
                 let amount_out = (value - fee) / price_out;
@@ -490,7 +528,7 @@ mod exchange {
                 let value_0 = amount_0 * price_0;
                 let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource_0.clone() => value_0, resource_1.clone() => -value_0}, &pool_info);
                 let fee_base = dec!(2) * value_0.checked_abs().unwrap() * self.config.margin_base_fee;
-                let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+                let fee_impact = (pow(imbalance_f, self.config.margin_impact_exp) - pow(imbalance_0, self.config.margin_impact_exp)) * self.config.margin_impact_fee;
                 let fee = (fee_base + fee_impact).max(dec!(0));
 
                 let value_1 = if value_0.is_positive() {
@@ -539,7 +577,7 @@ mod exchange {
                 *liquidation_changes.entry(resource_1.clone()).or_default() -= value_1;
                 let (imbalance_0, imbalance_f) = calculate_imbalances(liquidation_changes.clone(), &pool_info);
                 let fee_base = liquidation_changes.values().fold(dec!(0), |a, b| a + b.checked_abs().unwrap()) * self.config.margin_base_fee;
-                let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+                let fee_impact = (pow(imbalance_f, self.config.margin_impact_exp) - pow(imbalance_0, self.config.margin_impact_exp)) * self.config.margin_impact_fee;
                 let liquidation_fee = (fee_base + fee_impact).max(dec!(0));
 
                 let positions_liquidation_value = account_info.positions_value + value_0 - value_1 - liquidation_fee;
@@ -570,7 +608,7 @@ mod exchange {
                 let value_0 = account_info.position_info_map.get(&resource_0).expect("Missing position info").value;
                 let value_1 = account_info.position_info_map.get(&resource_1).expect("Missing position info").value;
                 let (imbalance_0, imbalance_f) = calculate_imbalances(hashmap!{resource_0.clone() => value_0, resource_1.clone() => value_1}, &pool_info);
-                let fee_impact = (imbalance_f.pow(self.config.margin_impact_exp) - imbalance_0.pow(self.config.margin_impact_exp)) * self.config.margin_impact_fee;
+                let fee_impact = (pow(imbalance_f, self.config.margin_impact_exp) - pow(imbalance_0, self.config.margin_impact_exp)) * self.config.margin_impact_fee;
                 let fee_base = (value_0.checked_abs().unwrap() + value_1.checked_abs().unwrap()) * self.config.margin_base_fee;
                 let fee = (fee_base + fee_impact).max(dec!(0));
 
