@@ -1,9 +1,13 @@
 use scrypto::prelude::*;
 
-#[derive(ScryptoSbor, Default)]
+#[derive(ScryptoSbor)]
 pub struct PoolPosition {
-    pub long_oi: Decimal,
-    pub short_oi: Decimal,
-    pub interest_long_checkpoint: Decimal,
-    pub interest_short_checkpoint: Decimal,
+    pub oi_long: Decimal,
+    pub oi_short: Decimal,
+    pub cost: Decimal,
+    pub funding_rate: Decimal,
+    pub funding_long_index: Decimal,
+    pub funding_short_index: Decimal,
+    pub pnl_snap: Decimal,
+    pub last_update: Instant,
 }

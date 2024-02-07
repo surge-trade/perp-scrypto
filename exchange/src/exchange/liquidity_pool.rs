@@ -2,19 +2,20 @@ pub mod pool_position;
 pub use self::pool_position::PoolPosition;
 
 use scrypto::prelude::*;
-use crate::utils::Vaults;
+use super::consts::BASE_RESOURCE;
+use crate::utils::{Vaults, Pair};
 
 #[derive(ScryptoSbor)]
 pub struct LiquidityPool {
-    pub vaults: Vaults,
-    pub positions: HashMap<ResourceAddress, PoolPosition>,
-    pub unrealized_borrowing: Decimal,
-    pub last_update: Instant,
+    pub base_tokens: Vault,
+    pub virtual_balance: Decimal,
+    pub positions: KeyValueStore<Pair, PoolPosition>,
+    pub pnl_snap: Decimal,
     pub lp_token_manager: ResourceManager,
 }
 
 impl LiquidityPool {
-    pub fn new(resources: Vec<ResourceAddress>, this: ComponentAddress, owner_role: OwnerRole) -> Self {
+    pub fn new(this: ComponentAddress, owner_role: OwnerRole) -> Self {
         let lp_token_manager = ResourceBuilder::new_fungible(owner_role)
             .metadata(metadata!(
                 init {
@@ -37,11 +38,15 @@ impl LiquidityPool {
             .create_with_no_initial_supply();
 
         Self {
-            vaults: Vaults::new(),
-            positions: resources.into_iter().map(|r| (r, PoolPosition::default())).collect(),
-            unrealized_borrowing: dec!(0),
-            last_update: Clock::current_time_rounded_to_minutes(),
+            base_tokens: Vault::new(BASE_RESOURCE),
+            positions: KeyValueStore::new(),
+            virtual_balance: dec!(0),
+            pnl_snap: dec!(0),
             lp_token_manager,
         }
+    }
+
+    pub fn add_pair(&mut self, pair: Pair) {
+        // TODO
     }
 }

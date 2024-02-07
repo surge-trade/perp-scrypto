@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 
-#[derive(ScryptoSbor, Default)]
+#[derive(ScryptoSbor)]
 pub struct AccountPosition {
     pub amount: Decimal,
-    pub interest_checkpoint: Decimal,
+    pub funding_index: Decimal,
 }

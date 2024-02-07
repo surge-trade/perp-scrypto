@@ -2,26 +2,26 @@ pub mod account_position;
 pub use self::account_position::AccountPosition;
 
 use scrypto::prelude::*;
-use crate::utils::{List, Vaults};
+use crate::utils::{List, Vaults, Pair};
 use super::keeper_requests::KeeperRequest;
 
 #[derive(ScryptoSbor)]
 pub struct MarginAccount {
     pub vaults: Vaults,
-    pub positions: HashMap<ResourceAddress, AccountPosition>,
-    pub collateral: Vault,
+    pub positions: HashMap<Pair, AccountPosition>,
+    pub collateral: Vaults,
+    pub virtual_balance: Decimal,
     pub requests: List<KeeperRequest>,
-    pub last_update: Instant,
 }
 
 impl MarginAccount {
-    pub fn new(resource_collateral: ResourceAddress) -> Self {
+    pub fn new() -> Self {
         Self {
             vaults: Vaults::new(),
             positions: HashMap::new(),
-            collateral: Vault::new(resource_collateral),
+            collateral: Vaults::new(),
+            virtual_balance: dec!(0),
             requests: List::new(),
-            last_update: Clock::current_time_rounded_to_minutes(),
         }
     }
 }
@@ -71,11 +71,11 @@ impl MarginAccountManager {
         self.accounts.get_mut(id)
     }
 
-    pub fn create_account(&mut self, resource_collateral: ResourceAddress) -> Bucket {
+    pub fn create_account(&mut self) -> Bucket {
         let badge = self.account_badge_manager.mint_ruid_non_fungible(());
         let id = badge.as_non_fungible().non_fungible_local_id();
         self.account_ids.push(id.clone());
-        self.accounts.insert(id, MarginAccount::new(resource_collateral));
+        self.accounts.insert(id, MarginAccount::new());
 
         badge
     }
