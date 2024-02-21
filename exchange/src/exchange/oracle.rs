@@ -16,16 +16,13 @@ mod oracle {
             .globalize()
         }
 
-        pub fn get_prices(&self) -> HashMap<ResourceAddress, Decimal> {
+        pub fn get_price(&self, _pair_id: u64) -> Decimal {
             // for testing purposes, just return a constant price
-            let price = dec!(1);
+            dec!(1)
+        }
 
-            let mut prices = HashMap::new();
-            for resource in &self.resources {
-                prices.insert(resource.clone(), price);
-            }
-
-            prices
+        pub fn get_price_resource(&self, _: ResourceAddress) -> Decimal {
+            dec!(1)
         }
     }
 }

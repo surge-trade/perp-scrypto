@@ -1,7 +1,5 @@
 use scrypto::prelude::*;
 
-use crate::utils::Pair;
-
 #[derive(ScryptoSbor, Clone)]
 pub enum Limit {
     Gte(Decimal),
@@ -46,14 +44,23 @@ impl Duration {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct RequestMarginOrder {
-    pub pair: Pair,
+    pub pair_id: u64,
     pub amount: Decimal,
+    pub margin: Decimal,
+    pub collateral_resource: ResourceAddress,
     pub price_limit: Limit,
+}
+
+#[derive(ScryptoSbor, Clone)]
+pub struct RequestRemoveCollateral {
+    resource: ResourceAddress, 
+    amount: Decimal,
 }
 
 #[derive(ScryptoSbor, Clone)]
 pub enum Request {
     MarginOrder(RequestMarginOrder),
+    RemoveCollateral(RequestRemoveCollateral),
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -72,16 +79,35 @@ pub struct KeeperRequest {
 
 impl KeeperRequest {
     pub fn margin_order(
-        pair: Pair,
-        amount: Decimal,
+        pair_id: u64, 
+        amount: Decimal, 
+        margin: Decimal, 
+        collateral_resource: ResourceAddress,
         price_limit: Limit,
         duration: Duration,
     ) -> Self {
         KeeperRequest {
             request: Request::MarginOrder(RequestMarginOrder {
-                pair,
+                pair_id,
                 amount,
+                margin,
+                collateral_resource,
                 price_limit,
+            }),
+            duration,
+            status: Status::Pending,
+        }
+    }
+
+    pub fn remove_collateral(
+        resource: ResourceAddress, 
+        amount: Decimal, 
+        duration: Duration,
+    ) -> Self {
+        KeeperRequest {
+            request: Request::RemoveCollateral(RequestRemoveCollateral {
+                resource,
+                amount,
             }),
             duration,
             status: Status::Pending,

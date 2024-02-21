@@ -1,15 +1,26 @@
-pub mod pool_position;
-pub use self::pool_position::PoolPosition;
-
 use scrypto::prelude::*;
 use super::consts::BASE_RESOURCE;
-use crate::utils::{Vaults, Pair};
+
+#[derive(ScryptoSbor)]
+pub struct PoolPosition {
+    pub oi_long: Decimal,
+    pub oi_short: Decimal,
+    pub cost: Decimal,
+    pub skew_abs_snap: Decimal,
+    pub pnl_snap: Decimal,
+    pub funding_2_rate: Decimal,
+    pub funding_long_index: Decimal,
+    pub funding_short_index: Decimal,
+    pub last_update: Instant,
+}
 
 #[derive(ScryptoSbor)]
 pub struct LiquidityPool {
     pub base_tokens: Vault,
     pub virtual_balance: Decimal,
-    pub positions: KeyValueStore<Pair, PoolPosition>,
+    pub positions: KeyValueStore<u64, PoolPosition>,
+    pub unrealized_pool_funding: Decimal,
+    pub skew_abs_snap: Decimal,
     pub pnl_snap: Decimal,
     pub lp_token_manager: ResourceManager,
 }
@@ -39,14 +50,12 @@ impl LiquidityPool {
 
         Self {
             base_tokens: Vault::new(BASE_RESOURCE),
-            positions: KeyValueStore::new(),
             virtual_balance: dec!(0),
+            positions: KeyValueStore::new(),
+            unrealized_pool_funding: dec!(0),
+            skew_abs_snap: dec!(0),
             pnl_snap: dec!(0),
             lp_token_manager,
         }
-    }
-
-    pub fn add_pair(&mut self, pair: Pair) {
-        // TODO
     }
 }
