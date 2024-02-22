@@ -17,13 +17,15 @@ use self::errors::*;
 use self::keeper_requests::*;
 use self::liquidity_pool::*;
 use self::margin_account::*;
+use self::liquidity_pool::liquidity_pool::LiquidityPool;
+use self::margin_account::margin_account::MarginAccount;
 use self::oracle::oracle::Oracle;
 
 #[blueprint]
 mod exchange {
     struct Exchange {
         config: ExchangeConfig,
-        pool: LiquidityPool,
+        pool: ComponentAddress,
         oracle: Global<Oracle>,
     }
     impl Exchange {
@@ -44,7 +46,7 @@ mod exchange {
                     pairs: List::new(),
                     collaterals: HashMap::new(),
                 },
-                pool: LiquidityPool::new(this, owner_role.clone()),
+                pool: LiquidityPool::new(owner_role.clone()).address(),
                 oracle: Oracle::new(resources.clone()),
             }
             .instantiate()
@@ -54,22 +56,32 @@ mod exchange {
         }
 
         // get_pool_value
-        fn get_pool_value(&self) -> Decimal {
-            self.pool.base_tokens.amount() + 
-            self.pool.virtual_balance + 
-            self.pool.unrealized_pool_funding +
-            self.pool.pnl_snap
+        fn get_pool_value(
+            &self, 
+            pool: &VirtualLiquidityPool,
+        ) -> Decimal {
+            pool.base_tokens_amount() + 
+            pool.virtual_balance() + 
+            pool.unrealized_pool_funding() +
+            pool.pnl_snap()
         }
 
         // assert_skewness
-        fn assert_pool_integrity(&mut self) {
-            if self.pool.skew_abs_snap / self.get_pool_value() >= self.config.skew_ratio_cap {
+        fn assert_pool_integrity(
+            &self,
+            pool: &VirtualLiquidityPool,
+        ) {
+            if pool.skew_abs_snap() / self.get_pool_value(pool) >= self.config.skew_ratio_cap {
                 panic!("{}", ERROR_SKEW_TOO_HIGH);
             }
         }
 
-        fn assert_account_integrity(&mut self, account: &VirtualMarginAccount) {
-            let (pnl, margin) = self.value_positions(account);
+        fn assert_account_integrity(
+            &mut self, 
+            pool: &VirtualLiquidityPool,
+            account: &VirtualMarginAccount,
+        ) {
+            let (pnl, margin) = self.value_positions(pool, account);
             let collateral = self.value_collateral(account);
 
             if pnl + collateral < margin {
@@ -94,35 +106,12 @@ mod exchange {
         // update_pair_snaps
         fn update_pair_snaps(
             &mut self, 
+            pool: &mut VirtualLiquidityPool,
             pair_id: u64,
         ) {
             let price_token = self.oracle.get_price(pair_id);
 
-            let mut position = self.pool.positions.get_mut(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
-            let oi_long = position.oi_long;
-            let oi_short = position.oi_short;
-
-            let skew = (oi_long - oi_short) * price_token;
-            let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
-            let skew_abs_snap_delta = skew_abs - position.skew_abs_snap;
-            position.skew_abs_snap = skew_abs;
-            self.pool.skew_abs_snap += skew_abs_snap_delta;
-
-            let pnl = skew - position.cost;
-            let pnl_snap_delta = pnl - position.pnl_snap;
-            position.pnl_snap = pnl;
-            self.pool.pnl_snap += pnl_snap_delta;
-        }
-
-        // update_pair
-        fn update_pair(
-            &mut self, 
-            pair_id: u64,
-        ) {
-            let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
-            let price_token = self.oracle.get_price(pair_id);
-
-            let mut pool_position = self.pool.positions.get_mut(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
+            let mut pool_position = pool.position(pair_id);
             let oi_long = pool_position.oi_long;
             let oi_short = pool_position.oi_short;
 
@@ -130,12 +119,39 @@ mod exchange {
             let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
             pool_position.skew_abs_snap = skew_abs;
-            self.pool.skew_abs_snap += skew_abs_snap_delta;
+            pool.update_skew_abs_snap(pool.skew_abs_snap() + skew_abs_snap_delta);
 
             let pnl = skew - pool_position.cost;
             let pnl_snap_delta = pnl - pool_position.pnl_snap;
             pool_position.pnl_snap = pnl;
-            self.pool.pnl_snap += pnl_snap_delta;
+            pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
+
+            pool.update_position(pair_id, pool_position);
+        }
+
+        // update_pair
+        fn update_pair(
+            &mut self, 
+            pool: &mut VirtualLiquidityPool,
+            pair_id: u64,
+        ) {
+            let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+            let price_token = self.oracle.get_price(pair_id);
+
+            let mut pool_position = pool.position(pair_id);
+            let oi_long = pool_position.oi_long;
+            let oi_short = pool_position.oi_short;
+
+            let skew = (oi_long - oi_short) * price_token;
+            let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
+            let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
+            pool_position.skew_abs_snap = skew_abs;
+            pool.update_skew_abs_snap(pool.skew_abs_snap() + skew_abs_snap_delta);
+
+            let pnl = skew - pool_position.cost;
+            let pnl_snap_delta = pnl - pool_position.pnl_snap;
+            pool_position.pnl_snap = pnl;
+            pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
             
             let current_time = Clock::current_time_rounded_to_minutes();
             let period_minutes = Decimal::from((current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch) / 60);
@@ -178,17 +194,20 @@ mod exchange {
 
                 let funding_pool = funding_pool_rate * period_minutes;
                 let funding_pool_index = funding_pool / (oi_long + oi_short);
-                self.pool.unrealized_pool_funding += funding_pool + funding_share;
+                pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding_pool + funding_share);
 
                 pool_position.funding_long_index += funding_long_index + funding_pool_index;
                 pool_position.funding_short_index += funding_short_index + funding_pool_index;
             }
+
+            pool.update_position(pair_id, pool_position);
         }
         
         // margin_order
         fn margin_order(
             &mut self, 
-            account: &mut VirtualMarginAccount, 
+            pool: &mut VirtualLiquidityPool,
+            account: &mut VirtualMarginAccount,
             pair_id: u64, 
             amount: Decimal, 
             vault_transfers: Vec<(ResourceAddress, Decimal)>, 
@@ -198,8 +217,8 @@ mod exchange {
             }
             account.transfer_from_vaults_to_collateral(vault_transfers, TO_INFINITY);
 
-            self.update_pair(pair_id); // TODO: Do we need to do this
-            self.settle_funding(account, pair_id);
+            self.update_pair(pool, pair_id); // TODO: Do we need to do this
+            self.settle_funding(pool, account, pair_id);
                 
             let (amount_close, amount_open) = {
                 let position_amount = account.positions().get(&pair_id).map_or(dec!(0), |p| p.amount);
@@ -216,28 +235,29 @@ mod exchange {
                 }
             };
             if !amount_close.is_zero() {
-                self.close_position(account, pair_id, amount_close);
+                self.close_position(pool, account, pair_id, amount_close);
             }
             if !amount_open.is_zero() {
-                self.open_position(account, pair_id, amount_open);
+                self.open_position(pool, account, pair_id, amount_open);
             }
 
-            self.save_funding_index(account, pair_id);
-            self.update_pair_snaps(pair_id);
+            self.save_funding_index(pool, account, pair_id);
+            self.update_pair_snaps(pool, pair_id);
 
-            self.assert_account_integrity(account);
-            self.assert_pool_integrity();
+            self.assert_account_integrity(pool, account);
+            self.assert_pool_integrity(pool);
         }
 
         fn settle_with_pool(
             &mut self,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
             amount: Decimal,
         ) {
             let outstanding_base = if amount.is_positive() {
-                let available_base = self.pool.base_tokens.amount();
+                let available_base = pool.base_tokens_amount();
                 let amount_base = amount.min(available_base);
-                let tokens_base = self.pool.base_tokens.take_advanced(amount_base, TO_ZERO);
+                let tokens_base = pool.withdraw(amount_base, TO_ZERO);
                 account.deposit_collateral(tokens_base);
 
                 amount - amount_base
@@ -245,22 +265,23 @@ mod exchange {
                 let available_base = account.collateral_amount(&BASE_RESOURCE);
                 let amount_base = (-amount).min(available_base);
                 let tokens_base = account.withdraw_collateral(&BASE_RESOURCE, amount_base, TO_INFINITY);
-                self.pool.base_tokens.put(tokens_base);
+                pool.deposit(tokens_base);
                 
                 amount + amount_base
             };
+            pool.update_virtual_balance(pool.virtual_balance() - outstanding_base);
             account.update_virtual_balance(account.virtual_balance() + outstanding_base);
-            self.pool.virtual_balance -= outstanding_base;
         }
 
         // settle_funding
         fn settle_funding(
             &mut self,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
             pair_id: u64,
         ) {
             let funding = {
-                let pool_position = self.pool.positions.get(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
+                let pool_position = pool.position(pair_id);
     
                 let funding = if let Some(position) = account.positions().get(&pair_id) {
                     if position.amount.is_positive() {
@@ -271,20 +292,21 @@ mod exchange {
                 } else {
                     dec!(0)
                 };
-                self.pool.unrealized_pool_funding += funding;
+                pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding);
 
                 funding
             };
-            self.settle_with_pool(account, funding);
+            self.settle_with_pool(pool, account, funding);
         }
         
         fn save_funding_index(
             &mut self,
+            pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
             pair_id: u64,
         ) {
-            let pool_position = self.pool.positions.get(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
-            let mut position = account.position(&pair_id);
+            let pool_position = pool.position(pair_id);
+            let mut position = account.position(pair_id);
 
             let funding_index = if position.amount.is_positive() {
                 pool_position.funding_long_index
@@ -293,12 +315,13 @@ mod exchange {
             };
             position.funding_index = funding_index;
 
-            account.update_position(&pair_id, position)
+            account.update_position(pair_id, position)
         }
 
         // open_position
         fn open_position(
-            &mut self, 
+            &mut self,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             pair_id: u64, 
             amount: Decimal, 
@@ -308,10 +331,10 @@ mod exchange {
 
             let value = amount * price_token;
             let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
-            let pool_value = self.get_pool_value();
+            let pool_value = self.get_pool_value(pool);
 
-            let mut pool_position = self.pool.positions.get_mut(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
-            let mut position = account.position(&pair_id);
+            let mut pool_position = pool.position(pair_id);
+            let mut position = account.position(pair_id);
             
             let skew_abs = ((pool_position.oi_long - pool_position.oi_short + amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
             let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
@@ -327,12 +350,14 @@ mod exchange {
             position.amount += amount;
             position.cost += cost;
 
-            account.update_position(&pair_id, position);
+            pool.update_position(pair_id, pool_position);
+            account.update_position(pair_id, position);
         }
 
         // close_position
         fn close_position(
-            &mut self, 
+            &mut self,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             pair_id: u64, 
             amount: Decimal, 
@@ -343,10 +368,10 @@ mod exchange {
                 
                 let value = amount * price_token;
                 let value_abs = value.checked_abs().unwrap();
-                let pool_value = self.get_pool_value();
+                let pool_value = self.get_pool_value(pool);
 
-                let mut pool_position = self.pool.positions.get_mut(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
-                let mut position = account.position(&pair_id);
+                let mut pool_position = pool.position(pair_id);
+                let mut position = account.position(pair_id);
 
                 let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
@@ -363,31 +388,34 @@ mod exchange {
                 position.amount += amount;
                 position.cost -= cost;
 
-                account.update_position(&pair_id, position);
+                pool.update_position(pair_id, pool_position);
+                account.update_position(pair_id, position);
 
                 pnl
             };
 
-            self.settle_with_pool(account, pnl);
+            self.settle_with_pool(pool, account, pnl);
         }
 
         // TODO: add_collateral?
 
-        // // add_collateral
-        // fn add_collateral(
-        //     &mut self, 
-        //     account: &mut VirtualMarginAccount, 
-        //     transfers: Vec<(ResourceAddress, Decimal)>,
-        // ) {
-        //     self.assert_valid_collateral(*resource);
+        // add_collateral
+        fn add_collateral(
+            &mut self, 
+            account: &mut VirtualMarginAccount, 
+            vault_transfers: Vec<(ResourceAddress, Decimal)>,
+        ) {
+            for (resource, _amount) in vault_transfers.iter() {
+                self.assert_valid_collateral(*resource);
+            }
 
-        //     let collateral = account.vaults.take_advanced(resource, amount, INCOMING);
-        //     account.collateral.put(collateral);
-        // }
+            account.transfer_from_vaults_to_collateral(vault_transfers, TO_ZERO);
+        }
 
         // liquidate
         fn liquidate(
             &mut self,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
             mut payment_tokens: Bucket,
         ) -> Vec<Bucket> {
@@ -396,7 +424,7 @@ mod exchange {
                 "{}", ERROR_INVALID_PAYMENT
             );
 
-            let (pnl, margin) = self.liquidate_positions(account);
+            let (pnl, margin) = self.liquidate_positions(pool, account);
             let (collateral_value, mut collateral_tokens) = self.liquidate_collateral(account);
 
             assert!(
@@ -406,7 +434,7 @@ mod exchange {
             
             account.deposit_collateral(payment_tokens.take_advanced(collateral_value, TO_INFINITY));
 
-            self.settle_with_pool(account, pnl);
+            self.settle_with_pool(pool, account, pnl);
             // TODO: insurance fund for outstanding_base
 
             collateral_tokens.push(payment_tokens);
@@ -417,20 +445,21 @@ mod exchange {
         // calculate_positions_value
         fn liquidate_positions(
             &mut self, 
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
         ) -> (Decimal, Decimal) {
-            let pool_value = self.get_pool_value();
+            let pool_value = self.get_pool_value(pool);
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
-            for (pair_id, position) in account.positions().clone().iter() {
-                let config = self.config.pairs.get(*pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
-                let price_token = self.oracle.get_price(*pair_id);
+            for (&pair_id, position) in account.positions().clone().iter() {
+                let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+                let price_token = self.oracle.get_price(pair_id);
                 let amount = position.amount;
                 let value = position.amount * price_token;
                 let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
 
-                let mut pool_position = self.pool.positions.get_mut(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
+                let mut pool_position = pool.position(pair_id);
 
                 let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
@@ -448,7 +477,8 @@ mod exchange {
                 total_pnl += pnl;
                 total_margin += margin;
 
-                account.update_position(&pair_id, AccountPosition::default());
+                pool.update_position(pair_id, pool_position);
+                account.update_position(pair_id, AccountPosition::default());
             }
 
             (total_pnl, total_margin)
@@ -474,21 +504,22 @@ mod exchange {
         }
 
         fn value_positions(
-            &self, 
+            &self,
+            pool: &VirtualLiquidityPool,
             account: &VirtualMarginAccount, 
         ) -> (Decimal, Decimal) {
-            let pool_value = self.get_pool_value();
+            let pool_value = self.get_pool_value(pool);
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
-            for (pair_id, position) in account.positions().iter() {
-                let config = self.config.pairs.get(*pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
-                let price_token = self.oracle.get_price(*pair_id);
+            for (&pair_id, position) in account.positions().iter() {
+                let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+                let price_token = self.oracle.get_price(pair_id);
                 let amount = position.amount;
                 let value = position.amount * price_token;
                 let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
 
-                let pool_position = self.pool.positions.get(&pair_id).expect(ERROR_MISSING_POOL_POSITION);
+                let pool_position = pool.position(pair_id);
 
                 let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
@@ -520,16 +551,18 @@ mod exchange {
         // remove_collateral
         fn remove_collateral(
             &mut self, 
+            pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             collateral_transfers: Vec<(ResourceAddress, Decimal)>,
         ) {
             account.transfer_from_collateral_to_vaults(collateral_transfers, TO_ZERO);
-            self.assert_account_integrity(account);
+            self.assert_account_integrity(pool, account);
         }
 
         // swap_debt
         fn swap_debt(
             &mut self, 
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             resource: &ResourceAddress, 
             payment: Bucket, 
@@ -548,10 +581,10 @@ mod exchange {
             );
             let price_resource = self.oracle.get_price_resource(*resource);
             let amount = value / price_resource;
-            // TODO: check amount first?
+            // TODO: check amount first? take less of two?
 
-            self.pool.base_tokens.put(payment);
-            self.pool.virtual_balance -= value;
+            pool.deposit(payment);
+            pool.update_virtual_balance(pool.virtual_balance() - value);
             account.update_virtual_balance(virtual_balance + value);
             let collateral = account.withdraw_collateral(resource, amount, TO_ZERO);
 

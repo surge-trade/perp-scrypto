@@ -24,7 +24,6 @@ pub struct MarginAccountUpdates {
     virtual_balance: Decimal,
 }
 
-#[derive(ScryptoSbor)]
 pub struct VirtualMarginAccount {
     account: Global<MarginAccount>,
     account_info: MarginAccountInfo,
@@ -35,7 +34,7 @@ impl VirtualMarginAccount {
     pub fn new(account: ComponentAddress) -> Self {
         let account = Global::<MarginAccount>::try_from(account).expect(ERROR_INVALID_ACCOUNT);
         let account_info = account.get_info();
-        
+
         Self {
             account,
             account_updates: MarginAccountUpdates {
@@ -54,12 +53,12 @@ impl VirtualMarginAccount {
         &self.account_info.positions
     }
 
-    pub fn position(&self, pair_id: &u64) -> AccountPosition {
-        self.account_info.positions.get(pair_id).cloned().unwrap_or_default()
+    pub fn position(&self, pair_id: u64) -> AccountPosition {
+        self.account_info.positions.get(&pair_id).cloned().unwrap_or_default()
     }
 
-    pub fn position_amount(&self, pair_id: &u64) -> Decimal {
-        self.account_info.positions.get(pair_id).map(|position| position.amount).unwrap_or_default()
+    pub fn position_amount(&self, pair_id: u64) -> Decimal {
+        self.account_info.positions.get(&pair_id).map(|position| position.amount).unwrap_or_default()
     }
 
     pub fn collateral_balances(&self) -> &HashMap<ResourceAddress, Decimal> {
@@ -162,9 +161,9 @@ impl VirtualMarginAccount {
         self.account_updates.virtual_balance = virtual_balance;
     }
 
-    pub fn update_position(&mut self, pair_id: &u64, position: AccountPosition) {
-        self.account_info.positions.insert(*pair_id, position.clone());
-        self.account_updates.position_updates.insert(*pair_id, position);
+    pub fn update_position(&mut self, pair_id: u64, position: AccountPosition) {
+        self.account_info.positions.insert(pair_id, position.clone());
+        self.account_updates.position_updates.insert(pair_id, position);
     }
 }
 
