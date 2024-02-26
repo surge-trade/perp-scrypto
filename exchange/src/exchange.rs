@@ -7,6 +7,8 @@ pub mod errors;
 pub mod keeper_requests;
 pub mod liquidity_pool;
 pub mod margin_account;
+pub mod virtual_liquidity_pool;
+pub mod virtual_margin_account;
 pub mod oracle;
 
 use scrypto::prelude::*;
@@ -15,10 +17,9 @@ use self::config::*;
 use self::consts::*;
 use self::errors::*;
 use self::keeper_requests::*;
-use self::liquidity_pool::*;
-use self::margin_account::*;
+use self::virtual_liquidity_pool::*;
+use self::virtual_margin_account::*;
 use self::liquidity_pool::liquidity_pool::LiquidityPool;
-use self::margin_account::margin_account::MarginAccount;
 use self::oracle::oracle::Oracle;
 
 #[blueprint]
@@ -34,7 +35,7 @@ mod exchange {
             let owner_role = OwnerRole::None;
             let resources = vec![];
 
-            let (address_reservation, this) = Runtime::allocate_component_address(Exchange::blueprint_id());
+            let (component_reservation, _this) = Runtime::allocate_component_address(Exchange::blueprint_id());
             Self {
                 config: ExchangeConfig {
                     max_price_age_seconds: 0,
@@ -51,7 +52,7 @@ mod exchange {
             }
             .instantiate()
             .prepare_to_globalize(owner_role.clone())
-            .with_address(address_reservation)
+            .with_address(component_reservation)
             .globalize()
         }
 
@@ -210,13 +211,7 @@ mod exchange {
             account: &mut VirtualMarginAccount,
             pair_id: u64, 
             amount: Decimal, 
-            vault_transfers: Vec<(ResourceAddress, Decimal)>, 
         ) {
-            for (resource, _amount) in vault_transfers.iter() {
-                self.assert_valid_collateral(*resource);
-            }
-            account.transfer_from_vaults_to_collateral(vault_transfers, TO_INFINITY);
-
             self.update_pair(pool, pair_id); // TODO: Do we need to do this
             self.settle_funding(pool, account, pair_id);
                 
@@ -403,13 +398,13 @@ mod exchange {
         fn add_collateral(
             &mut self, 
             account: &mut VirtualMarginAccount, 
-            vault_transfers: Vec<(ResourceAddress, Decimal)>,
+            tokens: Vec<Bucket>,
         ) {
-            for (resource, _amount) in vault_transfers.iter() {
-                self.assert_valid_collateral(*resource);
+            for tokens in tokens.iter() {
+                self.assert_valid_collateral(tokens.resource_address());
             }
 
-            account.transfer_from_vaults_to_collateral(vault_transfers, TO_ZERO);
+            account.deposit_collateral_batch(tokens);
         }
 
         // liquidate
@@ -478,7 +473,7 @@ mod exchange {
                 total_margin += margin;
 
                 pool.update_position(pair_id, pool_position);
-                account.update_position(pair_id, AccountPosition::default());
+                account.remove_position(pair_id);
             }
 
             (total_pnl, total_margin)
@@ -553,9 +548,14 @@ mod exchange {
             &mut self, 
             pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
-            collateral_transfers: Vec<(ResourceAddress, Decimal)>,
+            target_account: ComponentAddress,
+            claims: Vec<(ResourceAddress, Decimal)>,
         ) {
-            account.transfer_from_collateral_to_vaults(collateral_transfers, TO_ZERO);
+            let mut target_account = Global::<Account>::try_from(target_account).expect(ERROR_INVALID_ACCOUNT);
+            
+            let tokens = account.withdraw_collateral_batch(claims, TO_ZERO);
+            target_account.try_deposit_batch_or_abort(tokens, None); // TODO: create authorization badge
+            
             self.assert_account_integrity(pool, account);
         }
 

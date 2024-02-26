@@ -11,6 +11,7 @@ pub const ERROR_LIQUIDATION_SUFFICIENT_MARGIN: &str = "Sufficient margin for liq
 pub const ERROR_SWAP_NOT_ENOUGH_DEBT: &str = "Not enough debt to swap";
 
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
+pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
 pub const ERROR_INVALID_POOL: &str = "Invalid pool";
 pub const ERROR_MISSING_ACCOUNT_POSITION: &str = "Account position not found";
 pub const ERROR_MISSING_POOL_POSITION: &str = "Position not found";
