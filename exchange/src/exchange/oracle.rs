@@ -16,13 +16,12 @@ mod oracle {
             .globalize()
         }
 
-        pub fn get_price(&self, _pair_id: u64) -> Decimal {
-            // for testing purposes, just return a constant price
-            dec!(1)
+        pub fn get_prices(&self) -> HashMap<u64, Decimal> {
+            HashMap::new()
         }
 
-        pub fn get_price_resource(&self, _: ResourceAddress) -> Decimal {
-            dec!(1)
+        pub fn get_price_resource(&self, _: ResourceAddress) -> Option<Decimal> {
+            Some(dec!(1))
         }
     }
 }

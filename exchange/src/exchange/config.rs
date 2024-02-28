@@ -8,7 +8,10 @@ pub struct ExchangeConfig {
     pub keeper_fee: Decimal,
     pub positions_max: u64,
     pub skew_ratio_cap: Decimal,
-    pub skew_ratio_adl: Decimal,
+    pub adl_offset: Decimal,
+    pub adl_a: Decimal,
+    pub adl_b: Decimal,
+    pub fee_liquidity: Decimal,
     pub fee_max: Decimal,
     pub pairs: List<PairConfig>,
     pub collaterals: HashMap<ResourceAddress, CollateralConfig>

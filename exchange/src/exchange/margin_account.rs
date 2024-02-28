@@ -59,8 +59,8 @@ pub mod margin_account {
 
     struct MarginAccount {
         collateral: Vaults,
-        positions: HashMap<u64, AccountPosition>,
-        collateral_balances: HashMap<ResourceAddress, Decimal>,
+        positions: HashMap<u64, AccountPosition>, // TODO: make kvs for efficient token movement
+        collateral_balances: HashMap<ResourceAddress, Decimal>, // TODO: remove?
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
     }
