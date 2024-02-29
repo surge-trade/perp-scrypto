@@ -47,9 +47,12 @@ pub mod margin_account {
         },
         methods { 
             get_info => PUBLIC;
+            get_request => PUBLIC;
+            get_requests => PUBLIC;
 
             // Authority protected methods
             update => PUBLIC;
+            process_request => PUBLIC;
             deposit_collateral => PUBLIC;
             deposit_collateral_batch => PUBLIC;
             withdraw_collateral => PUBLIC;
@@ -74,7 +77,7 @@ pub mod margin_account {
                 positions: HashMap::new(),
                 collateral_balances: HashMap::new(),
                 virtual_balance: dec!(0),
-                requests: List::new(),
+                requests: List::new(), // TODO: global ref list
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None) // TODO: set the owner role
@@ -90,6 +93,14 @@ pub mod margin_account {
             }
         }
 
+        pub fn get_request(&self, index: u64) -> Option<KeeperRequest> {
+            self.requests.get(index)
+        }
+
+        pub fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest> {
+            self.requests.range(start, end)
+        }
+
         pub fn update(&mut self, update: MarginAccountUpdates) {
             Runtime::assert_access_rule(AUTHORITY.get_rule());
 
@@ -101,6 +112,19 @@ pub mod margin_account {
                 }
             }
             self.virtual_balance = update.virtual_balance;
+        }
+
+        pub fn process_request(&mut self, index: u64) -> Vec<u8> {
+            Runtime::assert_access_rule(AUTHORITY.get_rule());
+
+            let mut request = self.requests.get_mut(index).expect(ERROR_MISSING_REQUEST);
+            assert!(
+                request.is_active(),
+                "{}", ERROR_REQUEST_NOT_ACTIVE
+            );
+            request.process();
+            
+            request.data()
         }
 
         pub fn deposit_collateral(&mut self, token: Bucket) {

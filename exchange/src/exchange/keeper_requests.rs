@@ -1,4 +1,5 @@
 use scrypto::prelude::*;
+use super::errors::*;
 
 #[derive(ScryptoSbor, Clone)]
 pub enum Limit {
@@ -29,10 +30,10 @@ pub struct Duration {
 }
 
 impl Duration {
-    pub fn new(minutes: i64) -> Self {
+    pub fn new(minutes: u64) -> Self {
         let now = Clock::current_time_rounded_to_minutes();
         Self { 
-            end: now.add_minutes(minutes).expect("Duration too long"),
+            end: now.add_minutes(minutes as i64).expect("Duration too long"),
         }
     }
 
@@ -46,8 +47,6 @@ impl Duration {
 pub struct RequestMarginOrder {
     pub pair_id: u64,
     pub amount: Decimal,
-    pub margin: Decimal,
-    pub collateral_resource: ResourceAddress,
     pub price_limit: Limit,
 }
 
@@ -63,39 +62,59 @@ pub enum Request {
     RemoveCollateral(RequestRemoveCollateral),
 }
 
-#[derive(ScryptoSbor, Clone)]
-pub enum Status {
-    Pending,
-    Completed,
-    Cancelled,
+pub trait Encodable {
+    fn encode(&self) -> Vec<u8>;
+    fn decode(data: &[u8]) -> Self;
+}
+
+impl Encodable for Request {
+    fn encode(&self) -> Vec<u8> {
+        // TODO: verify this is deterministic and will not change with different versions
+        scrypto_encode(self).expect(ERROR_REQUEST_ENCODING)
+    }
+
+    fn decode(data: &[u8]) -> Self {
+        scrypto_decode(data).expect(ERROR_REQUEST_DECODING)
+    }
 }
 
 #[derive(ScryptoSbor, Clone)]
 pub struct KeeperRequest {
-    pub request: Request,
-    pub duration: Duration,
-    pub status: Status,
+    data: Vec<u8>,
+    duration: Duration,
+    processed: bool,
 }
 
 impl KeeperRequest {
+    pub fn is_active(&self) -> bool {
+        !self.processed && !self.duration.is_expired()
+    }
+
+    pub fn process(&mut self) {
+        self.processed = true;
+    }
+
+    pub fn data(&self) -> Vec<u8> {
+        self.data.clone()
+    }
+
     pub fn margin_order(
         pair_id: u64, 
         amount: Decimal, 
-        margin: Decimal, 
-        collateral_resource: ResourceAddress,
         price_limit: Limit,
         duration: Duration,
     ) -> Self {
+        let request = Request::MarginOrder(RequestMarginOrder {
+            pair_id,
+            amount,
+            price_limit,
+        });
+        let data = request.encode();
+
         KeeperRequest {
-            request: Request::MarginOrder(RequestMarginOrder {
-                pair_id,
-                amount,
-                margin,
-                collateral_resource,
-                price_limit,
-            }),
+            data,
             duration,
-            status: Status::Pending,
+            processed: false,
         }
     }
 
@@ -104,13 +123,16 @@ impl KeeperRequest {
         amount: Decimal, 
         duration: Duration,
     ) -> Self {
+        let request = Request::RemoveCollateral(RequestRemoveCollateral {
+            resource,
+            amount,
+        });
+        let data = request.encode();
+
         KeeperRequest {
-            request: Request::RemoveCollateral(RequestRemoveCollateral {
-                resource,
-                amount,
-            }),
+            data,
             duration,
-            status: Status::Pending,
+            processed: false,
         }
     }
 }

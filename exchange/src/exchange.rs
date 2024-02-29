@@ -21,7 +21,6 @@ use self::keeper_requests::*;
 use self::virtual_liquidity_pool::*;
 use self::virtual_margin_account::*;
 use self::virtual_oracle::*;
-use self::liquidity_pool::liquidity_pool::LiquidityPool;
 
 #[blueprint]
 mod exchange {
@@ -618,7 +617,7 @@ mod exchange {
         }
 
 
-        // TODO: auto_deleverage
+        // auto_deleverage
         fn auto_deleverage(
             &mut self, 
             pool: &mut VirtualLiquidityPool,
@@ -715,5 +714,7 @@ mod exchange {
 
             payment
         }
+
+        
     }
 }

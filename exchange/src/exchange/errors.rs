@@ -18,12 +18,19 @@ pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
 pub const ERROR_INVALID_POOL: &str = "Invalid pool";
 pub const ERROR_INVALID_ORACLE: &str = "Invalid oracle";
+
 pub const ERROR_MISSING_ACCOUNT_POSITION: &str = "Account position not found";
 pub const ERROR_MISSING_POOL_POSITION: &str = "Position not found";
 pub const ERROR_MISSING_PAIR_CONFIG: &str = "Pair config not found";
 pub const ERROR_MISSING_PRICE: &str = "Price not found";
+pub const ERROR_MISSING_REQUEST: &str = "Request not found";
 
 pub const ERROR_ARITHMETIC: &str = "Arithmetic error";
+
+pub const ERROR_REQUEST_ENCODING: &str = "Request encoding error";
+pub const ERROR_REQUEST_DECODING: &str = "Request decoding error";
+
+pub const ERROR_REQUEST_NOT_ACTIVE: &str = "Request not active";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 

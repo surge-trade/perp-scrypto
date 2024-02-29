@@ -2,6 +2,7 @@ use scrypto::prelude::*;
 use super::errors::*;
 use super::margin_account::*;
 use super::margin_account::margin_account::MarginAccount;
+use super::keeper_requests::*;
 
 pub struct VirtualMarginAccount {
     account: Global<MarginAccount>,
@@ -50,6 +51,12 @@ impl VirtualMarginAccount {
 
     pub fn virtual_balance(&self) -> Decimal {
         self.account_info.virtual_balance
+    }
+
+    pub fn process_request(&mut self, index: u64) -> Request {
+        let data = self.account.process_request(index);
+        let request = Request::decode(&data);
+        request
     }
 
     pub fn deposit_collateral(&mut self, token: Bucket) {
