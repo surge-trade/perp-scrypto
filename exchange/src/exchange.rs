@@ -1,29 +1,64 @@
-// TODO: remove dead code
+// TODO: remove
 #![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
 
-pub mod config;
-pub mod consts;
-pub mod errors;
-pub mod keeper_requests;
-pub mod liquidity_pool;
-pub mod margin_account;
-pub mod oracle;
-pub mod virtual_liquidity_pool;
-pub mod virtual_margin_account;
-pub mod virtual_oracle;
+
+mod config;
+mod consts;
+mod errors;
+mod requests;
+mod oracle;
+mod virtual_liquidity_pool;
+mod virtual_margin_account;
+mod virtual_oracle;
 
 use scrypto::prelude::*;
-use crate::utils::*;
+use utils::*;
+use account::*;
+use pool::*;
 use self::config::*;
 use self::consts::*;
 use self::errors::*;
-use self::keeper_requests::*;
+use self::requests::*;
 use self::virtual_liquidity_pool::*;
 use self::virtual_margin_account::*;
 use self::virtual_oracle::*;
 
 #[blueprint]
 mod exchange {
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        MarginAccount {
+            fn get_info(&self) -> MarginAccountInfo;
+            fn get_request(&self, index: u64) -> Option<KeeperRequest>;
+            fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest>;
+
+            // Authority protected methods
+            fn update(&self, update: MarginAccountUpdates);
+            fn process_request(&self, index: u64) -> Option<KeeperRequest>;
+            fn deposit_collateral(&self, token: Bucket);
+            fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
+            fn withdraw_collateral(&self, resource: ResourceAddress, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;
+            fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket>;
+        }
+    }
+
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        MarginPool {
+            fn get_info(&self) -> MarginPoolInfo;
+            fn get_position(&self, position_id: u64) -> Option<PoolPosition>;            fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest>;
+
+            // Authority protected methods
+            fn update(&self, update: MarginPoolUpdates);
+            fn deposit(&mut self, token: Bucket);
+            fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
+            fn mint_lp(&mut self, amount: Decimal) -> Bucket;
+            fn burn_lp(&mut self, token: Bucket);
+        }
+    }
+
     struct Exchange {
         config: ExchangeConfig,
         pool: ComponentAddress,

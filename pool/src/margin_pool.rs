@@ -1,7 +1,7 @@
+mod consts;
+
 use scrypto::prelude::*;
-use super::consts::BASE_RESOURCE;
-use super::errors::*;
-use self::liquidity_pool::LiquidityPool;
+use self::consts::*;
 
 #[derive(ScryptoSbor, Clone)]
 pub struct PoolPosition {
@@ -17,7 +17,7 @@ pub struct PoolPosition {
 }
 
 #[derive(ScryptoSbor)]
-pub struct LiquidityPoolInfo {
+pub struct MarginPoolInfo {
     pub base_tokens_amount: Decimal,
     pub virtual_balance: Decimal,
     pub unrealized_pool_funding: Decimal,
@@ -27,7 +27,7 @@ pub struct LiquidityPoolInfo {
 }
 
 #[derive(ScryptoSbor)]
-pub struct LiquidityPoolUpdates {
+pub struct MarginPoolUpdates {
     pub position_updates: HashMap<u64, PoolPosition>,
     pub virtual_balance: Decimal,
     pub unrealized_pool_funding: Decimal,
@@ -36,20 +36,26 @@ pub struct LiquidityPoolUpdates {
 }
 
 #[blueprint]
-pub mod liquidity_pool {
-    extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        Authority {
-            fn get_rule(&self) -> AccessRule;
+pub mod margin_pool {
+    // Set access rules
+    enable_method_auth! { 
+        roles {
+            authority => updatable_by: [];
+        },
+        methods { 
+            get_info => PUBLIC;
+            get_position => PUBLIC;
+
+            // Authority protected methods
+            update => restrict_to: [authority];
+            deposit => restrict_to: [authority];
+            withdraw => restrict_to: [authority];
+            mint_lp => restrict_to: [authority];
+            burn_lp => restrict_to: [authority];
         }
     }
 
-    const AUTHORITY: Global<Authority> = global_component!(
-        Authority,
-        "component_sim1czc0e8f9yhlvpv38s2ymrplu7q366y3k8zc53zf2srlm7qm604g029"
-    );
-
-    struct LiquidityPool {
+    struct MarginPool {
         base_tokens: Vault,
         virtual_balance: Decimal,
         positions: KeyValueStore<u64, PoolPosition>,
@@ -59,11 +65,11 @@ pub mod liquidity_pool {
         lp_token_manager: ResourceManager,
     }
 
-    impl LiquidityPool {
-        pub fn new(owner_role: OwnerRole) -> Global<LiquidityPool> {
-            let (component_reservation, this) = Runtime::allocate_component_address(LiquidityPool::blueprint_id());
+    impl MarginPool {
+        pub fn new(owner_rule: AccessRule) -> Global<MarginPool> {
+            let (component_reservation, this) = Runtime::allocate_component_address(MarginPool::blueprint_id());
 
-            let lp_token_manager = ResourceBuilder::new_fungible(owner_role.clone())
+            let lp_token_manager = ResourceBuilder::new_fungible(OwnerRole::Updatable(owner_rule.clone()))
                 .metadata(metadata!(
                     init {
                         "package" => GlobalAddress::from(Runtime::package_address()), locked;
@@ -94,13 +100,16 @@ pub mod liquidity_pool {
                 lp_token_manager,
             }
             .instantiate()
-            .prepare_to_globalize(owner_role)
+            .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
+            .roles(roles! {
+                authority => rule!(require(AUTHORITY_RESOURCE));
+            })
             .with_address(component_reservation)
             .globalize()
         }
 
-        pub fn get_info(&self) -> LiquidityPoolInfo {
-            LiquidityPoolInfo {
+        pub fn get_info(&self) -> MarginPoolInfo {
+            MarginPoolInfo {
                 base_tokens_amount: self.base_tokens.amount(),
                 virtual_balance: self.virtual_balance,
                 unrealized_pool_funding: self.unrealized_pool_funding,
@@ -114,40 +123,30 @@ pub mod liquidity_pool {
             self.positions.get(&position_id).map(|position| position.clone())
         }
 
-        pub fn update(&mut self, updates: LiquidityPoolUpdates) {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
-            for (position_id, position) in updates.position_updates {
+        pub fn update(&mut self, update: MarginPoolUpdates) {
+            for (position_id, position) in update.position_updates {
                 self.positions.insert(position_id, position);
             }
 
-            self.virtual_balance = updates.virtual_balance;
-            self.unrealized_pool_funding = updates.unrealized_pool_funding;
-            self.skew_abs_snap = updates.skew_abs_snap;
-            self.pnl_snap = updates.pnl_snap;
+            self.virtual_balance = update.virtual_balance;
+            self.unrealized_pool_funding = update.unrealized_pool_funding;
+            self.skew_abs_snap = update.skew_abs_snap;
+            self.pnl_snap = update.pnl_snap;
         }
 
         pub fn deposit(&mut self, token: Bucket) {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             self.base_tokens.put(token);
         }
 
         pub fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             self.base_tokens.take_advanced(amount, withdraw_strategy)
         }
 
         pub fn mint_lp(&mut self, amount: Decimal) -> Bucket {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             self.lp_token_manager.mint(amount)
         }
 
         pub fn burn_lp(&mut self, token: Bucket) {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             token.burn();
         }
     }

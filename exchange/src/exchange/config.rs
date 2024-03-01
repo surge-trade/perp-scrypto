@@ -1,6 +1,5 @@
 use scrypto::prelude::*;
-
-use crate::utils::List;
+use utils::List;
 
 #[derive(ScryptoSbor)]
 pub struct ExchangeConfig {

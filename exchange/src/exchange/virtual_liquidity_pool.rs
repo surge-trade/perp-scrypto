@@ -1,22 +1,22 @@
 use scrypto::prelude::*;
+use pool::*;
 use super::errors::*;
-use super::liquidity_pool::*;
-use super::liquidity_pool::liquidity_pool::LiquidityPool;
+use super::exchange::MarginPool;
 
 pub struct VirtualLiquidityPool {
-    pool: Global<LiquidityPool>,
-    pool_info: LiquidityPoolInfo,
-    pool_updates: LiquidityPoolUpdates,
+    pool: Global<MarginPool>,
+    pool_info: MarginPoolInfo,
+    pool_updates: MarginPoolUpdates,
 }
 
 impl VirtualLiquidityPool {
     pub fn new(pool: ComponentAddress) -> Self {
-        let pool = Global::<LiquidityPool>::try_from(pool).expect(ERROR_INVALID_POOL);
+        let pool = Global::<MarginPool>::try_from(pool).expect(ERROR_INVALID_POOL);
         let pool_info = pool.get_info();
 
         Self {
             pool,
-            pool_updates: LiquidityPoolUpdates {
+            pool_updates: MarginPoolUpdates {
                 position_updates: HashMap::new(),
                 virtual_balance: pool_info.virtual_balance,
                 unrealized_pool_funding: pool_info.unrealized_pool_funding,

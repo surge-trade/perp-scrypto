@@ -1,8 +1,9 @@
 use scrypto::prelude::*;
+use account::*;
 use super::errors::*;
-use super::margin_account::*;
-use super::margin_account::margin_account::MarginAccount;
-use super::keeper_requests::*;
+// use super::margin_account::*;
+use super::exchange::MarginAccount;
+use super::requests::*;
 
 pub struct VirtualMarginAccount {
     account: Global<MarginAccount>,
@@ -54,8 +55,16 @@ impl VirtualMarginAccount {
     }
 
     pub fn process_request(&mut self, index: u64) -> Request {
-        let data = self.account.process_request(index);
-        let request = Request::decode(&data);
+        let keeper_request = self.account.process_request(index).expect(ERROR_MISSING_REQUEST);
+        assert!(
+            !keeper_request.processed,
+            "{}", ERROR_REQUEST_ALREADY_PROCESSED
+        );
+        assert!(
+            Clock::current_time_is_strictly_before(keeper_request.expiry, TimePrecision::Second),
+            "{}", ERROR_REQUEST_EXPIRED
+        );
+        let request = Request::decode(&keeper_request.data);
         request
     }
 

@@ -1,8 +1,10 @@
+mod errors;
+mod consts;
+
 use scrypto::prelude::*;
-use crate::utils::{List, Vaults};
-use super::errors::*;
-use super::keeper_requests::KeeperRequest;
-use super::margin_account::margin_account::MarginAccount;
+use utils::{List, Vaults};
+use self::errors::*;
+use self::consts::*;
 
 #[derive(ScryptoSbor, Clone, Default)]
 pub struct AccountPosition {
@@ -24,23 +26,19 @@ pub struct MarginAccountUpdates {
     pub virtual_balance: Decimal,
 }
 
+#[derive(ScryptoSbor, Clone)]
+pub struct KeeperRequest {
+    pub data: Vec<u8>,
+    pub expiry: Instant,
+    pub processed: bool,
+}
+
 #[blueprint]
 pub mod margin_account {
-    extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        Authority {
-            fn get_rule(&self) -> AccessRule;
-        }
-    }
-
-    const AUTHORITY: Global<Authority> = global_component!(
-        Authority,
-        "component_sim1czc0e8f9yhlvpv38s2ymrplu7q366y3k8zc53zf2srlm7qm604g029"
-    );
-
     // Set access rules
     enable_method_auth! { 
         roles {
+            authority => updatable_by: [];
             trader => updatable_by: [OWNER];
             withdrawer => updatable_by: [OWNER];
             depositor => updatable_by: [OWNER];
@@ -51,12 +49,12 @@ pub mod margin_account {
             get_requests => PUBLIC;
 
             // Authority protected methods
-            update => PUBLIC;
-            process_request => PUBLIC;
-            deposit_collateral => PUBLIC;
-            deposit_collateral_batch => PUBLIC;
-            withdraw_collateral => PUBLIC;
-            withdraw_collateral_batch => PUBLIC;
+            update => restrict_to: [authority];
+            process_request => restrict_to: [authority];
+            deposit_collateral => restrict_to: [authority];
+            deposit_collateral_batch => restrict_to: [authority];
+            withdraw_collateral => restrict_to: [authority];
+            withdraw_collateral_batch => restrict_to: [authority];
         }
     }
 
@@ -69,7 +67,7 @@ pub mod margin_account {
     }
 
     impl MarginAccount {
-        pub fn new() -> Global<MarginAccount> {
+        pub fn new(owner_rule: AccessRule) -> Global<MarginAccount> {
             let (component_reservation, _this) = Runtime::allocate_component_address(MarginAccount::blueprint_id());
 
             Self {
@@ -80,7 +78,13 @@ pub mod margin_account {
                 requests: List::new(), // TODO: global ref list
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::None) // TODO: set the owner role
+            .prepare_to_globalize(OwnerRole::Updatable(owner_rule)) // TODO: set the owner role
+            .roles(roles! {
+                authority => rule!(require(AUTHORITY_RESOURCE));
+                trader => OWNER;
+                withdrawer => OWNER;
+                depositor => OWNER;
+            })
             .with_address(component_reservation)
             .globalize()
         }
@@ -102,8 +106,6 @@ pub mod margin_account {
         }
 
         pub fn update(&mut self, update: MarginAccountUpdates) {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             for (pair_id, position) in update.position_updates {
                 if position.amount != dec!(0) {
                     self.positions.insert(pair_id, position);
@@ -114,22 +116,14 @@ pub mod margin_account {
             self.virtual_balance = update.virtual_balance;
         }
 
-        pub fn process_request(&mut self, index: u64) -> Vec<u8> {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
-            let mut request = self.requests.get_mut(index).expect(ERROR_MISSING_REQUEST);
-            assert!(
-                request.is_active(),
-                "{}", ERROR_REQUEST_NOT_ACTIVE
-            );
-            request.process();
-            
-            request.data()
+        pub fn process_request(&mut self, index: u64) -> Option<KeeperRequest> {
+            let mut request = self.requests.get_mut(index)?;
+            let temp = request.clone();
+            request.processed = true;
+            Some(temp)
         }
 
         pub fn deposit_collateral(&mut self, token: Bucket) {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             let amount = token.amount();
             let resource = token.resource_address();
             self.collateral_balances
@@ -141,8 +135,6 @@ pub mod margin_account {
         }
 
         pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             for token in tokens.iter() {
                 let amount = token.amount();
                 let resource = token.resource_address();
@@ -156,8 +148,6 @@ pub mod margin_account {
         }
 
         pub fn withdraw_collateral(&mut self, resource: ResourceAddress, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             self.collateral_balances
                 .entry(resource)
                 .and_modify(|balance| *balance -= amount)
@@ -167,8 +157,6 @@ pub mod margin_account {
         }
 
         pub fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket> {
-            Runtime::assert_access_rule(AUTHORITY.get_rule());
-
             for (resource, amount) in claims.iter() {
                 self.collateral_balances
                     .entry(*resource)

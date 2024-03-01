@@ -30,7 +30,8 @@ pub const ERROR_ARITHMETIC: &str = "Arithmetic error";
 pub const ERROR_REQUEST_ENCODING: &str = "Request encoding error";
 pub const ERROR_REQUEST_DECODING: &str = "Request decoding error";
 
-pub const ERROR_REQUEST_NOT_ACTIVE: &str = "Request not active";
+pub const ERROR_REQUEST_ALREADY_PROCESSED: &str = "Request already processed";
+pub const ERROR_REQUEST_EXPIRED: &str = "Request expired";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 
