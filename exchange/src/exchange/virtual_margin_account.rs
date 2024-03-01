@@ -12,9 +12,9 @@ pub struct VirtualMarginAccount {
 }
 
 impl VirtualMarginAccount {
-    pub fn new(account: ComponentAddress) -> Self {
+    pub fn new(account: ComponentAddress, collateral_resources: Vec<ResourceAddress>) -> Self {
         let account = Global::<MarginAccount>::try_from(account).expect(ERROR_INVALID_MARGIN_ACCOUNT);
-        let account_info = account.get_info();
+        let account_info = account.get_info(collateral_resources);
 
         Self {
             account,

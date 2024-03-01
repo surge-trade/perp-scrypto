@@ -20,6 +20,10 @@ impl Vaults {
         }
     }
 
+    pub fn amounts(&self, resources: Vec<ResourceAddress>) -> HashMap<ResourceAddress, Decimal> {
+        resources.into_iter().map(|resource| (resource, self.amount(&resource))).collect()
+    }
+
     pub fn put(&mut self, tokens: Bucket) {
         let resource = tokens.resource_address();
         if self.vaults.get(&resource).is_some() {

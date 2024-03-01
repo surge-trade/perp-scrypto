@@ -1,37 +1,10 @@
-mod errors;
 mod consts;
+pub mod structs;
 
 use scrypto::prelude::*;
 use utils::{List, Vaults};
-use self::errors::*;
 use self::consts::*;
-
-#[derive(ScryptoSbor, Clone, Default)]
-pub struct AccountPosition {
-    pub amount: Decimal,
-    pub cost: Decimal,
-    pub funding_index: Decimal,
-}
-
-#[derive(ScryptoSbor)]
-pub struct MarginAccountInfo {
-    pub positions: HashMap<u64, AccountPosition>,
-    pub collateral_balances: HashMap<ResourceAddress, Decimal>,
-    pub virtual_balance: Decimal,
-}
-
-#[derive(ScryptoSbor)]
-pub struct MarginAccountUpdates {
-    pub position_updates: HashMap<u64, AccountPosition>,
-    pub virtual_balance: Decimal,
-}
-
-#[derive(ScryptoSbor, Clone)]
-pub struct KeeperRequest {
-    pub data: Vec<u8>,
-    pub expiry: Instant,
-    pub processed: bool,
-}
+pub use self::structs::*;
 
 #[blueprint]
 pub mod margin_account {
@@ -57,11 +30,10 @@ pub mod margin_account {
             withdraw_collateral_batch => restrict_to: [authority];
         }
     }
-
+    
     struct MarginAccount {
         collateral: Vaults,
         positions: HashMap<u64, AccountPosition>, // TODO: make kvs for efficient token movement
-        collateral_balances: HashMap<ResourceAddress, Decimal>, // TODO: remove?
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
     }
@@ -73,7 +45,6 @@ pub mod margin_account {
             Self {
                 collateral: Vaults::new(),
                 positions: HashMap::new(),
-                collateral_balances: HashMap::new(),
                 virtual_balance: dec!(0),
                 requests: List::new(), // TODO: global ref list
             }
@@ -89,10 +60,10 @@ pub mod margin_account {
             .globalize()
         }
 
-        pub fn get_info(&self) -> MarginAccountInfo {
+        pub fn get_info(&self, collateral_resources: Vec<ResourceAddress>) -> MarginAccountInfo {
             MarginAccountInfo {
                 positions: self.positions.clone(),
-                collateral_balances: self.collateral_balances.clone(),
+                collateral_balances: self.collateral.amounts(collateral_resources),
                 virtual_balance: self.virtual_balance,
             }
         }
@@ -124,49 +95,19 @@ pub mod margin_account {
         }
 
         pub fn deposit_collateral(&mut self, token: Bucket) {
-            let amount = token.amount();
-            let resource = token.resource_address();
-            self.collateral_balances
-                .entry(resource)
-                .and_modify(|balance| *balance += amount)
-                .or_insert(amount);
-
             self.collateral.put(token);
         }
 
         pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
-            for token in tokens.iter() {
-                let amount = token.amount();
-                let resource = token.resource_address();
-                self.collateral_balances
-                    .entry(resource)
-                    .and_modify(|balance| *balance += amount)
-                    .or_insert(amount);
-            }
-
             self.collateral.put_batch(tokens);
         }
 
         pub fn withdraw_collateral(&mut self, resource: ResourceAddress, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket {
-            self.collateral_balances
-                .entry(resource)
-                .and_modify(|balance| *balance -= amount)
-                .or_insert_with(|| panic!("{}", PANIC_NEGATIVE_COLLATERAL));
-
             self.collateral.take_advanced(&resource, amount, withdraw_strategy)
         }
 
-        pub fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket> {
-            for (resource, amount) in claims.iter() {
-                self.collateral_balances
-                    .entry(*resource)
-                    .and_modify(|balance| *balance -= *amount)
-                    .or_insert_with(|| panic!("{}", PANIC_NEGATIVE_COLLATERAL));
-            }
-            
-            let tokens = self.collateral.take_advanced_batch(claims, withdraw_strategy);
-            
-            tokens
+        pub fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket> {            
+            self.collateral.take_advanced_batch(claims, withdraw_strategy)
         }
     }
 }

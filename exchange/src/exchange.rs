@@ -30,7 +30,7 @@ mod exchange {
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
-            fn get_info(&self) -> MarginAccountInfo;
+            fn get_info(&self, collateral_resources: Vec<ResourceAddress>) -> MarginAccountInfo;
             fn get_request(&self, index: u64) -> Option<KeeperRequest>;
             fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest>;
 
@@ -60,20 +60,22 @@ mod exchange {
     }
 
     struct Exchange {
+        authority_token: Vault,
         config: ExchangeConfig,
         pool: ComponentAddress,
         oracle: ComponentAddress,
     }
     impl Exchange {
         pub fn new(
+            owner_rule: AccessRule,
+            authority_token: Bucket,
             pool: ComponentAddress,
             oracle: ComponentAddress,
         ) -> Global<Exchange> {
             // TODO: for testing purposes
-            let owner_role = OwnerRole::None;
-
             let (component_reservation, _this) = Runtime::allocate_component_address(Exchange::blueprint_id());
             Self {
+                authority_token: Vault::with_bucket(authority_token),
                 config: ExchangeConfig {
                     max_price_age_seconds: 0,
                     keeper_fee: dec!(0),
@@ -91,9 +93,17 @@ mod exchange {
                 oracle,
             }
             .instantiate()
-            .prepare_to_globalize(owner_role.clone())
+            .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
             .with_address(component_reservation)
             .globalize()
+        }
+
+        pub fn deposit_authority(&mut self, token: Bucket) {
+            self.authority_token.put(token);
+        }
+
+        pub fn withdraw_authority(&mut self) -> Bucket {
+            self.authority_token.take_all()
         }
 
         // get_pool_value
@@ -125,7 +135,7 @@ mod exchange {
         }
 
         fn assert_account_integrity(
-            &mut self, 
+            &self, 
             pool: &VirtualLiquidityPool,
             account: &VirtualMarginAccount,
             oracle: &VirtualOracle,
@@ -749,7 +759,5 @@ mod exchange {
 
             payment
         }
-
-        
     }
 }
