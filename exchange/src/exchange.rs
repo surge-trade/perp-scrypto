@@ -8,7 +8,6 @@ mod config;
 mod consts;
 mod errors;
 mod requests;
-mod oracle;
 mod virtual_liquidity_pool;
 mod virtual_margin_account;
 mod virtual_oracle;
@@ -56,6 +55,13 @@ mod exchange {
             fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
             fn mint_lp(&mut self, amount: Decimal) -> Bucket;
             fn burn_lp(&mut self, token: Bucket);
+        }
+    }
+
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        Oracle {
+            fn prices(&self) -> HashMap<u64, Decimal>;
         }
     }
 

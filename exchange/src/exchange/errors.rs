@@ -23,6 +23,7 @@ pub const ERROR_MISSING_ACCOUNT_POSITION: &str = "Account position not found";
 pub const ERROR_MISSING_POOL_POSITION: &str = "Position not found";
 pub const ERROR_MISSING_PAIR_CONFIG: &str = "Pair config not found";
 pub const ERROR_MISSING_PRICE: &str = "Price not found";
+pub const ERROR_MISSING_RESOURCE_FEED: &str = "Resource feed not found";
 pub const ERROR_MISSING_REQUEST: &str = "Request not found";
 
 pub const ERROR_ARITHMETIC: &str = "Arithmetic error";
@@ -34,5 +35,3 @@ pub const ERROR_REQUEST_ALREADY_PROCESSED: &str = "Request already processed";
 pub const ERROR_REQUEST_EXPIRED: &str = "Request expired";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
-
-

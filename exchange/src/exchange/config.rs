@@ -35,5 +35,6 @@ pub struct PairConfig {
 #[derive(ScryptoSbor, Clone)]
 pub struct CollateralConfig {
     pub disabled: bool,
+    pub pair_id: u64,
     pub discount: Decimal,
 }
