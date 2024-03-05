@@ -20,14 +20,23 @@ impl Config {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct ExchangeConfig {
+    /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: u64,
+    /// Flat fee to cover the keeper's expenses
     pub keeper_fee: Decimal,
+    /// Maximum allowed number of positions per account
     pub positions_max: u64,
+    /// Maximum skew ratio allowed before skew increasing orders can not be made
     pub skew_ratio_cap: Decimal,
+    /// ADL offset calculation parameter
     pub adl_offset: Decimal,
+    /// ADL A calculation parameter
     pub adl_a: Decimal,
+    /// ADL B calculation parameter
     pub adl_b: Decimal,
+    /// Fee for adding and removing liquidity
     pub fee_liquidity: Decimal,
+    /// Maximum fee that can be charged
     pub fee_max: Decimal,
 }
 
@@ -63,17 +72,29 @@ impl ExchangeConfig {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct PairConfig {
+    /// Price feed id
     pub pair_id: u64,
+    /// If the pair is disabled  // TODO: implement
     pub disabled: bool,
+    /// Initial margin required
     pub margin_initial: Decimal,
+    /// Maintenance margin required
     pub margin_maintenance: Decimal,
+    /// Skew based funding 
     pub funding_1: Decimal,
+    /// Integral of skew based funding
     pub funding_2: Decimal,
+    /// Rate of change of funding 2 integral
     pub funding_2_delta: Decimal,
+    /// Constant pool funding
     pub funding_pool_0: Decimal,
+    /// Skew based pool funding
     pub funding_pool_1: Decimal,
+    /// Share of regular funding taken as pool funding
     pub funding_share: Decimal,
+    /// Constant fee
     pub fee_0: Decimal,
+    /// Skew based fee
     pub fee_1: Decimal,
 }
 
@@ -94,7 +115,9 @@ impl PairConfig {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct CollateralConfig {
+    /// Price feed id
     pub pair_id: u64,
+    /// Discount applied to the collateral
     pub discount: Decimal,
 }
 
