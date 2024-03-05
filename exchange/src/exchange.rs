@@ -114,12 +114,20 @@ mod exchange {
         }
     }
 
+    macro_rules! authorize {
+        ($self:expr, $func:expr) => {{
+            $self.authority_token.create_proof_of_amount(dec!(1)).authorize(|| {
+                $func
+            })
+        }};
+    }
     struct Exchange {
-        authority_token: Vault,
+        authority_token: FungibleVault,
         config: Config,
         pool: ComponentAddress,
         oracle: ComponentAddress,
     }
+    
     impl Exchange {
         pub fn new(
             owner_rule: AccessRule,
@@ -130,7 +138,7 @@ mod exchange {
             // TODO: for testing purposes
             let (component_reservation, _this) = Runtime::allocate_component_address(Exchange::blueprint_id());
             Self {
-                authority_token: Vault::with_bucket(authority_token),
+                authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 config: Config {
                     exchange: ExchangeConfig {
                         max_price_age_seconds: 0,
@@ -166,13 +174,13 @@ mod exchange {
             &mut self, 
             token: Bucket,
         ) {
-            self.authority_token.put(token);
+            self.authority_token.put(token.as_fungible());
         }
 
         pub fn withdraw_authority(
             &mut self
         ) -> Bucket {
-            self.authority_token.take_all()
+            self.authority_token.take_all().into()
         }
 
         // --- ADMIN METHODS ---
@@ -283,7 +291,9 @@ mod exchange {
             initial_rule: AccessRule,
         ) -> ComponentAddress {
             // TODO: globalize within exchange?
-            Blueprint::<MarginAccount>::new(initial_rule).address()
+            authorize!(self, {
+                Blueprint::<MarginAccount>::new(initial_rule).address()
+            })
         }
 
         pub fn set_level_1_auth(
@@ -291,9 +301,12 @@ mod exchange {
             account: ComponentAddress, 
             rule: AccessRule,
         ) {
-            let account = VirtualMarginAccount::new(account, self._collaterals());
-            account.verify_level_1_auth();
-            account.set_level_1_auth(rule);
+            authorize!(self, {
+                let account = VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_1_auth();
+                account.set_level_1_auth(rule);
+                account.realize();
+            })
         }
 
         pub fn set_level_2_auth(
@@ -301,9 +314,12 @@ mod exchange {
             account: ComponentAddress, 
             rule: AccessRule,
         ) {
-            let account = VirtualMarginAccount::new(account, self._collaterals());
-            account.verify_level_1_auth();
-            account.set_level_2_auth(rule);
+            authorize!(self, {
+                let account = VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_1_auth();
+                account.set_level_2_auth(rule);
+                account.realize();
+            })
         }
 
         pub fn set_level_3_auth(
@@ -311,25 +327,36 @@ mod exchange {
             account: ComponentAddress, 
             rule: AccessRule,
         ) {
-            let account = VirtualMarginAccount::new(account, self._collaterals());
-            account.verify_level_1_auth();
-            account.set_level_3_auth(rule);
+            authorize!(self, {
+                let account = VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_1_auth();
+                account.set_level_3_auth(rule);
+                account.realize();
+            })
         }
 
         pub fn add_liquidity(
             &self,
             payment: Bucket,
         ) -> Bucket {
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            self._add_liquidity(&mut pool, payment)
+            authorize!(self, {
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let lp_token = self._add_liquidity(&mut pool, payment);
+                pool.realize();
+                lp_token
+            })
         }
 
         pub fn remove_liquidity(
             &self,
             lp_token: Bucket,
         ) -> Bucket {
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            self._remove_liquidity(&mut pool, lp_token)
+            authorize!(self, {
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let payment = self._remove_liquidity(&mut pool, lp_token);
+                pool.realize();
+                payment
+            })
         }
 
         pub fn add_collateral(
@@ -337,8 +364,11 @@ mod exchange {
             account: ComponentAddress, 
             tokens: Vec<Bucket>,
         ) {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            self._add_collateral(&mut account, tokens);
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                self._add_collateral(&mut account, tokens);
+                account.realize();
+            })
         }
 
         pub fn remove_collateral_request(
@@ -348,14 +378,18 @@ mod exchange {
             target_account: ComponentAddress,
             claims: Vec<(ResourceAddress, Decimal)>,
         ) {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            account.verify_level_1_auth();
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_1_auth();
 
-            let request = Request::RemoveCollateral(RequestRemoveCollateral {
-                target_account,
-                claims,
-            });
-            account.push_request(request, expiry_seconds);
+                let request = Request::RemoveCollateral(RequestRemoveCollateral {
+                    target_account,
+                    claims,
+                });
+                account.push_request(request, expiry_seconds);
+
+                account.realize();
+            })
         }
 
         pub fn margin_order_request(
@@ -366,15 +400,19 @@ mod exchange {
             amount: Decimal,
             price_limit: Limit,
         ) {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            account.verify_level_2_auth();
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_2_auth();
 
-            let request = Request::MarginOrder(RequestMarginOrder {
-                pair_id,
-                amount,
-                price_limit,
-            });
-            account.push_request(request, expiry_seconds);
+                let request = Request::MarginOrder(RequestMarginOrder {
+                    pair_id,
+                    amount,
+                    price_limit,
+                });
+                account.push_request(request, expiry_seconds);
+
+                account.realize();
+            })
         }
 
         pub fn cancel_request(
@@ -382,10 +420,13 @@ mod exchange {
             account: ComponentAddress, 
             index: u64,
         ) {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            account.verify_level_2_auth();
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_2_auth();
 
-            account.set_request_status(index, 2);
+                account.set_request_status(index, 2);
+                account.realize();
+            })
         }
 
         // --- KEEPER METHODS ---
@@ -395,25 +436,30 @@ mod exchange {
             account: ComponentAddress, 
             index: u64,
         ) {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            let request = account.process_request(index);
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                let request = account.process_request(index);
 
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
 
-            match request {
-                Request::RemoveCollateral(request) => {
-                    let target_account = request.target_account;
-                    let claims = request.claims;
-                    self._remove_collateral(&mut pool, &mut account, &oracle, target_account, claims);
-                },
-                Request::MarginOrder(request) => {
-                    let pair_id = request.pair_id;
-                    let amount = request.amount;
-                    let price_limit = request.price_limit;
-                    self._margin_order(&mut pool, &mut account, &oracle, pair_id, amount);
-                },
-            }
+                match request {
+                    Request::RemoveCollateral(request) => {
+                        let target_account = request.target_account;
+                        let claims = request.claims;
+                        self._remove_collateral(&mut pool, &mut account, &oracle, target_account, claims);
+                    },
+                    Request::MarginOrder(request) => {
+                        let pair_id = request.pair_id;
+                        let amount = request.amount;
+                        let price_limit = request.price_limit;
+                        self._margin_order(&mut pool, &mut account, &oracle, pair_id, amount);
+                    },
+                }
+
+                account.realize();
+                pool.realize();
+            })
         }
 
         pub fn swap_debt(
@@ -422,10 +468,18 @@ mod exchange {
             resource: ResourceAddress, 
             payment: Bucket, 
         ) -> Bucket {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
-            self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment)
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+    
+                let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+                let token = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
+    
+                account.realize();
+                pool.realize();
+    
+                token
+            })
         }
 
         pub fn liquidate(
@@ -433,10 +487,18 @@ mod exchange {
             account: ComponentAddress,
             payment_tokens: Bucket,
         ) -> Vec<Bucket> {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
-            self._liquidate(&mut pool, &mut account, &oracle, payment_tokens)
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+
+                let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+                let tokens = self._liquidate(&mut pool, &mut account, &oracle, payment_tokens);
+
+                account.realize();
+                pool.realize();
+
+                tokens
+            })
         }
 
         pub fn auto_deleverage(
@@ -444,19 +506,29 @@ mod exchange {
             account: ComponentAddress, 
             pair_id: u64, 
         ) {
-            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
-            self._auto_deleverage(&mut pool, &mut account, &oracle, pair_id)
+            authorize!(self, {
+                let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+
+                let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+                self._auto_deleverage(&mut pool, &mut account, &oracle, pair_id);
+
+                account.realize();
+                pool.realize();
+            })
         }
 
         pub fn update_pair(
             &self, 
             pair_id: u64,
         ) {
-            let mut pool = VirtualLiquidityPool::new(self.pool);
-            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
-            self._update_pair(&mut pool, &oracle, pair_id)
+            authorize!(self, {
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+                self._update_pair(&mut pool, &oracle, pair_id);
+    
+                pool.realize();
+            })
         }
 
         // --- INTERNAL METHODS ---
