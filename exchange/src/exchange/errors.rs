@@ -13,6 +13,7 @@ pub const ERROR_ADL_SKEW_TOO_LOW: &str = "Skew ratio is too low for ADL";
 pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL not positive";
 pub const ERROR_ADL_SKEW_NOT_REDUCED: &str = "Skew ratio not reduced";
 pub const ERROR_SWAP_NOT_ENOUGH_DEBT: &str = "Not enough debt to swap";
+pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
 
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
@@ -25,6 +26,7 @@ pub const ERROR_MISSING_PAIR_CONFIG: &str = "Pair config not found";
 pub const ERROR_MISSING_PRICE: &str = "Price not found";
 pub const ERROR_MISSING_RESOURCE_FEED: &str = "Resource feed not found";
 pub const ERROR_MISSING_REQUEST: &str = "Request not found";
+pub const ERROR_MISSING_AUTH: &str = "Authorization role not found";
 
 pub const ERROR_ARITHMETIC: &str = "Arithmetic error";
 

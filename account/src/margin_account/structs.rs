@@ -22,7 +22,7 @@ pub struct MarginAccountUpdates {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct KeeperRequest {
-    pub data: Vec<u8>,
+    pub request: Vec<u8>,
     pub expiry: Instant,
     pub processed: bool,
 }

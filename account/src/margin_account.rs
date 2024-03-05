@@ -8,13 +8,15 @@ pub use self::structs::*;
 
 #[blueprint]
 pub mod margin_account {
-    // Set access rules
+    enable_function_auth! {
+        new => rule!(require(AUTHORITY_RESOURCE));
+    }
     enable_method_auth! { 
         roles {
             authority => updatable_by: [];
-            trader => updatable_by: [OWNER];
-            withdrawer => updatable_by: [OWNER];
-            depositor => updatable_by: [OWNER];
+            level_1 => updatable_by: [authority];
+            level_2 => updatable_by: [authority];
+            level_3 => updatable_by: [authority];
         },
         methods { 
             get_info => PUBLIC;
@@ -36,10 +38,11 @@ pub mod margin_account {
         positions: HashMap<u64, AccountPosition>, // TODO: make kvs for efficient token movement
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
+        roles: KeyValueStore<String, Vec<u8>>
     }
 
     impl MarginAccount {
-        pub fn new(owner_rule: AccessRule) -> Global<MarginAccount> {
+        pub fn new(initial_rule: AccessRule) -> Global<MarginAccount> {
             let (component_reservation, _this) = Runtime::allocate_component_address(MarginAccount::blueprint_id());
 
             Self {
@@ -47,14 +50,15 @@ pub mod margin_account {
                 positions: HashMap::new(),
                 virtual_balance: dec!(0),
                 requests: List::new(), // TODO: global ref list
+                roles: KeyValueStore::new(),
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::Updatable(owner_rule)) // TODO: set the owner role
+            .prepare_to_globalize(OwnerRole::None)
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
-                trader => OWNER;
-                withdrawer => OWNER;
-                depositor => OWNER;
+                level_1 => initial_rule.clone();
+                level_2 => initial_rule.clone();
+                level_3 => initial_rule.clone();
             })
             .with_address(component_reservation)
             .globalize()
@@ -84,7 +88,6 @@ pub mod margin_account {
                     self.positions.remove(&pair_id);
                 }
             }
-            self.virtual_balance = update.virtual_balance;
         }
 
         pub fn process_request(&mut self, index: u64) -> Option<KeeperRequest> {

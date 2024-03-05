@@ -44,18 +44,13 @@ pub enum Request {
     RemoveCollateral(RequestRemoveCollateral),
 }
 
-pub trait Encodable {
-    fn encode(&self) -> Vec<u8>;
-    fn decode(data: &[u8]) -> Self;
-}
-
-impl Encodable for Request {
-    fn encode(&self) -> Vec<u8> {
+impl Request {
+    pub fn encode(&self) -> Vec<u8> {
         // TODO: verify this is deterministic and will not change with different versions
         scrypto_encode(self).expect(ERROR_REQUEST_ENCODING)
     }
 
-    fn decode(data: &[u8]) -> Self {
+    pub fn decode(data: &[u8]) -> Self {
         scrypto_decode(data).expect(ERROR_REQUEST_DECODING)
     }
 }

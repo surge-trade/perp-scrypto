@@ -130,7 +130,6 @@ mod exchange {
             pool.skew_abs_snap() / self.get_pool_value(pool)
         }
 
-        // assert_skewness
         fn assert_pool_integrity(
             &self,
             pool: &VirtualLiquidityPool,
@@ -166,7 +165,14 @@ mod exchange {
             }
         }
 
-        // TODO: assert not too many positions
+        fn assert_position_limit(
+            &self, 
+            account: &VirtualMarginAccount,
+        ) {
+            if account.positions().len() > self.config.positions_max as usize {
+                panic!("{}", ERROR_POSITIONS_TOO_MANY);
+            }
+        }
 
         // update_pair_snaps
         fn update_pair_snaps(
@@ -415,6 +421,8 @@ mod exchange {
 
             pool.update_position(pair_id, pool_position);
             account.update_position(pair_id, position);
+
+            self.assert_position_limit(account);
         }
 
         // close_position

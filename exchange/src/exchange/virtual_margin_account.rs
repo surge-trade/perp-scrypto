@@ -1,7 +1,6 @@
 use scrypto::prelude::*;
 use account::*;
 use super::errors::*;
-// use super::margin_account::*;
 use super::exchange::MarginAccount;
 use super::requests::*;
 
@@ -54,6 +53,33 @@ impl VirtualMarginAccount {
         self.account_info.virtual_balance
     }
 
+    pub fn verify_level_1_auth(&self) {
+        let rule = self.account.get_role("level_1").expect(ERROR_MISSING_AUTH);
+        Runtime::assert_access_rule(rule);
+    }
+
+    pub fn verify_level_2_auth(&self) {
+        let rule = self.account.get_role("level_2").expect(ERROR_MISSING_AUTH);
+        Runtime::assert_access_rule(rule);
+    }
+
+    pub fn verify_level_3_auth(&self) {
+        let rule = self.account.get_role("level_3").expect(ERROR_MISSING_AUTH);
+        Runtime::assert_access_rule(rule);
+    }
+
+    pub fn set_level_1_auth(&self, rule: AccessRule) {
+        self.account.set_role("level_1", rule);
+    }
+
+    pub fn set_level_2_auth(&self, rule: AccessRule) {
+        self.account.set_role("level_2", rule);
+    }
+
+    pub fn set_level_3_auth(&self, rule: AccessRule) {
+        self.account.set_role("level_3", rule);
+    }
+
     pub fn process_request(&mut self, index: u64) -> Request {
         let keeper_request = self.account.process_request(index).expect(ERROR_MISSING_REQUEST);
         assert!(
@@ -64,7 +90,7 @@ impl VirtualMarginAccount {
             Clock::current_time_is_strictly_before(keeper_request.expiry, TimePrecision::Second),
             "{}", ERROR_REQUEST_EXPIRED
         );
-        let request = Request::decode(&keeper_request.data);
+        let request = Request::decode(&keeper_request.request);
         request
     }
 
