@@ -74,7 +74,7 @@ mod exchange {
     enable_method_auth! { 
         roles {
             admin => updatable_by: [OWNER];
-            keeper => updatable_by: [OWNER, admin];
+            keeper => updatable_by: [OWNER];
             user => updatable_by: [OWNER, admin];
         },
         methods { 
