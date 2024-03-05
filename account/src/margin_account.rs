@@ -26,6 +26,7 @@ pub mod margin_account {
             // Authority protected methods
             update => restrict_to: [authority];
             push_request => restrict_to: [authority];
+            set_request_status => restrict_to: [authority];
             process_request => restrict_to: [authority];
             deposit_collateral => restrict_to: [authority];
             deposit_collateral_batch => restrict_to: [authority];
@@ -39,7 +40,6 @@ pub mod margin_account {
         positions: HashMap<u64, AccountPosition>, // TODO: make kvs for efficient token movement
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
-        roles: KeyValueStore<String, Vec<u8>>
     }
 
     impl MarginAccount {
@@ -50,8 +50,7 @@ pub mod margin_account {
                 collateral: Vaults::new(),
                 positions: HashMap::new(),
                 virtual_balance: dec!(0),
-                requests: List::new(), // TODO: global ref list
-                roles: KeyValueStore::new(),
+                requests: List::new(), // TODO: global ref list?
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
@@ -95,10 +94,16 @@ pub mod margin_account {
             self.requests.push(request);
         }
 
+        pub fn set_request_status(&mut self, index: u64, status: u8) {
+            if let Some(mut request) = self.requests.get_mut(index) {
+                request.status = status;
+            }
+        }
+
         pub fn process_request(&mut self, index: u64) -> Option<KeeperRequest> {
             let mut request = self.requests.get_mut(index)?;
             let temp = request.clone();
-            request.processed = true;
+            request.status = 1;
             Some(temp)
         }
 

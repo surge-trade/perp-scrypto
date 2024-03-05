@@ -86,11 +86,15 @@ impl VirtualMarginAccount {
         self.account.push_request(keeper_request);
     }
 
+    pub fn set_request_status(&mut self, index: u64, status: u8) {
+        self.account.set_request_status(index, status);
+    }
+
     pub fn process_request(&mut self, index: u64) -> Request {
         let keeper_request = self.account.process_request(index).expect(ERROR_MISSING_REQUEST);
         assert!(
-            !keeper_request.processed,
-            "{}", ERROR_REQUEST_ALREADY_PROCESSED
+            keeper_request.status == 0,
+            "{}", ERROR_REQUEST_NOT_ACTIVE
         );
         assert!(
             Clock::current_time_is_strictly_before(keeper_request.expiry, TimePrecision::Second),

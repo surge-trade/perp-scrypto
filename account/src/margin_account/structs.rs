@@ -24,7 +24,7 @@ pub struct MarginAccountUpdates {
 pub struct KeeperRequest {
     pub request: Vec<u8>,
     pub expiry: Instant,
-    pub processed: bool,
+    pub status: u8,
 }
 
 impl KeeperRequest {
@@ -32,7 +32,7 @@ impl KeeperRequest {
         Self {
             request,
             expiry,
-            processed: false,
+            status: 0,
         }
     }
 }

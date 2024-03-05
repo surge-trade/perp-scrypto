@@ -40,6 +40,7 @@ mod exchange {
             // Authority protected methods
             fn update(&self, update: MarginAccountUpdates);
             fn push_request(&self, request: KeeperRequest);
+            fn set_request_status(&self, index: u64, status: u8);
             fn process_request(&self, index: u64) -> Option<KeeperRequest>;
             fn deposit_collateral(&self, token: Bucket);
             fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
@@ -103,6 +104,7 @@ mod exchange {
             add_collateral => restrict_to: [user];
             remove_collateral_request => restrict_to: [user];
             margin_order_request => restrict_to: [user];
+            cancel_request => restrict_to: [user];
 
             process_request => restrict_to: [keeper];
             swap_debt => restrict_to: [keeper];
@@ -373,6 +375,17 @@ mod exchange {
                 price_limit,
             });
             account.push_request(request, expiry_seconds);
+        }
+
+        pub fn cancel_request(
+            &self, 
+            account: ComponentAddress, 
+            index: u64,
+        ) {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            account.verify_level_2_auth();
+
+            account.set_request_status(index, 2);
         }
 
         // --- KEEPER METHODS ---
