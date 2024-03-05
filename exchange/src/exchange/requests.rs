@@ -26,6 +26,12 @@ impl Limit {
 }
 
 #[derive(ScryptoSbor, Clone)]
+pub struct RequestRemoveCollateral {
+    pub target_account: ComponentAddress, 
+    pub claims: Vec<(ResourceAddress, Decimal)>,
+}
+
+#[derive(ScryptoSbor, Clone)]
 pub struct RequestMarginOrder {
     pub pair_id: u64,
     pub amount: Decimal,
@@ -33,15 +39,9 @@ pub struct RequestMarginOrder {
 }
 
 #[derive(ScryptoSbor, Clone)]
-pub struct RequestRemoveCollateral {
-    resource: ResourceAddress, 
-    amount: Decimal,
-}
-
-#[derive(ScryptoSbor, Clone)]
 pub enum Request {
-    MarginOrder(RequestMarginOrder),
     RemoveCollateral(RequestRemoveCollateral),
+    MarginOrder(RequestMarginOrder),
 }
 
 impl Request {

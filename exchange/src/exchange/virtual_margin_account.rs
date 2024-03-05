@@ -80,6 +80,12 @@ impl VirtualMarginAccount {
         self.account.set_role("level_3", rule);
     }
 
+    pub fn push_request(&mut self, request: Request, expiry_seconds: u64) {
+        let expiry = Clock::current_time_rounded_to_seconds().add_seconds(expiry_seconds as i64).expect(ERROR_ARITHMETIC);
+        let keeper_request = KeeperRequest::new(request.encode(), expiry);
+        self.account.push_request(keeper_request);
+    }
+
     pub fn process_request(&mut self, index: u64) -> Request {
         let keeper_request = self.account.process_request(index).expect(ERROR_MISSING_REQUEST);
         assert!(

@@ -19,8 +19,8 @@ impl<T: ScryptoSbor + Clone> List<T> {
         self.pointer += 1;
     }
 
-    pub fn get(&self, index: u64) -> Option<T> where T: Clone {
-        self.kvs.get(&index).map(|item| item.clone())
+    pub fn get(&self, index: u64) -> Option<KeyValueEntryRef<T>> {
+        self.kvs.get(&index)
     }
 
     pub fn get_mut(&mut self, index: u64) -> Option<KeyValueEntryRefMut<T>> {
@@ -31,7 +31,7 @@ impl<T: ScryptoSbor + Clone> List<T> {
         let mut result = Vec::new();
         for i in start..end {
             if let Some(item) = self.get(i) {
-                result.push(item);
+                result.push(item.clone());
             } else {
                 break;
             }

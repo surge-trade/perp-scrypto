@@ -25,6 +25,7 @@ pub mod margin_account {
 
             // Authority protected methods
             update => restrict_to: [authority];
+            push_request => restrict_to: [authority];
             process_request => restrict_to: [authority];
             deposit_collateral => restrict_to: [authority];
             deposit_collateral_batch => restrict_to: [authority];
@@ -73,7 +74,7 @@ pub mod margin_account {
         }
 
         pub fn get_request(&self, index: u64) -> Option<KeeperRequest> {
-            self.requests.get(index)
+            self.requests.get(index).map(|request| request.clone())
         }
 
         pub fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest> {
@@ -88,6 +89,10 @@ pub mod margin_account {
                     self.positions.remove(&pair_id);
                 }
             }
+        }
+
+        pub fn push_request(&mut self, request: KeeperRequest) {
+            self.requests.push(request);
         }
 
         pub fn process_request(&mut self, index: u64) -> Option<KeeperRequest> {

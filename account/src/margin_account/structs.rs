@@ -26,3 +26,13 @@ pub struct KeeperRequest {
     pub expiry: Instant,
     pub processed: bool,
 }
+
+impl KeeperRequest {
+    pub fn new(request: Vec<u8>, expiry: Instant) -> Self {
+        Self {
+            request,
+            expiry,
+            processed: false,
+        }
+    }
+}

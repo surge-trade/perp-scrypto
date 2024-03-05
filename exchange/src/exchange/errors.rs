@@ -1,5 +1,4 @@
 pub const ERROR_COLLATERAL_INVALID: &str = "Invalid collateral";
-pub const ERROR_COLLATERAL_DISABLED: &str = "Collateral disabled";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";
 pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 

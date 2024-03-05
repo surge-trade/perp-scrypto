@@ -29,12 +29,17 @@ mod exchange {
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
+            // Constructor
+            fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
+
+            // Getter methods
             fn get_info(&self, collateral_resources: Vec<ResourceAddress>) -> MarginAccountInfo;
             fn get_request(&self, index: u64) -> Option<KeeperRequest>;
             fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest>;
 
             // Authority protected methods
             fn update(&self, update: MarginAccountUpdates);
+            fn push_request(&self, request: KeeperRequest);
             fn process_request(&self, index: u64) -> Option<KeeperRequest>;
             fn deposit_collateral(&self, token: Bucket);
             fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
@@ -42,32 +47,74 @@ mod exchange {
             fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket>;
         }
     }
-
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
+            // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
-            fn get_position(&self, position_id: u64) -> Option<PoolPosition>;            fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest>;
+            fn get_position(&self, position_id: u64) -> Option<PoolPosition>;            
 
             // Authority protected methods
             fn update(&self, update: MarginPoolUpdates);
             fn deposit(&mut self, token: Bucket);
-            fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
+            fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            
             fn mint_lp(&mut self, amount: Decimal) -> Bucket;
             fn burn_lp(&mut self, token: Bucket);
         }
     }
-
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
+            // Getter methods
             fn prices(&self) -> HashMap<u64, Decimal>;
+        }
+    }
+
+    enable_method_auth! { 
+        roles {
+            admin => updatable_by: [OWNER];
+            keeper => updatable_by: [OWNER, admin];
+            user => updatable_by: [OWNER, admin];
+        },
+        methods { 
+            deposit_authority => restrict_to: [OWNER];
+            withdraw_authority => restrict_to: [OWNER];
+            update_exchange_config => restrict_to: [OWNER];
+            update_pair_configs => restrict_to: [OWNER];
+            update_collateral_configs => restrict_to: [OWNER];
+            remove_collateral_config => restrict_to: [OWNER];
+
+            get_exchange_config => PUBLIC;
+            get_num_pairs => PUBLIC;
+            get_pair_config => PUBLIC;
+            get_pair_configs => PUBLIC;
+            get_collateral_config => PUBLIC;
+            get_collateral_configs => PUBLIC;
+            get_collaterals => PUBLIC;
+            get_pool_value => PUBLIC;
+            get_skew_ratio => PUBLIC;
+
+            create_account => restrict_to: [user];
+            set_level_1_auth => restrict_to: [user];
+            set_level_2_auth => restrict_to: [user];
+            set_level_3_auth => restrict_to: [user];
+            add_liquidity => restrict_to: [user];
+            remove_liquidity => restrict_to: [user];
+            add_collateral => restrict_to: [user];
+            remove_collateral_request => restrict_to: [user];
+            margin_order_request => restrict_to: [user];
+
+            process_request => restrict_to: [keeper];
+            swap_debt => restrict_to: [keeper];
+            liquidate => restrict_to: [keeper];
+            auto_deleverage => restrict_to: [keeper];
+            update_pair => restrict_to: [keeper];
         }
     }
 
     struct Exchange {
         authority_token: Vault,
-        config: ExchangeConfig,
+        config: Config,
         pool: ComponentAddress,
         oracle: ComponentAddress,
     }
@@ -82,17 +129,19 @@ mod exchange {
             let (component_reservation, _this) = Runtime::allocate_component_address(Exchange::blueprint_id());
             Self {
                 authority_token: Vault::with_bucket(authority_token),
-                config: ExchangeConfig {
-                    max_price_age_seconds: 0,
-                    keeper_fee: dec!(0),
-                    positions_max: 0,
-                    skew_ratio_cap: dec!(0),
-                    adl_offset: dec!(0),
-                    adl_a: dec!(0),
-                    adl_b: dec!(0),
-                    fee_liquidity: dec!(0),
-                    fee_max: dec!(0),
-                    pairs: List::new(),
+                config: Config {
+                    exchange: ExchangeConfig {
+                        max_price_age_seconds: 0,
+                        keeper_fee: dec!(0),
+                        positions_max: 0,
+                        skew_ratio_cap: dec!(0),
+                        adl_offset: dec!(0),
+                        adl_a: dec!(0),
+                        adl_b: dec!(0),
+                        fee_liquidity: dec!(0),
+                        fee_max: dec!(0),
+                    },
+                    pairs: HashList::new(),
                     collaterals: HashMap::new(),
                 },
                 pool,
@@ -100,20 +149,319 @@ mod exchange {
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
+            .roles(roles! {
+                admin => OWNER;
+                keeper => rule!(allow_all);
+                user => rule!(allow_all);
+            })
             .with_address(component_reservation)
             .globalize()
         }
 
-        pub fn deposit_authority(&mut self, token: Bucket) {
+        // --- OWNER METHODS ---
+
+        pub fn deposit_authority(
+            &mut self, 
+            token: Bucket,
+        ) {
             self.authority_token.put(token);
         }
 
-        pub fn withdraw_authority(&mut self) -> Bucket {
+        pub fn withdraw_authority(
+            &mut self
+        ) -> Bucket {
             self.authority_token.take_all()
         }
 
+        // --- ADMIN METHODS ---
+
+        pub fn update_exchange_config(
+            &mut self, 
+            config: ExchangeConfig,
+        ) {
+            config.validate();
+            self.config.exchange = config;
+        }
+
+        pub fn update_pair_configs(
+            &mut self, 
+            pair_id: u64, 
+            configs: Vec<PairConfig>,
+        ) {
+            for config in configs.iter() {
+                config.validate();
+                self.config.pairs.insert(pair_id, config.clone());
+            }
+        }
+
+        pub fn update_collateral_configs(
+            &mut self, 
+            resource: ResourceAddress, 
+            configs: Vec<CollateralConfig>,
+        ) {
+            for config in configs.iter() {
+                config.validate();
+                self.config.collaterals.insert(resource, config.clone());
+            }
+        }
+
+        pub fn remove_collateral_config(
+            &mut self, 
+            resource: ResourceAddress,
+        ) {
+            self.config.collaterals.remove(&resource);
+        }
+
+        // --- GET METHODS ---
+
+        pub fn get_exchange_config(
+            &self
+        ) -> ExchangeConfig {
+            self.config.exchange.clone()
+        }
+
+        pub fn get_num_pairs(
+            &self,
+        ) -> u64 {
+            self.config.pairs.len()
+        }
+
+        pub fn get_pair_config(
+            &self, 
+            pair_id: u64,
+        ) -> PairConfig {
+            self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG).clone()
+        }
+
+        pub fn get_pair_configs(&self, 
+            start: u64, 
+            end: u64,
+        ) -> Vec<PairConfig> {
+            self.config.pairs.range(start, end)
+        }
+
+        pub fn get_collateral_config(
+            &self, 
+            resource: ResourceAddress,
+        ) -> CollateralConfig {
+            self.config.collaterals.get(&resource).expect(ERROR_COLLATERAL_INVALID).clone()
+        }
+
+        pub fn get_collateral_configs(
+            &self, 
+            resource: ResourceAddress,
+        ) -> HashMap<ResourceAddress, CollateralConfig> {
+            self.config.collaterals.clone()
+        }
+
+        pub fn get_collaterals(
+            &self,
+        ) -> Vec<ResourceAddress> {
+            self._collaterals()
+        }
+
+        pub fn get_pool_value(
+            &self,
+        ) -> Decimal {
+            let pool = VirtualLiquidityPool::new(self.pool);
+            self._pool_value(&pool)
+        }
+
+        pub fn get_skew_ratio(
+            &self,
+        ) -> Decimal {
+            let pool = VirtualLiquidityPool::new(self.pool);
+            self._skew_ratio(&pool)
+        }
+
+        // --- USER METHODS ---
+
+        pub fn create_account(
+            &self, 
+            initial_rule: AccessRule,
+        ) -> ComponentAddress {
+            // TODO: globalize within exchange?
+            Blueprint::<MarginAccount>::new(initial_rule).address()
+        }
+
+        pub fn set_level_1_auth(
+            &self, 
+            account: ComponentAddress, 
+            rule: AccessRule,
+        ) {
+            let account = VirtualMarginAccount::new(account, self._collaterals());
+            account.verify_level_1_auth();
+            account.set_level_1_auth(rule);
+        }
+
+        pub fn set_level_2_auth(
+            &self, 
+            account: ComponentAddress, 
+            rule: AccessRule,
+        ) {
+            let account = VirtualMarginAccount::new(account, self._collaterals());
+            account.verify_level_1_auth();
+            account.set_level_2_auth(rule);
+        }
+
+        pub fn set_level_3_auth(
+            &self, 
+            account: ComponentAddress, 
+            rule: AccessRule,
+        ) {
+            let account = VirtualMarginAccount::new(account, self._collaterals());
+            account.verify_level_1_auth();
+            account.set_level_3_auth(rule);
+        }
+
+        pub fn add_liquidity(
+            &self,
+            payment: Bucket,
+        ) -> Bucket {
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            self._add_liquidity(&mut pool, payment)
+        }
+
+        pub fn remove_liquidity(
+            &self,
+            lp_token: Bucket,
+        ) -> Bucket {
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            self._remove_liquidity(&mut pool, lp_token)
+        }
+
+        pub fn add_collateral(
+            &self, 
+            account: ComponentAddress, 
+            tokens: Vec<Bucket>,
+        ) {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            self._add_collateral(&mut account, tokens);
+        }
+
+        pub fn remove_collateral_request(
+            &self,
+            expiry_seconds: u64, 
+            account: ComponentAddress, 
+            target_account: ComponentAddress,
+            claims: Vec<(ResourceAddress, Decimal)>,
+        ) {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            account.verify_level_1_auth();
+
+            let request = Request::RemoveCollateral(RequestRemoveCollateral {
+                target_account,
+                claims,
+            });
+            account.push_request(request, expiry_seconds);
+        }
+
+        pub fn margin_order_request(
+            &self,
+            expiry_seconds: u64,
+            account: ComponentAddress,
+            pair_id: u64,
+            amount: Decimal,
+            price_limit: Limit,
+        ) {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            account.verify_level_2_auth();
+
+            let request = Request::MarginOrder(RequestMarginOrder {
+                pair_id,
+                amount,
+                price_limit,
+            });
+            account.push_request(request, expiry_seconds);
+        }
+
+        // --- KEEPER METHODS ---
+
+        pub fn process_request(
+            &self, 
+            account: ComponentAddress, 
+            index: u64,
+        ) {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            let request = account.process_request(index);
+
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+
+            match request {
+                Request::RemoveCollateral(request) => {
+                    let target_account = request.target_account;
+                    let claims = request.claims;
+                    self._remove_collateral(&mut pool, &mut account, &oracle, target_account, claims);
+                },
+                Request::MarginOrder(request) => {
+                    let pair_id = request.pair_id;
+                    let amount = request.amount;
+                    let price_limit = request.price_limit;
+                    self._margin_order(&mut pool, &mut account, &oracle, pair_id, amount);
+                },
+            }
+        }
+
+        pub fn swap_debt(
+            &self, 
+            account: ComponentAddress, 
+            resource: ResourceAddress, 
+            payment: Bucket, 
+        ) -> Bucket {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+            self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment)
+        }
+
+        pub fn liquidate(
+            &self,
+            account: ComponentAddress,
+            payment_tokens: Bucket,
+        ) -> Vec<Bucket> {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+            self._liquidate(&mut pool, &mut account, &oracle, payment_tokens)
+        }
+
+        pub fn auto_deleverage(
+            &self, 
+            account: ComponentAddress, 
+            pair_id: u64, 
+        ) {
+            let mut account =  VirtualMarginAccount::new(account, self._collaterals());
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+            self._auto_deleverage(&mut pool, &mut account, &oracle, pair_id)
+        }
+
+        pub fn update_pair(
+            &self, 
+            pair_id: u64,
+        ) {
+            let mut pool = VirtualLiquidityPool::new(self.pool);
+            let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds());
+            self._update_pair(&mut pool, &oracle, pair_id)
+        }
+
+        // --- INTERNAL METHODS ---
+
+        fn _collaterals(
+            &self,
+        ) -> Vec<ResourceAddress> {
+            self.config.collaterals.keys().cloned().collect()
+        }
+
+        fn _collateral_feeds(
+            &self,
+        ) -> HashMap<ResourceAddress, u64> {
+            self.config.collaterals.iter().map(|(resource, config)| (*resource, config.pair_id)).collect()
+        }
+
         // get_pool_value
-        fn get_pool_value(
+        fn _pool_value(
             &self, 
             pool: &VirtualLiquidityPool,
         ) -> Decimal {
@@ -123,59 +471,55 @@ mod exchange {
             pool.pnl_snap()
         }
 
-        fn get_skew_ratio(
+        fn _skew_ratio(
             &self,
             pool: &VirtualLiquidityPool,
         ) -> Decimal {
-            pool.skew_abs_snap() / self.get_pool_value(pool)
+            pool.skew_abs_snap() / self._pool_value(pool)
         }
 
-        fn assert_pool_integrity(
+        fn _assert_pool_integrity(
             &self,
             pool: &VirtualLiquidityPool,
         ) {
-            if self.get_skew_ratio(pool) >= self.config.skew_ratio_cap {
+            if self._skew_ratio(pool) >= self.config.exchange.skew_ratio_cap {
                 panic!("{}", ERROR_SKEW_TOO_HIGH);
             }
         }
 
-        fn assert_account_integrity(
+        fn _assert_account_integrity(
             &self, 
             pool: &VirtualLiquidityPool,
             account: &VirtualMarginAccount,
             oracle: &VirtualOracle,
         ) {
-            let (pnl, margin) = self.value_positions(pool, account, oracle);
-            let collateral = self.value_collateral(account, oracle);
+            let (pnl, margin) = self._value_positions(pool, account, oracle);
+            let collateral = self._value_collateral(account, oracle);
 
             if pnl + collateral < margin {
                 panic!("{}", ERROR_INSUFFICIENT_MARGIN);
             }
         }
 
-        fn assert_valid_collateral(
+        fn _assert_valid_collateral(
             &self, 
             resource: ResourceAddress,
         ) {
             if !self.config.collaterals.contains_key(&resource) {
                 panic!("{}", ERROR_COLLATERAL_INVALID);
             }
-            if self.config.collaterals.get(&resource).unwrap().disabled {
-                panic!("{}", ERROR_COLLATERAL_DISABLED);
-            }
         }
 
-        fn assert_position_limit(
+        fn _assert_position_limit(
             &self, 
             account: &VirtualMarginAccount,
         ) {
-            if account.positions().len() > self.config.positions_max as usize {
+            if account.positions().len() > self.config.exchange.positions_max as usize {
                 panic!("{}", ERROR_POSITIONS_TOO_MANY);
             }
         }
 
-        // add_liquidity
-        fn add_liquidity(
+        fn _add_liquidity(
             &self,
             pool: &mut VirtualLiquidityPool,
             payment: Bucket,
@@ -185,9 +529,9 @@ mod exchange {
                 "{}", ERROR_INVALID_PAYMENT
             );
 
-            let pool_value = self.get_pool_value(pool);
+            let pool_value = self._pool_value(pool);
             let value = payment.amount();
-            let fee = value * self.config.fee_liquidity;
+            let fee = value * self.config.exchange.fee_liquidity;
             let lp_supply = pool.lp_token_manager().total_supply().unwrap();
 
             let lp_amount = (value - fee) / pool_value * lp_supply;
@@ -198,8 +542,7 @@ mod exchange {
             lp_token
         }
 
-        // remove_liquidity
-        fn remove_liquidity(
+        fn _remove_liquidity(
             &self,
             pool: &mut VirtualLiquidityPool,
             lp_token: Bucket,
@@ -209,12 +552,12 @@ mod exchange {
                 "{}", ERROR_INVALID_LP_TOKEN
             );
 
-            let pool_value = self.get_pool_value(pool);
+            let pool_value = self._pool_value(pool);
             let lp_supply = pool.lp_token_manager().total_supply().unwrap();
             let lp_amount = lp_token.amount();
 
             let value = lp_amount / lp_supply * pool_value;
-            let fee = value * self.config.fee_liquidity;
+            let fee = value * self.config.exchange.fee_liquidity;
 
             pool.burn_lp(lp_token);
             let payment = pool.withdraw(value - fee, TO_ZERO);
@@ -222,21 +565,19 @@ mod exchange {
             payment
         }
 
-        // add_collateral
-        fn add_collateral(
+        fn _add_collateral(
             &self, 
             account: &mut VirtualMarginAccount, 
             tokens: Vec<Bucket>,
         ) {
             for tokens in tokens.iter() {
-                self.assert_valid_collateral(tokens.resource_address());
+                self._assert_valid_collateral(tokens.resource_address());
             }
 
             account.deposit_collateral_batch(tokens);
         }
         
-        // remove_collateral
-        fn remove_collateral(
+        fn _remove_collateral(
             &self, 
             pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
@@ -249,11 +590,10 @@ mod exchange {
             let tokens = account.withdraw_collateral_batch(claims, TO_ZERO);
             target_account.try_deposit_batch_or_abort(tokens, None); // TODO: create authorization badge
             
-            self.assert_account_integrity(pool, account, oracle);
+            self._assert_account_integrity(pool, account, oracle);
         }
 
-        // margin_order
-        fn margin_order(
+        fn _margin_order(
             &self, 
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
@@ -261,8 +601,8 @@ mod exchange {
             pair_id: u64, 
             amount: Decimal, 
         ) {
-            self.update_pair(pool, oracle, pair_id); // TODO: Do we need to do this
-            self.settle_funding(pool, account, pair_id);
+            self._update_pair(pool, oracle, pair_id); // TODO: Do we need to do this
+            self._settle_funding(pool, account, pair_id);
                 
             let (amount_close, amount_open) = {
                 let position_amount = account.positions().get(&pair_id).map_or(dec!(0), |p| p.amount);
@@ -279,21 +619,20 @@ mod exchange {
                 }
             };
             if !amount_close.is_zero() {
-                self.close_position(pool, account, oracle, pair_id, amount_close);
+                self._close_position(pool, account, oracle, pair_id, amount_close);
             }
             if !amount_open.is_zero() {
-                self.open_position(pool, account, oracle, pair_id, amount_open);
+                self._open_position(pool, account, oracle, pair_id, amount_open);
             }
 
-            self.save_funding_index(pool, account, pair_id);
-            self.update_pair_snaps(pool, oracle, pair_id);
+            self._save_funding_index(pool, account, pair_id);
+            self._update_pair_snaps(pool, oracle, pair_id);
 
-            self.assert_account_integrity(pool, account, oracle);
-            self.assert_pool_integrity(pool);
+            self._assert_account_integrity(pool, account, oracle);
+            self._assert_pool_integrity(pool);
         }
 
-        // swap_debt
-        fn swap_debt(
+        fn _swap_debt(
             &self, 
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
@@ -325,8 +664,7 @@ mod exchange {
             collateral
         }
 
-        // liquidate
-        fn liquidate(
+        fn _liquidate(
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
@@ -338,8 +676,8 @@ mod exchange {
                 "{}", ERROR_INVALID_PAYMENT
             );
 
-            let (pnl, margin) = self.liquidate_positions(pool, account, oracle);
-            let (collateral_value, mut collateral_tokens) = self.liquidate_collateral(account, oracle);
+            let (pnl, margin) = self._liquidate_positions(pool, account, oracle);
+            let (collateral_value, mut collateral_tokens) = self._liquidate_collateral(account, oracle);
 
             assert!(
                 pnl + collateral_value < margin,
@@ -348,7 +686,7 @@ mod exchange {
             
             account.deposit_collateral(payment_tokens.take_advanced(collateral_value, TO_INFINITY));
 
-            self.settle_with_pool(pool, account, pnl);
+            self._settle_with_pool(pool, account, pnl);
             // TODO: insurance fund for outstanding_base
 
             collateral_tokens.push(payment_tokens);
@@ -356,20 +694,19 @@ mod exchange {
             collateral_tokens
         }
 
-        // auto_deleverage
-        fn auto_deleverage(
+        fn _auto_deleverage(
             &self, 
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
             pair_id: u64, 
         ) {
-            self.update_pair(pool, oracle, pair_id); // TODO: Do we need to do this
-            self.settle_funding(pool, account, pair_id);
+            self._update_pair(pool, oracle, pair_id); // TODO: Do we need to do this
+            self._settle_funding(pool, account, pair_id);
 
-            let skew_ratio = self.get_skew_ratio(pool);
+            let skew_ratio = self._skew_ratio(pool);
             assert!(
-                skew_ratio > self.config.skew_ratio_cap,
+                skew_ratio > self.config.exchange.skew_ratio_cap,
                 "{}", ERROR_ADL_SKEW_TOO_LOW
             );
                 
@@ -382,8 +719,8 @@ mod exchange {
 
             let pnl_percent = (value - cost) / cost;
 
-            let u = skew_ratio / self.config.adl_a - self.config.adl_offset / self.config.adl_a;
-            let threshold = -(u * u * u) - self.config.adl_b * u;
+            let u = skew_ratio / self.config.exchange.adl_a - self.config.exchange.adl_offset / self.config.exchange.adl_a;
+            let threshold = -(u * u * u) - self.config.exchange.adl_b * u;
             assert!(
                 pnl_percent > threshold,
                 "{}", ERROR_ADL_PNL_BELOW_THRESHOLD
@@ -391,23 +728,22 @@ mod exchange {
             
             let amount_close = -amount;
             if !amount_close.is_zero() { // TODO: panic?
-                self.close_position(pool, account, oracle, pair_id, amount_close);
+                self._close_position(pool, account, oracle, pair_id, amount_close);
             }
 
-            self.save_funding_index(pool, account, pair_id);
-            self.update_pair_snaps(pool, oracle, pair_id);
+            self._save_funding_index(pool, account, pair_id);
+            self._update_pair_snaps(pool, oracle, pair_id);
 
-            self.assert_account_integrity(pool, account, oracle); // TODO: not needed?
+            self._assert_account_integrity(pool, account, oracle); // TODO: not needed?
 
-            let skew_ratio_f = self.get_skew_ratio(pool);
+            let skew_ratio_f = self._skew_ratio(pool);
             assert!(
                 skew_ratio_f < skew_ratio_f,
                 "{}", ERROR_ADL_SKEW_NOT_REDUCED
             );
         }
 
-        // open_position
-        fn open_position(
+        fn _open_position(
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
@@ -415,18 +751,18 @@ mod exchange {
             pair_id: u64, 
             amount: Decimal, 
         ) {
-            let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+            let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
             let price_token = oracle.price(pair_id);
 
             let value = amount * price_token;
             let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
-            let pool_value = self.get_pool_value(pool);
+            let pool_value = self._pool_value(pool);
 
             let mut pool_position = pool.position(pair_id);
             let mut position = account.position(pair_id);
             
             let skew_abs = ((pool_position.oi_long - pool_position.oi_short + amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-            let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
+            let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
             let cost = value + fee;
 
             if amount.is_positive() {
@@ -442,11 +778,10 @@ mod exchange {
             pool.update_position(pair_id, pool_position);
             account.update_position(pair_id, position);
 
-            self.assert_position_limit(account);
+            self._assert_position_limit(account);
         }
 
-        // close_position
-        fn close_position(
+        fn _close_position(
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
@@ -455,18 +790,18 @@ mod exchange {
             amount: Decimal, 
         ) {
             let pnl = {
-                let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+                let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
                 let price_token = oracle.price(pair_id);
                 
                 let value = amount * price_token;
                 let value_abs = value.checked_abs().unwrap();
-                let pool_value = self.get_pool_value(pool);
+                let pool_value = self._pool_value(pool);
 
                 let mut pool_position = pool.position(pair_id);
                 let mut position = account.position(pair_id);
 
                 let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
+                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
                 let cost = -amount / position.amount * position.cost;
                 let pnl = value - cost - fee;
             
@@ -486,17 +821,16 @@ mod exchange {
                 pnl
             };
 
-            self.settle_with_pool(pool, account, pnl);
+            self._settle_with_pool(pool, account, pnl);
         }
 
-        // update_pair TODO: keeper should run this
-        fn update_pair(
+        fn _update_pair(
             &self, 
             pool: &mut VirtualLiquidityPool,
             oracle: &VirtualOracle,
             pair_id: u64,
         ) {
-            let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+            let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
             let price_token = oracle.price(pair_id);
 
             let mut pool_position = pool.position(pair_id);
@@ -564,8 +898,7 @@ mod exchange {
             pool.update_position(pair_id, pool_position);
         }
 
-        // update_pair_snaps
-        fn update_pair_snaps(
+        fn _update_pair_snaps(
             &self, 
             pool: &mut VirtualLiquidityPool,
             oracle: &VirtualOracle,
@@ -591,18 +924,18 @@ mod exchange {
             pool.update_position(pair_id, pool_position);
         }
 
-        fn value_positions(
+        fn _value_positions(
             &self,
             pool: &VirtualLiquidityPool,
             account: &VirtualMarginAccount, 
             oracle: &VirtualOracle,
         ) -> (Decimal, Decimal) {
-            let pool_value = self.get_pool_value(pool);
+            let pool_value = self._pool_value(pool);
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
             for (&pair_id, position) in account.positions().iter() {
-                let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+                let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
                 let price_token = oracle.price(pair_id);
                 let amount = position.amount;
                 let value = position.amount * price_token;
@@ -611,7 +944,7 @@ mod exchange {
                 let pool_position = pool.position(pair_id);
 
                 let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
+                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
                 let cost = position.cost;
 
                 let pnl = value - cost - fee;
@@ -623,18 +956,18 @@ mod exchange {
             (total_pnl, total_margin)
         }
 
-        fn liquidate_positions(
+        fn _liquidate_positions(
             &self, 
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
         ) -> (Decimal, Decimal) {
-            let pool_value = self.get_pool_value(pool);
+            let pool_value = self._pool_value(pool);
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
             for (&pair_id, position) in account.positions().clone().iter() {
-                let config = self.config.pairs.get(pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+                let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
                 let price_token = oracle.price(pair_id);
                 let amount = position.amount;
                 let value = position.amount * price_token;
@@ -643,7 +976,7 @@ mod exchange {
                 let mut pool_position = pool.position(pair_id);
 
                 let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.fee_max);
+                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
                 let cost = position.cost;
 
                 if position.amount.is_positive() {
@@ -665,7 +998,7 @@ mod exchange {
             (total_pnl, total_margin)
         }
 
-        fn value_collateral(
+        fn _value_collateral(
             &self, 
             account: &VirtualMarginAccount, 
             oracle: &VirtualOracle,
@@ -680,7 +1013,7 @@ mod exchange {
             total_value
         }
 
-        fn liquidate_collateral(
+        fn _liquidate_collateral(
             &self, 
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
@@ -699,7 +1032,7 @@ mod exchange {
             (total_value, collateral_tokens)
         }
 
-        fn settle_with_pool(
+        fn _settle_with_pool(
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
@@ -724,8 +1057,7 @@ mod exchange {
             account.update_virtual_balance(account.virtual_balance() + outstanding_base);
         }
 
-        // settle_funding
-        fn settle_funding(
+        fn _settle_funding(
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
@@ -747,10 +1079,10 @@ mod exchange {
 
                 funding
             };
-            self.settle_with_pool(pool, account, funding);
+            self._settle_with_pool(pool, account, funding);
         }
         
-        fn save_funding_index(
+        fn _save_funding_index(
             &self,
             pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
