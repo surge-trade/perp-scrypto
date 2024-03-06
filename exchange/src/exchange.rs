@@ -45,7 +45,7 @@ mod exchange {
             fn deposit_collateral(&self, token: Bucket);
             fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
             fn withdraw_collateral(&self, resource: ResourceAddress, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;
-            fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket>;
+            fn withdraw_collateral_batch(&self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket>;
         }
     }
     extern_blueprint! {
@@ -57,10 +57,10 @@ mod exchange {
 
             // Authority protected methods
             fn update(&self, update: MarginPoolUpdates);
-            fn deposit(&mut self, token: Bucket);
-            fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            
-            fn mint_lp(&mut self, amount: Decimal) -> Bucket;
-            fn burn_lp(&mut self, token: Bucket);
+            fn deposit(&self, token: Bucket);
+            fn withdraw(&self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            
+            fn mint_lp(&self, amount: Decimal) -> Bucket;
+            fn burn_lp(&self, token: Bucket);
         }
     }
     extern_blueprint! {
@@ -68,6 +68,20 @@ mod exchange {
         Oracle {
             // Getter methods
             fn prices(&self) -> HashMap<u64, Decimal>;
+        }
+    }
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        Referrals {
+            // Getter methods
+            fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
+
+            // Authority protected methods
+            fn update_rebate(&self, rebate: Decimal);
+            fn update_trickle_up(&self, trickle_up: Decimal);
+            fn set_referrer(&self, account: ComponentAddress, referrer: Option<ComponentAddress>);
+            fn reward(&self, referred_account: ComponentAddress, token: Bucket);
+            fn collect(&self, account: ComponentAddress) -> Bucket;
         }
     }
 
@@ -78,13 +92,17 @@ mod exchange {
             user => updatable_by: [OWNER, admin];
         },
         methods { 
+            // Owner methods
             deposit_authority => restrict_to: [OWNER];
             withdraw_authority => restrict_to: [OWNER];
             update_exchange_config => restrict_to: [OWNER];
             update_pair_configs => restrict_to: [OWNER];
             update_collateral_configs => restrict_to: [OWNER];
             remove_collateral_config => restrict_to: [OWNER];
+            update_referral_rebate => restrict_to: [OWNER];
+            update_referral_trickle_up => restrict_to: [OWNER];
 
+            // Get methods
             get_exchange_config => PUBLIC;
             get_num_pairs => PUBLIC;
             get_pair_config => PUBLIC;
@@ -94,11 +112,15 @@ mod exchange {
             get_collaterals => PUBLIC;
             get_pool_value => PUBLIC;
             get_skew_ratio => PUBLIC;
+            get_referrer => PUBLIC;
 
+            // User methods
             create_account => restrict_to: [user];
             set_level_1_auth => restrict_to: [user];
             set_level_2_auth => restrict_to: [user];
             set_level_3_auth => restrict_to: [user];
+            set_referrer => restrict_to: [user];
+            collect_referral_rewards => restrict_to: [user];
             add_liquidity => restrict_to: [user];
             remove_liquidity => restrict_to: [user];
             add_collateral => restrict_to: [user];
@@ -106,6 +128,7 @@ mod exchange {
             margin_order_request => restrict_to: [user];
             cancel_request => restrict_to: [user];
 
+            // Keeper methods
             process_request => restrict_to: [keeper];
             swap_debt => restrict_to: [keeper];
             liquidate => restrict_to: [keeper];
@@ -124,8 +147,9 @@ mod exchange {
     struct Exchange {
         authority_token: FungibleVault,
         config: Config,
-        pool: ComponentAddress,
-        oracle: ComponentAddress,
+        pool: Global<MarginPool>,
+        oracle: Global<Oracle>,
+        referrals: Global<Referrals>,
     }
     
     impl Exchange {
@@ -134,28 +158,20 @@ mod exchange {
             authority_token: Bucket,
             pool: ComponentAddress,
             oracle: ComponentAddress,
+            referrals: ComponentAddress,
         ) -> Global<Exchange> {
             // TODO: for testing purposes
             let (component_reservation, _this) = Runtime::allocate_component_address(Exchange::blueprint_id());
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 config: Config {
-                    exchange: ExchangeConfig {
-                        max_price_age_seconds: 0,
-                        keeper_fee: dec!(0),
-                        positions_max: 0,
-                        skew_ratio_cap: dec!(0),
-                        adl_offset: dec!(0),
-                        adl_a: dec!(0),
-                        adl_b: dec!(0),
-                        fee_liquidity: dec!(0),
-                        fee_max: dec!(0),
-                    },
+                    exchange: ExchangeConfig::default(),
                     pairs: HashList::new(),
                     collaterals: HashMap::new(),
                 },
-                pool,
-                oracle,
+                pool: pool.into(),
+                oracle: oracle.into(),
+                referrals: referrals.into(),
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
@@ -222,6 +238,24 @@ mod exchange {
             self.config.collaterals.remove(&resource);
         }
 
+        pub fn update_referral_rebate(
+            &self, 
+            rebate: Decimal,
+        ) {
+            authorize!(self, {
+                self.referrals.update_rebate(rebate);
+            })
+        }
+
+        pub fn update_referral_trickle_up(
+            &self, 
+            trickle_up: Decimal,
+        ) {
+            authorize!(self, {
+                self.referrals.update_trickle_up(trickle_up);
+            })
+        }
+
         // --- GET METHODS ---
 
         pub fn get_exchange_config(
@@ -284,6 +318,13 @@ mod exchange {
             self._skew_ratio(&pool)
         }
 
+        pub fn get_referrer(
+            &self, 
+            account: ComponentAddress,
+        ) -> Option<ComponentAddress> {
+            self.referrals.get_referrer(account)
+        }
+
         // --- USER METHODS ---
 
         pub fn create_account(
@@ -332,6 +373,35 @@ mod exchange {
                 account.verify_level_1_auth();
                 account.set_level_3_auth(rule);
                 account.realize();
+            })
+        }
+
+        pub fn set_referrer(
+            &self, 
+            account: ComponentAddress, 
+            referrer: Option<ComponentAddress>,
+        ) {
+            authorize!(self, {
+                let account = VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_1_auth();
+                if let Some(referrer) = referrer {
+                    Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT); // TODO: check
+                }
+                self.referrals.set_referrer(account.address(), referrer);
+                account.realize();
+            })
+        }
+
+        pub fn collect_referral_rewards(
+            &self, 
+            account: ComponentAddress, 
+        ) -> Bucket {
+            authorize!(self, {
+                let account = VirtualMarginAccount::new(account, self._collaterals());
+                account.verify_level_1_auth();
+                let token = self.referrals.collect(account.address());
+                account.realize();
+                token
             })
         }
 
@@ -761,7 +831,7 @@ mod exchange {
                 "{}", ERROR_INVALID_PAYMENT
             );
 
-            let (pnl, margin) = self._liquidate_positions(pool, account, oracle);
+            let (pnl, margin, fee_referral) = self._liquidate_positions(pool, account, oracle);
             let (collateral_value, mut collateral_tokens) = self._liquidate_collateral(account, oracle);
 
             assert!(
@@ -772,6 +842,7 @@ mod exchange {
             account.deposit_collateral(payment_tokens.take_advanced(collateral_value, TO_INFINITY));
 
             self._settle_with_pool(pool, account, pnl);
+            self._settle_with_referrals(pool, account, fee_referral);
             // TODO: insurance fund for outstanding_base
 
             collateral_tokens.push(payment_tokens);
@@ -848,6 +919,7 @@ mod exchange {
             
             let skew_abs = ((pool_position.oi_long - pool_position.oi_short + amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
             let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
+            let fee_referral = fee * self.config.exchange.fee_share_referral;
             let cost = value + fee;
 
             if amount.is_positive() {
@@ -863,6 +935,8 @@ mod exchange {
             pool.update_position(pair_id, pool_position);
             account.update_position(pair_id, position);
 
+            self._settle_with_referrals(pool, account, fee_referral);
+
             self._assert_position_limit(account);
         }
 
@@ -874,39 +948,37 @@ mod exchange {
             pair_id: u64, 
             amount: Decimal, 
         ) {
-            let pnl = {
-                let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
-                let price_token = oracle.price(pair_id);
-                
-                let value = amount * price_token;
-                let value_abs = value.checked_abs().unwrap();
-                let pool_value = self._pool_value(pool);
-
-                let mut pool_position = pool.position(pair_id);
-                let mut position = account.position(pair_id);
-
-                let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
-                let cost = -amount / position.amount * position.cost;
-                let pnl = value - cost - fee;
+            let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+            let price_token = oracle.price(pair_id);
             
-                if position.amount.is_positive() {
-                    pool_position.oi_long -= amount;
-                } else {
-                    pool_position.oi_short += amount;
-                }
-                pool_position.cost -= cost;
+            let value = amount * price_token;
+            let value_abs = value.checked_abs().unwrap();
+            let pool_value = self._pool_value(pool);
 
-                position.amount += amount;
-                position.cost -= cost;
+            let mut pool_position = pool.position(pair_id);
+            let mut position = account.position(pair_id);
 
-                pool.update_position(pair_id, pool_position);
-                account.update_position(pair_id, position);
+            let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+            let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
+            let fee_referral = fee * self.config.exchange.fee_share_referral;
+            let cost = -amount / position.amount * position.cost;
+            let pnl = value - cost - fee;
+        
+            if position.amount.is_positive() {
+                pool_position.oi_long -= amount;
+            } else {
+                pool_position.oi_short += amount;
+            }
+            pool_position.cost -= cost;
 
-                pnl
-            };
+            position.amount += amount;
+            position.cost -= cost;
+
+            pool.update_position(pair_id, pool_position);
+            account.update_position(pair_id, position);
 
             self._settle_with_pool(pool, account, pnl);
+            self._settle_with_referrals(pool, account, fee_referral);
         }
 
         fn _update_pair(
@@ -1046,11 +1118,12 @@ mod exchange {
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
-        ) -> (Decimal, Decimal) {
+        ) -> (Decimal, Decimal, Decimal) {
             let pool_value = self._pool_value(pool);
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
+            let mut total_fee_referral = dec!(0);
             for (&pair_id, position) in account.positions().clone().iter() {
                 let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
                 let price_token = oracle.price(pair_id);
@@ -1075,12 +1148,13 @@ mod exchange {
                 let margin = value_abs * config.margin_maintenance;
                 total_pnl += pnl;
                 total_margin += margin;
+                total_fee_referral += fee * self.config.exchange.fee_share_referral;
 
                 pool.update_position(pair_id, pool_position);
                 account.remove_position(pair_id);
             }
 
-            (total_pnl, total_margin)
+            (total_pnl, total_margin, total_fee_referral)
         }
 
         fn _value_collateral(
@@ -1165,6 +1239,17 @@ mod exchange {
                 funding
             };
             self._settle_with_pool(pool, account, funding);
+        }
+
+        fn _settle_with_referrals(
+            &self,
+            pool: &mut VirtualLiquidityPool,
+            account: &mut VirtualMarginAccount,
+            fee_referral: Decimal,
+        ) {
+            let fee_referral = fee_referral.min(pool.base_tokens_amount());
+            let fee_referral_tokens = pool.withdraw(fee_referral, TO_ZERO);
+            self.referrals.reward(account.address(), fee_referral_tokens);
         }
         
         fn _save_funding_index(

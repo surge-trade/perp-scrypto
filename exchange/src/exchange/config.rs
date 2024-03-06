@@ -36,6 +36,8 @@ pub struct ExchangeConfig {
     pub adl_b: Decimal,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: Decimal,
+    /// Share of fees that go to the referrer
+    pub fee_share_referral: Decimal,
     /// Maximum fee that can be charged
     pub fee_max: Decimal,
 }
@@ -44,14 +46,15 @@ impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
             max_price_age_seconds: 60,
-            keeper_fee: Decimal::from_str("0.01").unwrap(),
+            keeper_fee: dec!(0.01),
             positions_max: 100,
-            skew_ratio_cap: Decimal::from_str("0.1").unwrap(),
-            adl_offset: Decimal::from_str("0.1").unwrap(),
-            adl_a: Decimal::from_str("0.1").unwrap(),
-            adl_b: Decimal::from_str("0.1").unwrap(),
-            fee_liquidity: Decimal::from_str("0.01").unwrap(),
-            fee_max: Decimal::from_str("0.01").unwrap(),
+            skew_ratio_cap: dec!(0.1),
+            adl_offset: dec!(0.1),
+            adl_a: dec!(0.1),
+            adl_b: dec!(0.1),
+            fee_liquidity: dec!(0.01),
+            fee_share_referral: dec!(0.1),
+            fee_max: dec!(0.1),
         }
     }
 }

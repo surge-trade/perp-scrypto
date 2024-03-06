@@ -29,6 +29,10 @@ impl VirtualMarginAccount {
         self.account.update(self.account_updates);
     }
 
+    pub fn address(&self) -> ComponentAddress {
+        self.account.address()
+    }
+
     pub fn positions(&self) -> &HashMap<u64, AccountPosition> {
         &self.account_info.positions
     }

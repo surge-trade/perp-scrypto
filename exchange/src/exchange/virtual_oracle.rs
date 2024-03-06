@@ -9,8 +9,7 @@ pub struct VirtualOracle {
 }
 
 impl VirtualOracle {
-    pub fn new(oracle: ComponentAddress, resource_feeds: HashMap<ResourceAddress, u64>) -> Self {
-        let oracle = Global::<Oracle>::try_from(oracle).expect(ERROR_INVALID_ORACLE);
+    pub fn new(oracle: Global<Oracle>, resource_feeds: HashMap<ResourceAddress, u64>) -> Self {
         let prices = oracle.prices();
 
         Self {

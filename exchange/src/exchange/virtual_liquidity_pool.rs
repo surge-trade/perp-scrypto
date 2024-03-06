@@ -10,8 +10,7 @@ pub struct VirtualLiquidityPool {
 }
 
 impl VirtualLiquidityPool {
-    pub fn new(pool: ComponentAddress) -> Self {
-        let pool = Global::<MarginPool>::try_from(pool).expect(ERROR_INVALID_POOL);
+    pub fn new(pool: Global<MarginPool>) -> Self {
         let pool_info = pool.get_info();
 
         Self {
