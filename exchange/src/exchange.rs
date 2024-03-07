@@ -139,7 +139,7 @@ mod exchange {
 
     macro_rules! authorize {
         ($self:expr, $func:expr) => {{
-            $self.authority_token.create_proof_of_amount(dec!(1)).authorize(|| {
+            $self.authority_token.create_proof_of_amount(dec!(0.000000000000000001)).authorize(|| {
                 $func
             })
         }};
