@@ -2,6 +2,7 @@ mod errors;
 mod consts;
 
 use scrypto::prelude::*;
+use utils::List;
 use self::consts::*;
 use self::errors::*;
 
@@ -21,6 +22,7 @@ mod token_wrapper {
             add_child => restrict_to: [OWNER];
             update_wrappable => restrict_to: [OWNER];
             
+            get_children => PUBLIC;
             wrap => restrict_to: [user];
             unwrap => restrict_to: [user];
         }
@@ -28,6 +30,7 @@ mod token_wrapper {
 
     struct TokenWrapper {
         parent_token: ResourceManager,
+        child_list: List<ResourceAddress>,
         child_vaults: KeyValueStore<ResourceAddress, ChildToken>,
     }
 
@@ -40,6 +43,7 @@ mod token_wrapper {
 
             Self {
                 parent_token,
+                child_list: List::new(),
                 child_vaults: KeyValueStore::new(),
             }
             .instantiate()  
@@ -52,17 +56,26 @@ mod token_wrapper {
         }
 
         pub fn add_child(&mut self, child_resource: ResourceAddress) {
-            let child_vault = ChildToken {
-                vault: Vault::new(child_resource),
-                wrappable: true,
-            };
-
-            self.child_vaults.insert(child_resource, child_vault);
+            self.child_list.push(child_resource);
+            self.child_vaults.insert(
+                child_resource, 
+                ChildToken {
+                    vault: Vault::new(child_resource),
+                    wrappable: true,
+                }
+            );
         }
 
         pub fn update_wrappable(&mut self, child_resource: ResourceAddress, wrappable: bool) {
             let mut child_vault = self.child_vaults.get_mut(&child_resource).expect(ERROR_INVALID_CHILD_TOKEN);
             child_vault.wrappable = wrappable;
+        }
+
+        pub fn get_children(&self, start: u64, end: u64) -> Vec<(ResourceAddress, bool, Decimal)> {
+            self.child_list.range(start, end).iter().map(|child_resource| {
+                let child_vault = self.child_vaults.get(child_resource).unwrap();
+                (*child_resource, child_vault.wrappable, child_vault.vault.amount())
+            }).collect()
         }
 
         pub fn wrap(&mut self, child_token: Bucket) -> Bucket {
