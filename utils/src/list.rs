@@ -31,7 +31,7 @@ impl<T: ScryptoSbor + Clone> List<T> {
         let mut result = Vec::new();
         for i in start..end {
             if let Some(item) = self.get(i) {
-                result.push(item.clone());
+                result.push(item.to_owned());
             } else {
                 break;
             }

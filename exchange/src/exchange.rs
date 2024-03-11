@@ -917,8 +917,10 @@ mod exchange {
             let mut pool_position = pool.position(pair_id);
             let mut position = account.position(pair_id);
             
-            let skew_abs = ((pool_position.oi_long - pool_position.oi_short + amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-            let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
+            let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+            let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short + amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+            let skew_abs_delta = skew_abs_1 - skew_abs_0;
+            let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
             let fee_referral = fee * self.config.exchange.fee_share_referral;
             let cost = value + fee;
 
@@ -958,8 +960,10 @@ mod exchange {
             let mut pool_position = pool.position(pair_id);
             let mut position = account.position(pair_id);
 
-            let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-            let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
+            let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+            let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+            let skew_abs_delta = skew_abs_1 - skew_abs_0;
+            let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
             let fee_referral = fee * self.config.exchange.fee_share_referral;
             let cost = -amount / position.amount * position.cost;
             let pnl = value - cost - fee;
@@ -1100,8 +1104,10 @@ mod exchange {
 
                 let pool_position = pool.position(pair_id);
 
-                let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
+                let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+                let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+                let skew_abs_delta = skew_abs_1 - skew_abs_0;
+                let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
                 let cost = position.cost;
 
                 let pnl = value - cost - fee;
@@ -1133,8 +1139,10 @@ mod exchange {
 
                 let mut pool_position = pool.position(pair_id);
 
-                let skew_abs = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
-                let fee = value_abs * (config.fee_0 + skew_abs / pool_value * config.fee_1).min(self.config.exchange.fee_max);
+                let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+                let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
+                let skew_abs_delta = skew_abs_1 - skew_abs_0;
+                let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
                 let cost = position.cost;
 
                 if position.amount.is_positive() {

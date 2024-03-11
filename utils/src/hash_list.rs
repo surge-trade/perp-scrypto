@@ -16,12 +16,14 @@ impl<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> HashList<K, V> {
     }
 
     pub fn insert(&mut self, key: K, value: V) {
-        if self.kvs.get(&key).is_none() {
-            self.list.push(key.clone());
-            self.kvs.insert(key, value);
-        } else {
-            self.kvs.insert(key, value);
-        }
+        self.kvs.get_mut(&key)
+            .map(|mut entry| {
+                *entry = value.to_owned();
+            })
+            .unwrap_or_else(|| {
+                self.list.push(key.clone());
+                self.kvs.insert(key, value);
+            });
     }
 
     pub fn get(&self, key: &K) -> Option<KeyValueEntryRef<V>> {
@@ -36,7 +38,7 @@ impl<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> HashList<K, V> {
         let mut result = Vec::new();
         for i in start..end {
             if let Some(key) = self.list.get(i) {
-                let item = self.get(&key).unwrap().clone();
+                let item = self.get(&key).unwrap().to_owned();
                 result.push(item);
             } else {
                 break;

@@ -23,6 +23,7 @@ mod token_wrapper {
             update_wrappable => restrict_to: [OWNER];
             
             get_children => PUBLIC;
+            
             wrap => restrict_to: [user];
             unwrap => restrict_to: [user];
         }
