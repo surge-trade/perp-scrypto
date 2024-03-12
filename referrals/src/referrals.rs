@@ -29,6 +29,7 @@ mod referrals {
             
             update_rebate => restrict_to: [authority];
             update_trickle_up => restrict_to: [authority];
+            
             set_referrer => restrict_to: [authority];
             reward => restrict_to: [authority];
             collect => restrict_to: [authority];

@@ -1,6 +1,7 @@
 use scrypto::prelude::*;
 use super::errors::*;
 use super::exchange::Oracle;
+use crate::exchange::consts::BASE_RESOURCE;
 
 pub struct VirtualOracle {
     oracle: Global<Oracle>,
@@ -24,7 +25,11 @@ impl VirtualOracle {
     }
 
     pub fn price_resource(&self, resource: ResourceAddress) -> Decimal {
-        let pair_id = *self.resource_feeds.get(&resource).expect(ERROR_MISSING_RESOURCE_FEED);
-        self.price(pair_id)
+        if resource == BASE_RESOURCE {
+            return dec!(1);
+        } else {
+            let pair_id = *self.resource_feeds.get(&resource).expect(ERROR_MISSING_RESOURCE_FEED);
+            self.price(pair_id)
+        }
     }
 }

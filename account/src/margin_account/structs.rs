@@ -12,27 +12,20 @@ pub struct MarginAccountInfo {
     pub positions: HashMap<u64, AccountPosition>,
     pub collateral_balances: HashMap<ResourceAddress, Decimal>,
     pub virtual_balance: Decimal,
+    pub last_liquidation: Instant,
 }
 
 #[derive(ScryptoSbor)]
 pub struct MarginAccountUpdates {
     pub position_updates: HashMap<u64, AccountPosition>,
     pub virtual_balance: Decimal,
+    pub last_liquidation: Instant,
 }
 
 #[derive(ScryptoSbor, Clone)]
 pub struct KeeperRequest {
     pub request: Vec<u8>,
+    pub submission: Instant,
     pub expiry: Instant,
     pub status: u8,
-}
-
-impl KeeperRequest {
-    pub fn new(request: Vec<u8>, expiry: Instant) -> Self {
-        Self {
-            request,
-            expiry,
-            status: 0,
-        }
-    }
 }

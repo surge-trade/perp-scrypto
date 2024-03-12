@@ -36,6 +36,8 @@ pub struct RequestMarginOrder {
     pub pair_id: u64,
     pub amount: Decimal,
     pub price_limit: Limit,
+    pub active_requests: Vec<u64>,
+    pub cancel_requests: Vec<u64>,
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -54,3 +56,8 @@ impl Request {
         scrypto_decode(data).expect(ERROR_REQUEST_DECODING)
     }
 }
+
+pub const STATUS_DORMANT: u8 = 0;
+pub const STATUS_ACTIVE: u8 = 1;
+pub const STATUS_EXECUTED: u8 = 2;
+pub const STATUS_CANCELLED: u8 = 3;
