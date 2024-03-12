@@ -25,11 +25,7 @@ impl VirtualOracle {
     }
 
     pub fn price_resource(&self, resource: ResourceAddress) -> Decimal {
-        if resource == BASE_RESOURCE {
-            return dec!(1);
-        } else {
-            let pair_id = *self.resource_feeds.get(&resource).expect(ERROR_MISSING_RESOURCE_FEED);
-            self.price(pair_id)
-        }
+        let pair_id = *self.resource_feeds.get(&resource).expect(ERROR_MISSING_RESOURCE_FEED);
+        self.price(pair_id)
     }
 }

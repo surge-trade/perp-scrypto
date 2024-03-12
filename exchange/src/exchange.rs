@@ -439,7 +439,9 @@ mod exchange {
         ) {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account, self._collaterals());
-                self._add_collateral(&mut account, tokens);
+                let mut pool = VirtualLiquidityPool::new(self.pool);
+                self._add_collateral(&mut pool, &mut account, tokens);
+                pool.realize();
                 account.realize();
             })
         }
@@ -639,8 +641,9 @@ mod exchange {
         fn _assert_pool_integrity(
             &self,
             pool: &VirtualLiquidityPool,
+            skew_delta: Decimal,
         ) {
-            if self._skew_ratio(pool) >= self.config.exchange.skew_ratio_cap {
+            if self._skew_ratio(pool) >= self.config.exchange.skew_ratio_cap && skew_delta <= dec!(0) {
                 panic!("{}", ERROR_SKEW_TOO_HIGH);
             }
         }
@@ -652,9 +655,10 @@ mod exchange {
             oracle: &VirtualOracle,
         ) {
             let (pnl, margin) = self._value_positions(pool, account, oracle);
-            let collateral = self._value_collateral(account, oracle);
+            let collateral_value = self._value_collateral(account, oracle);
+            let account_value = pnl + collateral_value + account.virtual_balance();
 
-            if pnl + collateral < margin {
+            if account_value < margin {
                 panic!("{}", ERROR_INSUFFICIENT_MARGIN);
             }
         }
@@ -719,18 +723,27 @@ mod exchange {
 
             pool.burn_lp(lp_token);
             let payment = pool.withdraw(value - fee, TO_ZERO);
+            
+            self._assert_pool_integrity(pool, dec!(0));
 
             payment
         }
 
         fn _add_collateral(
             &self, 
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
-            tokens: Vec<Bucket>,
+            mut tokens: Vec<Bucket>,
         ) {
+            if let Some(index) = tokens.iter().position(|token| token.resource_address() == BASE_RESOURCE) {
+                let base_token = tokens.remove(index);
+                let base_amount = base_token.amount();
+                pool.deposit(base_token);
+                pool.update_virtual_balance(pool.virtual_balance() - base_amount);
+                account.update_virtual_balance(account.virtual_balance() + base_amount);
+            }
             for token in tokens.iter() {
-                let resource = token.resource_address();
-                self._assert_valid_collateral(resource);
+                self._assert_valid_collateral(token.resource_address());
             }
 
             account.deposit_collateral_batch(tokens);
@@ -738,17 +751,41 @@ mod exchange {
         
         fn _remove_collateral(
             &self, 
-            pool: &VirtualLiquidityPool,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
             request: RequestRemoveCollateral,
         ) {
             let target_account = request.target_account;
-            let claims = request.claims;
+            let mut claims = request.claims;
+
+            let mut tokens = Vec::new();
+            claims.retain(|(resource, amount)| {
+                if *resource == BASE_RESOURCE {
+                    assert!(
+                        *amount <= pool.base_tokens_amount(),
+                        "{}", ERROR_REMOVE_COLLATERAL_INSUFFICIENT_POOL_TOKENS
+                    );
+
+                    let base_token = pool.withdraw(*amount, TO_ZERO);
+                    let base_amount = base_token.amount();
+                    pool.update_virtual_balance(pool.virtual_balance() + base_amount);
+                    account.update_virtual_balance(account.virtual_balance() - base_amount);
+                    tokens.push(base_token);
+                    false
+                } else {
+                    true
+                }
+            });
+
+            assert!(
+                account.virtual_balance() >= dec!(0),
+                "{}", ERROR_REMOVE_COLLATERAL_NEGATIVE_BALANCE
+            );
 
             let mut target_account = Global::<Account>::try_from(target_account).expect(ERROR_INVALID_ACCOUNT);
             
-            let tokens = account.withdraw_collateral_batch(claims, TO_ZERO);
+            tokens.append(&mut account.withdraw_collateral_batch(claims, TO_ZERO));
             target_account.try_deposit_batch_or_abort(tokens, None); // TODO: create authorization badge
             
             self._assert_account_integrity(pool, account, oracle);
@@ -788,6 +825,9 @@ mod exchange {
                     (dec!(0), amount)
                 }
             };
+
+            let skew0 = pool.skew_abs_snap();
+
             if !amount_close.is_zero() {
                 self._close_position(pool, account, oracle, pair_id, amount_close);
             }
@@ -798,13 +838,15 @@ mod exchange {
             self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
 
+            let skew1 = pool.skew_abs_snap();
+
             let status_updates = request.active_requests.into_iter().map(|index| (index, STATUS_ACTIVE))
                 .chain(request.cancel_requests.into_iter().map(|index| (index, STATUS_CANCELLED)))
                 .collect();
             account.set_request_statuses(status_updates);
 
             self._assert_account_integrity(pool, account, oracle);
-            self._assert_pool_integrity(pool);
+            self._assert_pool_integrity(pool, skew1 - skew0);
         }
 
         fn _swap_debt(
@@ -853,9 +895,10 @@ mod exchange {
 
             let (pnl, margin, fee_referral) = self._liquidate_positions(pool, account, oracle);
             let (collateral_value, mut collateral_tokens) = self._liquidate_collateral(account, oracle);
+            let account_value = pnl + collateral_value + account.virtual_balance();
 
             assert!(
-                pnl + collateral_value + account.virtual_balance() < margin,
+                account_value < margin,
                 "{}", ERROR_LIQUIDATION_SUFFICIENT_MARGIN
             );
             
@@ -890,8 +933,12 @@ mod exchange {
             let position = account.position(pair_id);
             let price_token = oracle.price(pair_id);
             let amount = position.amount;
-            let value = position.amount * price_token;
 
+            if amount.is_zero() {
+                panic!("{}", ERROR_ADL_NO_POSITION);
+            }
+
+            let value = position.amount * price_token;
             let cost = position.cost;
 
             let pnl_percent = (value - cost) / cost;
@@ -904,9 +951,7 @@ mod exchange {
             );
             
             let amount_close = -amount;
-            if !amount_close.is_zero() { // TODO: panic?
-                self._close_position(pool, account, oracle, pair_id, amount_close);
-            }
+            self._close_position(pool, account, oracle, pair_id, amount_close);
 
             self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
@@ -1226,23 +1271,8 @@ mod exchange {
             account: &mut VirtualMarginAccount,
             amount: Decimal,
         ) {
-            let outstanding_base = if amount.is_positive() {
-                let available_base = pool.base_tokens_amount();
-                let amount_base = amount.min(available_base);
-                let tokens_base = pool.withdraw(amount_base, TO_ZERO);
-                account.deposit_collateral(tokens_base);
-
-                amount - amount_base
-            } else {
-                let available_base = account.collateral_amount(&BASE_RESOURCE);
-                let amount_base = (-amount).min(available_base);
-                let tokens_base = account.withdraw_collateral(&BASE_RESOURCE, amount_base, TO_INFINITY);
-                pool.deposit(tokens_base);
-                
-                amount + amount_base
-            };
-            pool.update_virtual_balance(pool.virtual_balance() - outstanding_base);
-            account.update_virtual_balance(account.virtual_balance() + outstanding_base);
+            pool.update_virtual_balance(pool.virtual_balance() - amount);
+            account.update_virtual_balance(account.virtual_balance() + amount);
         }
 
         fn _settle_funding(
