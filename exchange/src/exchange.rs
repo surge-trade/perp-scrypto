@@ -776,11 +776,6 @@ mod exchange {
                 }
             });
 
-            assert!(
-                account.virtual_balance() >= dec!(0),
-                "{}", ERROR_REMOVE_COLLATERAL_NEGATIVE_BALANCE
-            );
-
             let mut target_account = Global::<Account>::try_from(target_account).expect(ERROR_INVALID_ACCOUNT);
             
             tokens.append(&mut account.withdraw_collateral_batch(claims, TO_ZERO));
