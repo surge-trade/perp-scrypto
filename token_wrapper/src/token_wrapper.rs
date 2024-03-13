@@ -1,9 +1,7 @@
 mod errors;
-mod consts;
 
 use scrypto::prelude::*;
-use utils::List;
-use self::consts::*;
+use utils::{List, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]

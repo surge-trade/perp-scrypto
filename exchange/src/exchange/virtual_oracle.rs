@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 use super::errors::*;
 use super::exchange::Oracle;
-use crate::exchange::consts::BASE_RESOURCE;
+use utils::BASE_RESOURCE;
 
 pub struct VirtualOracle {
     oracle: Global<Oracle>,

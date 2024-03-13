@@ -1,8 +1,7 @@
-mod consts;
-pub mod structs;
+mod structs;
 
 use scrypto::prelude::*;
-use self::consts::*;
+use utils::{AUTHORITY_RESOURCE, BASE_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]

@@ -1,7 +1,5 @@
-mod consts;
-
 use scrypto::prelude::*;
-use self::consts::*;
+use utils::{AUTHORITY_RESOURCE, BASE_RESOURCE, TO_ZERO};
 
 #[derive(ScryptoSbor)]
 struct ReferralAccount {

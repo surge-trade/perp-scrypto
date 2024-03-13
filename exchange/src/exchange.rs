@@ -5,7 +5,6 @@
 
 
 mod config;
-mod consts;
 mod errors;
 mod requests;
 mod virtual_margin_pool;
@@ -13,11 +12,10 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use utils::*;
+use utils::{HashList, BASE_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
 use pool::*;
 use self::config::*;
-use self::consts::*;
 use self::errors::*;
 use self::requests::*;
 use self::virtual_margin_pool::*;
