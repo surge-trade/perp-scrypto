@@ -43,7 +43,7 @@ class Gateway:
             data = await response.json()
             return data['ledger_state']['epoch']
 
-    async def get_xrd_balance(self, account: str) -> float:
+    async def get_xrd_balance(self, account: Address) -> float:
         network_config = await self.network_configuration()
         xrd = network_config['xrd']
 
@@ -51,7 +51,7 @@ class Gateway:
             'Content-Type': 'application/json',
         }
         body = {
-            'address': account,
+            'address': account.as_str(),
         }
         async with self.session.post(
             f'{self.gateway_url}/state/entity/page/fungibles/',
