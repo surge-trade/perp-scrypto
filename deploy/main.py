@@ -43,12 +43,12 @@ async def main():
             account_details = new_account(network_config['network_id'])
         private_key, public_key, account = account_details
 
-        # balance = await core_node.get_account_balance(account, XRD)
-        # if balance < 100:
-        #     print('FUND ACCOUNT:', public_key)
-        # while balance < 100:
-        #     await asyncio.sleep(5)
-        #     balance = await core_node.get_account_balance(account, XRD)
+        balance = await gateway.get_xrd_balance(account)
+        if balance < 100:
+            print('FUND ACCOUNT:', public_key)
+        while balance < 100:
+            await asyncio.sleep(5)
+            balance = await gateway.get_xrd_balance(account)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -58,6 +58,8 @@ async def main():
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         owner_resource = await gateway.get_new_addresses(intent)[0]
+        print('OWNER_RESOURCE:', owner_resource)
+
         owner_role = OwnerRole.UPDATABLE(AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(owner_resource)))),
         manifest_owner_role = ManifestBuilderValue.ENUM_VALUE(2, 
             [ManifestBuilderValue.ENUM_VALUE(2, 
@@ -70,19 +72,6 @@ async def main():
                 )]
             )]
         )
-        none = ManifestBuilderValue.ENUM_VALUE(0, [])
-
-        # Enum<2u8>(
-        #     Enum<2u8>(
-        #         Enum<0u8>(
-        #             Enum<0u8>(
-        #                 Enum<1u8>(
-        #                     Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
-        #                 )
-        #             )
-        #         )
-        #     )
-        # )
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -91,6 +80,7 @@ async def main():
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         authority_resource = await gateway.get_new_addresses(intent)[0]
+        print('AUTHORITY_RESOURCE:', authority_resource)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -98,6 +88,7 @@ async def main():
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         base_resource = await gateway.get_new_addresses(intent)[0]
+        print('BASE_RESOURCE:', base_resource)
 
         vars = [
             ('NETWORK_ID', network_config['network_id']),
@@ -116,8 +107,8 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         token_wrapper_package = await gateway.get_new_addresses(intent)[0]
-
         vars.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
+        print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
 
         code, definition = build('account', vars)
         payload, intent = await gateway.build_publish_transaction(
@@ -130,8 +121,8 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         account_package = await gateway.get_new_addresses(intent)[0]
-
         vars.append(('ACCOUNT_PACKAGE', account_package))
+        print('ACCOUNT_PACKAGE:', account_package)
 
         code, definition = build('pool', vars)
         payload, intent = await gateway.build_publish_transaction(
@@ -144,8 +135,8 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         pool_package = await gateway.get_new_addresses(intent)[0]
-
         vars.append(('POOL_PACKAGE', pool_package))
+        print('POOL_PACKAGE:', pool_package)
 
         code, definition = build('oracle', vars)
         payload, intent = await gateway.build_publish_transaction(
@@ -158,8 +149,8 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         oracle_package = await gateway.get_new_addresses(intent)[0]
-
         vars.append(('ORACLE_PACKAGE', oracle_package))
+        print('ORACLE_PACKAGE:', oracle_package)
 
         code, definition = build('referrals', vars)
         payload, intent = await gateway.build_publish_transaction(
@@ -172,8 +163,8 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         referrals_package = await gateway.get_new_addresses(intent)[0]
-
         vars.append(('REFERRALS_PACKAGE', referrals_package))
+        print('REFERRALS_PACKAGE:', referrals_package)
 
         code, definition = build('exchange', vars)
         payload, intent = await gateway.build_publish_transaction(
@@ -186,20 +177,31 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         exchange_package = await gateway.get_new_addresses(intent)[0]
-
         vars.append(('EXCHANGE_PACKAGE', exchange_package))
+        print('EXCHANGE_PACKAGE:', exchange_package)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
+        builder = builder.account_withdraw(
+            account,
+            Address(authority_resource),
+            Decimal('0.000000000000000001')
+        )
+        builder = builder.take_from_worktop(
+            Address(authority_resource),
+            Decimal('0.000000000000000001'),
+            ManifestBuilderBucket("authority")
+        )
         builder = builder.call_function(
             pool_package,
             'TokenWrapper',
             'new',
-            [manifest_owner_role]
+            [manifest_owner_role, ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority"))]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         token_wrapper_component = await gateway.get_new_addresses(intent)[0]
+        print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -213,6 +215,8 @@ async def main():
         await gateway.submit_transaction(payload)
         temp = await gateway.get_new_addresses(intent)
         pool_component, lp_resource = temp[0], temp[1]
+        print('POOL_COMPONENT:', pool_component)
+        print('LP_RESOURCE:', lp_resource)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -225,6 +229,7 @@ async def main():
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         oracle_component = await gateway.get_new_addresses(intent)[0]
+        print('ORACLE_COMPONENT:', oracle_component)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -237,6 +242,7 @@ async def main():
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         referrals_component = await gateway.get_new_addresses(intent)[0]
+        print('REFERRALS_COMPONENT:', referrals_component)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -265,7 +271,7 @@ async def main():
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         exchange_component = await gateway.get_new_addresses(intent)[0]
+        print('EXCHANGE_COMPONENT:', exchange_component)
 
-        
 if __name__ == '__main__':
     asyncio.run(main())

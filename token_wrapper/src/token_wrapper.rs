@@ -44,9 +44,9 @@ mod token_wrapper {
     }
 
     impl TokenWrapper {
-        pub fn new(owner_role: OwnerRole) -> Global<TokenWrapper> {
+        pub fn new(owner_role: OwnerRole, authority_token: Bucket) -> Global<TokenWrapper> {
             Self {
-                authority_token: FungibleVault::new(AUTHORITY_RESOURCE),
+                authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 child_list: List::new(),
                 child_vaults: KeyValueStore::new(),
             }
