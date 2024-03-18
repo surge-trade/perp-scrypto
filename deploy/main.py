@@ -1,6 +1,8 @@
 from radix_engine_toolkit import *
 import asyncio
+import datetime
 from os.path import dirname, join, realpath
+from os import makedirs
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
@@ -25,6 +27,15 @@ def build(name: str, vars: list) -> (bytes, bytes):
         code = f.read()
     with open(join(path, f'target/wasm32-unknown-unknown/release/{name}.rpd'), 'rb') as f:
         definition = f.read()
+
+    release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+    makedirs(release_path, exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    with open(join(release_path, f'{name}_{timestamp}.wasm'), 'wb') as f:
+        f.write(code)
+    with open(join(release_path, f'{name}_{timestamp}.rpd'), 'wb') as f:
+        f.write(definition)
+    print(f'Release files written to: {release_path}')
     return code, definition
 
 async def main():
@@ -274,4 +285,5 @@ async def main():
         print('EXCHANGE_COMPONENT:', exchange_component)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    build('account', [])
+    # asyncio.run(main())
