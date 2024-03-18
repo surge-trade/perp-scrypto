@@ -45,7 +45,7 @@ async def main():
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 100:
-            print('FUND ACCOUNT:', public_key)
+            print('FUND ACCOUNT:', account.as_str())
         while balance < 100:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
