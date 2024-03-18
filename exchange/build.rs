@@ -18,7 +18,7 @@ fn main() {
         env::var("ACCOUNT_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("POOL_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
-        env::var("EXCHANGE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
+        env::var("REFERRALS_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
     ];
 
     // Find all matches and replace them sequentially with the new addresses

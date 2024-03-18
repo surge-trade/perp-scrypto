@@ -145,6 +145,7 @@ mod exchange {
             })
         }};
     }
+
     struct Exchange {
         authority_token: FungibleVault,
         config: Config,
@@ -155,14 +156,12 @@ mod exchange {
     
     impl Exchange {
         pub fn new(
-            owner_rule: AccessRule,
+            owner_role: OwnerRole,
             authority_token: Bucket,
             pool: ComponentAddress,
             oracle: ComponentAddress,
             referrals: ComponentAddress,
         ) -> Global<Exchange> {
-            // TODO: for testing purposes
-            let (component_reservation, _this) = Runtime::allocate_component_address(Exchange::blueprint_id());
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 config: Config {
@@ -175,13 +174,12 @@ mod exchange {
                 referrals: referrals.into(),
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
+            .prepare_to_globalize(owner_role)
             .roles(roles! {
                 admin => OWNER;
                 keeper => rule!(allow_all);
                 user => rule!(allow_all);
             })
-            .with_address(component_reservation)
             .globalize()
         }
 

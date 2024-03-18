@@ -45,8 +45,11 @@ pub mod margin_account {
     }
 
     impl MarginAccount {
-        pub fn new(initial_rule: AccessRule) -> Global<MarginAccount> {
-            let (component_reservation, _this) = Runtime::allocate_component_address(MarginAccount::blueprint_id());
+        pub fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount> {
+            let component_reservation = match reservation {
+                Some(reservation) => reservation,
+                None => Runtime::allocate_component_address(MarginAccount::blueprint_id()).0
+            };
 
             Self {
                 collateral: Vaults::new(),

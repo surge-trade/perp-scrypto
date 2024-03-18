@@ -9,10 +9,9 @@ const DEFAULT_AUTHORITY_RESOURCE: &str = "resource_sim1tknxxxxxxxxxradxrdxxxxxxx
 
 fn main() {
     // Determine the network to use
-    let network = match env::var("NETWORK").unwrap_or_default().as_str() {
-        "mainnet" => NetworkDefinition::mainnet(),
-        "stokenet" => NetworkDefinition::stokenet(),
-        "simulator" => NetworkDefinition::simulator(),
+    let network = match env::var("NETWORK_ID").unwrap_or_default().as_str() {
+        "1" => NetworkDefinition::mainnet(),
+        "2" => NetworkDefinition::stokenet(),
         _ => NetworkDefinition::simulator(),
     };
     let decoder = AddressBech32Decoder::new(&network);

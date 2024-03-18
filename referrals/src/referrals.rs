@@ -42,9 +42,7 @@ mod referrals {
     }
 
     impl Referrals {
-        pub fn new(owner_rule: AccessRule) -> Global<Referrals> {
-            let (component_reservation, _this) = Runtime::allocate_component_address(Referrals::blueprint_id());
-
+        pub fn new(owner_role: OwnerRole) -> Global<Referrals> {
             Self {
                 referral_accounts: KeyValueStore::new(),
                 undirected_rewards: Vault::new(BASE_RESOURCE),
@@ -52,11 +50,10 @@ mod referrals {
                 trickle_up: dec!(0),
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
+            .prepare_to_globalize(owner_role)
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
             })
-            .with_address(component_reservation)
             .globalize()
         }
 

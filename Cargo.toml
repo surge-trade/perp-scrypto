@@ -1,9 +1,0 @@
-[workspace]
-members = [
-    "account",
-    "exchange",
-    "pool",
-    "referrals",
-    "token_wrapper",
-    "utils",
-]

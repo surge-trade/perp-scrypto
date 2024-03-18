@@ -35,10 +35,10 @@ pub mod margin_pool {
     }
 
     impl MarginPool {
-        pub fn new(owner_rule: AccessRule) -> Global<MarginPool> {
+        pub fn new(owner_role: OwnerRole) -> Global<MarginPool> {
             let (component_reservation, this) = Runtime::allocate_component_address(MarginPool::blueprint_id());
 
-            let lp_token_manager = ResourceBuilder::new_fungible(OwnerRole::Updatable(owner_rule.clone()))
+            let lp_token_manager = ResourceBuilder::new_fungible(owner_role.clone())
                 .metadata(metadata!(
                     init {
                         "package" => GlobalAddress::from(Runtime::package_address()), locked;
@@ -69,7 +69,7 @@ pub mod margin_pool {
                 lp_token_manager,
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
+            .prepare_to_globalize(owner_role)
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
             })

@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use utils::{List, TO_ZERO};
+use utils::{List, AUTHORITY_RESOURCE, BASE_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -17,6 +17,8 @@ mod token_wrapper {
             user => updatable_by: [OWNER];
         },
         methods {
+            deposit_authority => restrict_to: [OWNER];
+            withdraw_authority => restrict_to: [OWNER];
             add_child => restrict_to: [OWNER];
             update_wrappable => restrict_to: [OWNER];
             
@@ -27,31 +29,41 @@ mod token_wrapper {
         }
     );
 
+    macro_rules! authorize {
+        ($self:expr, $func:expr) => {{
+            $self.authority_token.create_proof_of_amount(dec!(0.000000000000000001)).authorize(|| {
+                $func
+            })
+        }};
+    }
+
     struct TokenWrapper {
-        parent_token: ResourceManager,
+        authority_token: FungibleVault,
         child_list: List<ResourceAddress>,
         child_vaults: KeyValueStore<ResourceAddress, ChildToken>,
     }
 
     impl TokenWrapper {
-        pub fn new(owner_rule: AccessRule) -> Global<TokenWrapper> {
-            let (component_reservation, _this) = Runtime::allocate_component_address(TokenWrapper::blueprint_id());
-            
-            let parent_token = ResourceBuilder::new_fungible(OwnerRole::Updatable(owner_rule.clone()))
-                .create_with_no_initial_supply();
-
+        pub fn new(owner_role: OwnerRole) -> Global<TokenWrapper> {
             Self {
-                parent_token,
+                authority_token: FungibleVault::new(AUTHORITY_RESOURCE),
                 child_list: List::new(),
                 child_vaults: KeyValueStore::new(),
             }
             .instantiate()  
-            .prepare_to_globalize(OwnerRole::Updatable(owner_rule))
+            .prepare_to_globalize(owner_role)
             .roles(roles!  {
                 user => rule!(allow_all);
             })
-            .with_address(component_reservation)
             .globalize()
+        }
+
+        pub fn deposit_authority(&mut self, token: Bucket) {
+            self.authority_token.put(token.as_fungible());
+        }
+
+        pub fn withdraw_authority(&mut self) -> Bucket {
+            self.authority_token.take_all().into()
         }
 
         pub fn add_child(&mut self, child_resource: ResourceAddress) {
@@ -85,7 +97,9 @@ mod token_wrapper {
                 "{}", ERROR_WRAPPING_DISABLED
             );
 
-            let parent_token = self.parent_token.mint(child_token.amount());
+            let parent_token = authorize!(self, {
+                ResourceManager::from_address(BASE_RESOURCE).mint(child_token.amount())
+            });
             child_vault.vault.put(child_token);
 
             parent_token
