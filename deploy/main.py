@@ -299,9 +299,9 @@ async def main():
             [
                 manifest_owner_role, 
                 ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority")),
-                ManifestBuilderValue.ADDRESS_VALUE(Address(pool_component)),
-                ManifestBuilderValue.ADDRESS_VALUE(Address(oracle_component)),
-                ManifestBuilderValue.ADDRESS_VALUE(Address(referrals_component)),
+                ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(pool_component))),
+                ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(oracle_component))),
+                ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(referrals_component))),
             ]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
