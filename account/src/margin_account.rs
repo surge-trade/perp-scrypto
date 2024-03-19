@@ -1,11 +1,13 @@
 mod structs;
 
 use scrypto::prelude::*;
-use utils::{List, Vaults, AUTHORITY_RESOURCE};
+use utils::{List, Vaults, _AUTHORITY_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]
 pub mod margin_account {
+    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+
     enable_function_auth! {
         new => rule!(require(AUTHORITY_RESOURCE));
     }

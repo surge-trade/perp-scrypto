@@ -12,7 +12,7 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use utils::{HashList, BASE_RESOURCE, TO_ZERO, TO_INFINITY};
+use utils::{HashList, _BASE_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
 use pool::*;
 use self::config::*;
@@ -24,6 +24,8 @@ use self::virtual_oracle::*;
 
 #[blueprint]
 mod exchange {
+    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
+
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {

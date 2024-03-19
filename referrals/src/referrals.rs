@@ -10,7 +10,7 @@ struct ReferralAccount {
 impl ReferralAccount {
     fn new(referrer_account: Option<ComponentAddress>) -> Self {
         Self {
-            rewards: Vault::new(BASE_RESOURCE),
+            rewards: Vault::new(_BASE_RESOURCE),
             referrer_account,
         }
     }
@@ -18,6 +18,9 @@ impl ReferralAccount {
 
 #[blueprint]
 mod referrals {
+    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
+
     enable_method_auth!(
         roles {
             authority => updatable_by: [];
@@ -33,9 +36,6 @@ mod referrals {
             collect => restrict_to: [authority];
         }
     );
-
-    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
-    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     struct Referrals {
         referral_accounts: KeyValueStore<ComponentAddress, ReferralAccount>,
