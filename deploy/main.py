@@ -41,12 +41,11 @@ def build(name: str, envs: list) -> (bytes, bytes):
 
     release_path = join(dirname(dirname(realpath(__file__))), 'releases')
     makedirs(release_path, exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
     with open(join(release_path, f'{name}_{timestamp}.wasm'), 'wb') as f:
         f.write(code)
     with open(join(release_path, f'{name}_{timestamp}.rpd'), 'wb') as f:
         f.write(definition)
-    print(f'Release files written to: {release_path}')
     return code, definition
 
 async def main():
@@ -72,135 +71,168 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
-        builder = ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = mint_owner_badge(builder)
-        builder = deposit_all(builder, account)
+        # builder = ManifestBuilder()
+        # builder = lock_fee(builder, account, 100)
+        # builder = mint_owner_badge(builder)
+        # builder = deposit_all(builder, account)
 
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        owner_resource = await gateway.get_new_addresses(intent)[0]
-        print('OWNER_RESOURCE:', owner_resource)
+        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # owner_resource = addresses[0]
+        # print('OWNER_RESOURCE:', owner_resource)
 
-        owner_role = OwnerRole.UPDATABLE(AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(owner_resource)))),
+        # owner_role = OwnerRole.UPDATABLE(AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(owner_resource))))
+        # manifest_owner_role = ManifestBuilderValue.ENUM_VALUE(2, 
+        #     [ManifestBuilderValue.ENUM_VALUE(2, 
+        #         [ManifestBuilderValue.ENUM_VALUE(0, 
+        #             [ManifestBuilderValue.ENUM_VALUE(0, 
+        #                 [ManifestBuilderValue.ENUM_VALUE(1, 
+        #                     Address(owner_resource)
+        #                 )]
+        #             )]
+        #         )]
+        #     )]
+        # )
+
+        # builder = ManifestBuilder()
+        # builder = lock_fee(builder, account, 100)
+        # builder = mint_authority(builder)
+        # builder = deposit_all(builder, account)
+        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # authority_resource = addresses[0]
+        # print('AUTHORITY_RESOURCE:', authority_resource)
+
+        # builder = ManifestBuilder()
+        # builder = lock_fee(builder, account, 100)
+        # builder = create_base(builder, owner_role, authority_resource)
+        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # base_resource = addresses[0]
+        # print('BASE_RESOURCE:', base_resource)
+
+        # envs = [
+        #     ('NETWORK_ID', network_config['network_id']),
+        #     ('AUTHORITY_RESOURCE', authority_resource),
+        #     ('BASE_RESOURCE', base_resource),
+        # ]
+
+        # code, definition = build('token_wrapper', envs)
+        # payload, intent = await gateway.build_publish_transaction(
+        #     account,
+        #     code,
+        #     definition,
+        #     owner_role,
+        #     public_key,
+        #     private_key,
+        # )
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # token_wrapper_package = addresses[0]
+        # envs.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
+        # print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
+
+        # code, definition = build('account', envs)
+        # payload, intent = await gateway.build_publish_transaction(
+        #     account,
+        #     code,
+        #     definition,
+        #     owner_role,
+        #     public_key,
+        #     private_key,
+        # )
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # account_package = addresses[0]
+        # envs.append(('ACCOUNT_PACKAGE', account_package))
+        # print('ACCOUNT_PACKAGE:', account_package)
+
+        # code, definition = build('pool', envs)
+        # payload, intent = await gateway.build_publish_transaction(
+        #     account,
+        #     code,
+        #     definition,
+        #     owner_role,
+        #     public_key,
+        #     private_key,
+        # )
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # pool_package = addresses[0]
+        # envs.append(('POOL_PACKAGE', pool_package))
+        # print('POOL_PACKAGE:', pool_package)
+
+        # code, definition = build('oracle', envs)
+        # payload, intent = await gateway.build_publish_transaction(
+        #     account,
+        #     code,
+        #     definition,
+        #     owner_role,
+        #     public_key,
+        #     private_key,
+        # )
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # oracle_package = addresses[0]
+        # envs.append(('ORACLE_PACKAGE', oracle_package))
+        # print('ORACLE_PACKAGE:', oracle_package)
+
+        # code, definition = build('referrals', envs)
+        # payload, intent = await gateway.build_publish_transaction(
+        #     account,
+        #     code,
+        #     definition,
+        #     owner_role,
+        #     public_key,
+        #     private_key,
+        # )
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # referrals_package = addresses[0]
+        # envs.append(('REFERRALS_PACKAGE', referrals_package))
+        # print('REFERRALS_PACKAGE:', referrals_package)
+
+        # code, definition = build('exchange', envs)
+        # payload, intent = await gateway.build_publish_transaction(
+        #     account,
+        #     code,
+        #     definition,
+        #     owner_role,
+        #     public_key,
+        #     private_key,
+        # )
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # exchange_package = addresses[0]
+        # envs.append(('EXCHANGE_PACKAGE', exchange_package))
+        # print('EXCHANGE_PACKAGE:', exchange_package)
+
+        owner_resource = 'resource_tdx_2_1t4ghrqpemqdc9u4wsj0tqzyjn6lhure6q9vszr7flu4yczvxvjc455'
+        authority_resource = 'resource_tdx_2_1t4avj9y0nwkeme0p8shvg2ehgvtrt5jm06l7v96l3ek7st2f8a0s77'
+        base_resource = 'resource_tdx_2_1t4r63fm2gdc94dl3wd26kkcw430hzlhc7n94u4cqc2647eezqy940r'
+
+        owner_role = OwnerRole.UPDATABLE(AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(owner_resource))))
         manifest_owner_role = ManifestBuilderValue.ENUM_VALUE(2, 
             [ManifestBuilderValue.ENUM_VALUE(2, 
                 [ManifestBuilderValue.ENUM_VALUE(0, 
                     [ManifestBuilderValue.ENUM_VALUE(0, 
                         [ManifestBuilderValue.ENUM_VALUE(1, 
-                            Address(owner_resource)
+                            [ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(owner_resource)))]
                         )]
                     )]
                 )]
             )]
         )
 
-        builder = ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = mint_authority(builder)
-        builder = deposit_all(builder, account)
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        authority_resource = await gateway.get_new_addresses(intent)[0]
-        print('AUTHORITY_RESOURCE:', authority_resource)
-
-        builder = ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = create_base(builder, owner_role, authority_resource)
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        base_resource = await gateway.get_new_addresses(intent)[0]
-        print('BASE_RESOURCE:', base_resource)
-
-        envs = [
-            ('NETWORK_ID', network_config['network_id']),
-            ('AUTHORITY_RESOURCE', authority_resource),
-            ('BASE_RESOURCE', base_resource),
-        ]
-
-        code, definition = build('token_wrapper', envs)
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        token_wrapper_package = await gateway.get_new_addresses(intent)[0]
-        envs.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
-        print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
-
-        code, definition = build('account', envs)
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        account_package = await gateway.get_new_addresses(intent)[0]
-        envs.append(('ACCOUNT_PACKAGE', account_package))
-        print('ACCOUNT_PACKAGE:', account_package)
-
-        code, definition = build('pool', envs)
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        pool_package = await gateway.get_new_addresses(intent)[0]
-        envs.append(('POOL_PACKAGE', pool_package))
-        print('POOL_PACKAGE:', pool_package)
-
-        code, definition = build('oracle', envs)
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        oracle_package = await gateway.get_new_addresses(intent)[0]
-        envs.append(('ORACLE_PACKAGE', oracle_package))
-        print('ORACLE_PACKAGE:', oracle_package)
-
-        code, definition = build('referrals', envs)
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        referrals_package = await gateway.get_new_addresses(intent)[0]
-        envs.append(('REFERRALS_PACKAGE', referrals_package))
-        print('REFERRALS_PACKAGE:', referrals_package)
-
-        code, definition = build('exchange', envs)
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        exchange_package = await gateway.get_new_addresses(intent)[0]
-        envs.append(('EXCHANGE_PACKAGE', exchange_package))
-        print('EXCHANGE_PACKAGE:', exchange_package)
+        token_wrapper_package = 'package_tdx_2_1p4k2ytn6sja8hq7cd069f532m76uhfsp02plxxvlfqhpfcm6myv6dz'
+        account_package = 'package_tdx_2_1p4hxqrrfw87vn37zwap3r0st2wc6h2pdtk9sywqv6v5c0xv48z0ed9'
+        pool_package = 'package_tdx_2_1p494eq8a9vrfjvqm9mm5tclmyl3n2tjshztpgr83dr7ur9e7l34kk5'
+        oracle_package = 'package_tdx_2_1phu5ljhp50epr66vtkrm06lgwgwhra4mnd8ts7ku2elhcqs66ec30h'
+        referrals_package = 'package_tdx_2_1p5x3h5vvygeu6tf3k572zydgfpp2zux2v4rgq2kt6py90wptwsnsc4'
+        exchange_package = 'package_tdx_2_1ph8kg42yepjxly3f2wggdc996ndk56f7ch78pq92s0vzry7gx4m3ew'
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -215,55 +247,58 @@ async def main():
             ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
-            pool_package,
+            ManifestBuilderAddress.STATIC(Address(token_wrapper_package)),
             'TokenWrapper',
             'new',
             [manifest_owner_role, ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority"))]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
-        token_wrapper_component = await gateway.get_new_addresses(intent)[0]
+        addresses = await gateway.get_new_addresses(intent)
+        token_wrapper_component = addresses[0]
         print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            pool_package,
+            ManifestBuilderAddress.STATIC(Address(pool_package)),
             'MarginPool',
             'new',
             [manifest_owner_role]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
-        temp = await gateway.get_new_addresses(intent)
-        pool_component, lp_resource = temp[0], temp[1]
+        addresses = await gateway.get_new_addresses(intent)
+        pool_component, lp_resource = addresses[0], addresses[1]
         print('POOL_COMPONENT:', pool_component)
         print('LP_RESOURCE:', lp_resource)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            pool_package,
+            ManifestBuilderAddress.STATIC(Address(oracle_package)),
             'Oracle',
             'new',
             [manifest_owner_role]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
-        oracle_component = await gateway.get_new_addresses(intent)[0]
+        addresses = await gateway.get_new_addresses(intent)
+        oracle_component = addresses[0]
         print('ORACLE_COMPONENT:', oracle_component)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            pool_package,
+            ManifestBuilderAddress.STATIC(Address(referrals_package)),
             'Referrals',
             'new',
             [manifest_owner_role]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
-        referrals_component = await gateway.get_new_addresses(intent)[0]
+        addresses = await gateway.get_new_addresses(intent)
+        referrals_component = addresses[0]
         print('REFERRALS_COMPONENT:', referrals_component)
 
         builder = ManifestBuilder()
@@ -279,7 +314,7 @@ async def main():
             ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
-            pool_package,
+            ManifestBuilderAddress.STATIC(Address(exchange_package)),
             'Exchange',
             'new',
             [
@@ -292,9 +327,28 @@ async def main():
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
-        exchange_component = await gateway.get_new_addresses(intent)[0]
+        addresses = await gateway.get_new_addresses(intent)
+        exchange_component = addresses[0]
+        print('EXCHANGE_COMPONENT:', exchange_component)
+
+        print('---------- DEPLOY COMPLETE ----------')
+
+        print('OWNER_RESOURCE:', owner_resource)
+        print('AUTHORITY_RESOURCE:', authority_resource)
+        print('BASE_RESOURCE:', base_resource)
+
+        print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
+        print('ACCOUNT_PACKAGE:', account_package)
+        print('POOL_PACKAGE:', pool_package)
+        print('ORACLE_PACKAGE:', oracle_package)
+        print('REFERRALS_PACKAGE:', referrals_package)
+        print('EXCHANGE_PACKAGE:', exchange_package)
+
+        print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
+        print('POOL_COMPONENT:', pool_component)
+        print('ORACLE_COMPONENT:', oracle_component)
+        print('REFERRALS_COMPONENT:', referrals_component)
         print('EXCHANGE_COMPONENT:', exchange_component)
 
 if __name__ == '__main__':
-    build('account', [('TEST', '1')])
-    # asyncio.run(main())
+    asyncio.run(main())

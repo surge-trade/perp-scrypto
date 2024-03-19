@@ -11,7 +11,7 @@ fn main() {
     // Load the file
     let file_path = Path::new("src/exchange.rs");
     let mut data = fs::read_to_string(file_path).unwrap();
-    let package_regex = Regex::new(r"package_[a-z0-9]{58}").unwrap();
+    let package_regex = Regex::new(r"package[_a-z0-9]+").unwrap();
 
     // Fetch the addresses from the environment
     let packages = vec![
@@ -22,16 +22,20 @@ fn main() {
     ];
 
     // Find all matches and replace them sequentially with the new addresses
-    let matches: Vec<_> = package_regex.find_iter(&data).map(|mat| (mat.start(), mat.end())).collect();
-    for (i, (start, end)) in matches.into_iter().enumerate() {
+    let matches: Vec<_> = package_regex.find_iter(&data).collect();
+    let mut new_data = String::new();
+    let mut last_end = 0;
+    for (i, mat) in matches.iter().enumerate() {
         if i < packages.len() {
-            let (before, after) = data.split_at(start);
-            let (_old, after) = after.split_at(end - start);
-            data = format!("{}{}{}", before, &packages[i], after);
+            new_data.push_str(&data[last_end..mat.start()]);
+            new_data.push_str(&packages[i]);
+            last_end = mat.end();
         } else {
             break;
         }
     }
+    new_data.push_str(&data[last_end..]);
+    data = new_data;
 
     // Write the changes back to the file
     let mut file = File::create(file_path).unwrap();

@@ -35,6 +35,14 @@ def mint_owner_badge(builder: ManifestBuilder) -> ManifestBuilder:
     )
 
 def mint_authority(builder: ManifestBuilder) -> ManifestBuilder:
+    resource_roles = FungibleResourceRoles(
+        mint_roles=None,
+        burn_roles=None,
+        freeze_roles=None,
+        recall_roles=None,
+        withdraw_roles=None,
+        deposit_roles=None,
+    )
     metadata: MetadataModuleConfig = MetadataModuleConfig(
         init={
             'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Authority'), True),
@@ -49,7 +57,7 @@ def mint_authority(builder: ManifestBuilder) -> ManifestBuilder:
         track_total_supply=True,
         divisibility=18,
         initial_supply=Decimal('1'),
-        resource_roles=None,
+        resource_roles=resource_roles,
         metadata=metadata,
         address_reservation=None,
     )
@@ -85,6 +93,6 @@ def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resou
         initial_supply=None,
         resource_roles=resource_roles,
         metadata=metadata,
-        additional_modules=None,
+        address_reservation=None,
     )
     
