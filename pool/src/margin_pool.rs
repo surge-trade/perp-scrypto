@@ -1,7 +1,7 @@
 mod structs;
 
 use scrypto::prelude::*;
-use utils::{AUTHORITY_RESOURCE, BASE_RESOURCE};
+use utils::{_AUTHORITY_RESOURCE, _BASE_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]
@@ -23,6 +23,9 @@ pub mod margin_pool {
             burn_lp => restrict_to: [authority];
         }
     }
+
+    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     struct MarginPool {
         base_tokens: Vault,

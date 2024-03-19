@@ -2,7 +2,7 @@ from radix_engine_toolkit import *
 import asyncio
 import datetime
 from os.path import dirname, join, realpath
-from os import makedirs
+from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
@@ -49,6 +49,9 @@ def build(name: str, envs: list) -> (bytes, bytes):
     return code, definition
 
 async def main():
+    path = dirname(realpath(__file__))
+    chdir(path)
+
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         # clean('utils')
         # clean('account')
@@ -234,44 +237,44 @@ async def main():
         referrals_package = 'package_tdx_2_1p5x3h5vvygeu6tf3k572zydgfpp2zux2v4rgq2kt6py90wptwsnsc4'
         exchange_package = 'package_tdx_2_1ph8kg42yepjxly3f2wggdc996ndk56f7ch78pq92s0vzry7gx4m3ew'
 
-        builder = ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.account_withdraw(
-            account,
-            Address(authority_resource),
-            Decimal('0.000000000000000001')
-        )
-        builder = builder.take_from_worktop(
-            Address(authority_resource),
-            Decimal('0.000000000000000001'),
-            ManifestBuilderBucket("authority")
-        )
-        builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(token_wrapper_package)),
-            'TokenWrapper',
-            'new',
-            [manifest_owner_role, ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority"))]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        token_wrapper_component = addresses[0]
-        print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
+        # builder = ManifestBuilder()
+        # builder = lock_fee(builder, account, 100)
+        # builder = builder.account_withdraw(
+        #     account,
+        #     Address(authority_resource),
+        #     Decimal('0.000000000000000001')
+        # )
+        # builder = builder.take_from_worktop(
+        #     Address(authority_resource),
+        #     Decimal('0.000000000000000001'),
+        #     ManifestBuilderBucket("authority")
+        # )
+        # builder = builder.call_function(
+        #     ManifestBuilderAddress.STATIC(Address(token_wrapper_package)),
+        #     'TokenWrapper',
+        #     'new',
+        #     [manifest_owner_role, ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority"))]
+        # )
+        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # token_wrapper_component = addresses[0]
+        # print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
 
-        builder = ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(pool_package)),
-            'MarginPool',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        pool_component, lp_resource = addresses[0], addresses[1]
-        print('POOL_COMPONENT:', pool_component)
-        print('LP_RESOURCE:', lp_resource)
+        # builder = ManifestBuilder()
+        # builder = lock_fee(builder, account, 100)
+        # builder = builder.call_function(
+        #     ManifestBuilderAddress.STATIC(Address(pool_package)),
+        #     'MarginPool',
+        #     'new',
+        #     [manifest_owner_role]
+        # )
+        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        # await gateway.submit_transaction(payload)
+        # addresses = await gateway.get_new_addresses(intent)
+        # pool_component, lp_resource = addresses[0], addresses[1]
+        # print('POOL_COMPONENT:', pool_component)
+        # print('LP_RESOURCE:', lp_resource)
 
         builder = ManifestBuilder()
         builder = lock_fee(builder, account, 100)

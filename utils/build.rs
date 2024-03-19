@@ -22,7 +22,7 @@ fn main() {
     let mut f = File::create(&dest_path).unwrap();
 
     // Write constants to the output file
-    writeln!(f, "pub const BASE_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
+    writeln!(f, "pub const _BASE_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
         env::var("BASE_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
         }).unwrap_or_else(|_| {
@@ -30,7 +30,7 @@ fn main() {
         }).unwrap().into_node_id().to_vec()
     ).unwrap();
 
-    writeln!(f, "pub const AUTHORITY_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
+    writeln!(f, "pub const _AUTHORITY_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
         env::var("AUTHORITY_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
         }).unwrap_or_else(|_| {

@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::{AUTHORITY_RESOURCE, BASE_RESOURCE, TO_ZERO};
+use utils::{_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
 
 #[derive(ScryptoSbor)]
 struct ReferralAccount {
@@ -33,6 +33,9 @@ mod referrals {
             collect => restrict_to: [authority];
         }
     );
+
+    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     struct Referrals {
         referral_accounts: KeyValueStore<ComponentAddress, ReferralAccount>,

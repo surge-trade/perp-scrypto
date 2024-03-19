@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use utils::{List, BASE_RESOURCE, TO_ZERO};
+use utils::{List, _BASE_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -28,6 +28,8 @@ mod token_wrapper {
             unwrap => restrict_to: [user];
         }
     );
+
+    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     macro_rules! authorize {
         ($self:expr, $func:expr) => {{
