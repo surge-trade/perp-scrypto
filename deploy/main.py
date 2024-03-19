@@ -17,7 +17,7 @@ def clean(name: str) -> None:
     print(f'Clean: {path}')
     run(['cargo', 'clean'], cwd=path, check=True)
 
-def build(name: str envs: list) -> (bytes, bytes):
+def build(name: str, envs: list) -> (bytes, bytes):
     # path = join(dirname(dirname(realpath(__file__))), name)
     # print(f'Build: {path}')
     # run(['scrypto', 'build'] + [f'{key}={value}' for key, value in envs], cwd=path, check=True)
