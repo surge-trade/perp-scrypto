@@ -17,10 +17,20 @@ def clean(name: str) -> None:
     print(f'Clean: {path}')
     run(['cargo', 'clean'], cwd=path, check=True)
 
-def build(name: str, vars: list) -> (bytes, bytes):
-    path = join(dirname(dirname(realpath(__file__))), name)
-    print(f'Build: {path}')
-    run(['scrypto', 'build'] + [f'{key}={value}' for key, value in vars], cwd=path, check=True)
+def build(name: str, mounts: list, envs: list) -> (bytes, bytes):
+    # path = join(dirname(dirname(realpath(__file__))), name)
+    # print(f'Build: {path}')
+    # run(['scrypto', 'build'] + [f'{key}={value}' for key, value in envs], cwd=path, check=True)
+
+    run(['docker', 'run', 
+        f'-v /root/surge-scrypto/{name}:/src',
+        '-v /root/surge-scrypto/utils:/utils', 
+        '-v /root/surge-scrypto/account:/account',
+        '-v /root/surge-scrypto/pool:/pool',
+        'radixdlt/scrypto-builder:v1.1.1',
+    ] + [f'-e {key}={value}' for key, value in envs], 
+        check=True
+    )
 
     code, definition = None, None
     with open(join(path, f'target/wasm32-unknown-unknown/release/{name}.wasm'), 'rb') as f:
@@ -101,13 +111,13 @@ async def main():
         base_resource = await gateway.get_new_addresses(intent)[0]
         print('BASE_RESOURCE:', base_resource)
 
-        vars = [
+        envs = [
             ('NETWORK_ID', network_config['network_id']),
             ('AUTHORITY_RESOURCE', authority_resource),
             ('BASE_RESOURCE', base_resource),
         ]
 
-        code, definition = build('token_wrapper', vars)
+        code, definition = build('token_wrapper', envs)
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -118,10 +128,10 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         token_wrapper_package = await gateway.get_new_addresses(intent)[0]
-        vars.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
+        envs.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
         print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
 
-        code, definition = build('account', vars)
+        code, definition = build('account', envs)
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -132,10 +142,10 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         account_package = await gateway.get_new_addresses(intent)[0]
-        vars.append(('ACCOUNT_PACKAGE', account_package))
+        envs.append(('ACCOUNT_PACKAGE', account_package))
         print('ACCOUNT_PACKAGE:', account_package)
 
-        code, definition = build('pool', vars)
+        code, definition = build('pool', envs)
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -146,10 +156,10 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         pool_package = await gateway.get_new_addresses(intent)[0]
-        vars.append(('POOL_PACKAGE', pool_package))
+        envs.append(('POOL_PACKAGE', pool_package))
         print('POOL_PACKAGE:', pool_package)
 
-        code, definition = build('oracle', vars)
+        code, definition = build('oracle', envs)
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -160,10 +170,10 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         oracle_package = await gateway.get_new_addresses(intent)[0]
-        vars.append(('ORACLE_PACKAGE', oracle_package))
+        envs.append(('ORACLE_PACKAGE', oracle_package))
         print('ORACLE_PACKAGE:', oracle_package)
 
-        code, definition = build('referrals', vars)
+        code, definition = build('referrals', envs)
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -174,10 +184,10 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         referrals_package = await gateway.get_new_addresses(intent)[0]
-        vars.append(('REFERRALS_PACKAGE', referrals_package))
+        envs.append(('REFERRALS_PACKAGE', referrals_package))
         print('REFERRALS_PACKAGE:', referrals_package)
 
-        code, definition = build('exchange', vars)
+        code, definition = build('exchange', envs)
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -188,7 +198,7 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         exchange_package = await gateway.get_new_addresses(intent)[0]
-        vars.append(('EXCHANGE_PACKAGE', exchange_package))
+        envs.append(('EXCHANGE_PACKAGE', exchange_package))
         print('EXCHANGE_PACKAGE:', exchange_package)
 
         builder = ManifestBuilder()
