@@ -23,15 +23,16 @@ def build(name: str, envs: list) -> (bytes, bytes):
     # run(['scrypto', 'build'] + [f'{key}={value}' for key, value in envs], cwd=path, check=True)
 
     run(['docker', 'run', 
-        f'-v /root/surge-scrypto/{name}:/src',
-        '-v /root/surge-scrypto/utils:/utils', 
-        '-v /root/surge-scrypto/account:/account',
-        '-v /root/surge-scrypto/pool:/pool',
-        'radixdlt/scrypto-builder:v1.1.1',
-    ] + [f'-e {key}={value}' for key, value in envs], 
+        '-v', f'/root/surge-scrypto/{name}:/src',
+        '-v', f'/root/surge-scrypto/utils:/utils', 
+        '-v', f'/root/surge-scrypto/account:/account',
+        '-v', f'/root/surge-scrypto/pool:/pool'] + 
+    [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
+    ['radixdlt/scrypto-builder:v1.1.1'],        
         check=True
     )
 
+    path = join(dirname(dirname(realpath(__file__))), name)
     code, definition = None, None
     with open(join(path, f'target/wasm32-unknown-unknown/release/{name}.wasm'), 'rb') as f:
         code = f.read()
@@ -295,5 +296,5 @@ async def main():
         print('EXCHANGE_COMPONENT:', exchange_component)
 
 if __name__ == '__main__':
-    build('account', [])
+    build('account', [('TEST', '1')])
     # asyncio.run(main())
