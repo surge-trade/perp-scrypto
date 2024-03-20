@@ -27,7 +27,7 @@ mod exchange {
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p52rnzyrjxruhdmsrk3y0hye0gdcq3xcgdz25fcm3ttuda8s5cwlkd",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -52,7 +52,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pkuncqd0kvgr56d8luhrvtyycp429vz022xj4fslpj36z5ntl3npqr",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -67,14 +67,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1ph74qp7dq7m3jwtewggnuqyqjae63ywrnwlh8advld9rq9aqyr7u6h",
         Oracle {
             // Getter methods
             fn prices(&self) -> HashMap<u64, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pkduwkqyfp65gx9m2d87s5prh02lcfdr4glm245lkwmc7atnt92cq9",
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
