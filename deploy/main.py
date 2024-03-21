@@ -137,7 +137,7 @@ async def main():
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
         ]
 
-        code, definition = build('token_wrapper', envs)
+        code, definition = build('token_wrapper', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -176,7 +176,7 @@ async def main():
         token_wrapper_component = addresses[0]
         print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
 
-        code, definition = build('account', envs)
+        code, definition = build('account', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -191,7 +191,7 @@ async def main():
         envs.append(('ACCOUNT_PACKAGE', account_package))
         print('ACCOUNT_PACKAGE:', account_package)
 
-        code, definition = build('pool', envs)
+        code, definition = build('pool', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -221,7 +221,7 @@ async def main():
         print('POOL_COMPONENT:', pool_component)
         print('LP_RESOURCE:', lp_resource)
 
-        code, definition = build('oracle', envs)
+        code, definition = build('oracle', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -250,7 +250,7 @@ async def main():
         oracle_component = addresses[0]
         print('ORACLE_COMPONENT:', oracle_component)
 
-        code, definition = build('referrals', envs)
+        code, definition = build('referrals', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -279,7 +279,7 @@ async def main():
         referrals_component = addresses[0]
         print('REFERRALS_COMPONENT:', referrals_component)
 
-        code, definition = build('exchange', envs)
+        code, definition = build('exchange', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
