@@ -1,10 +1,11 @@
 use scrypto::prelude::*;
+use utils::PairId;
 
 // THIS IS A MOCK IMPLEMENTATION
 #[blueprint]
 mod oracle {
     struct Oracle {
-        prices: HashMap<u64, Decimal>,
+        prices: HashMap<PairId, Decimal>,
     }
 
     impl Oracle {
@@ -22,7 +23,7 @@ mod oracle {
             .globalize()
         }
 
-        pub fn prices(&self) -> HashMap<u64, Decimal> {
+        pub fn prices(&self, _max_age: Instant) -> HashMap<PairId, Decimal> {
             self.prices.clone()
         }
     }

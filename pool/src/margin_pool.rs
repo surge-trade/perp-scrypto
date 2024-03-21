@@ -1,7 +1,7 @@
 mod structs;
 
 use scrypto::prelude::*;
-use utils::{_AUTHORITY_RESOURCE, _BASE_RESOURCE};
+use utils::{PairId, _AUTHORITY_RESOURCE, _BASE_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]
@@ -30,7 +30,7 @@ pub mod margin_pool {
     struct MarginPool {
         base_tokens: Vault,
         virtual_balance: Decimal,
-        positions: KeyValueStore<u64, PoolPosition>,
+        positions: KeyValueStore<PairId, PoolPosition>,
         unrealized_pool_funding: Decimal,
         skew_abs_snap: Decimal,
         pnl_snap: Decimal,
@@ -91,8 +91,8 @@ pub mod margin_pool {
             }
         }
 
-        pub fn get_position(&self, position_id: u64) -> Option<PoolPosition> {
-            self.positions.get(&position_id).map(|position| position.clone())
+        pub fn get_position(&self, pair_id: PairId) -> Option<PoolPosition> {
+            self.positions.get(&pair_id).map(|position| position.clone())
         }
 
         pub fn update(&mut self, update: MarginPoolUpdates) {

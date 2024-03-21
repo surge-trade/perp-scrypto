@@ -1,5 +1,6 @@
 use scrypto::prelude::*;
 use crate::list::*;
+pub use crate::list::ListIndex;
 
 #[derive(ScryptoSbor)]
 pub struct HashList<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> {
@@ -34,7 +35,7 @@ impl<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> HashList<K, V> {
         self.kvs.get_mut(key)
     }
 
-    pub fn range(&self, start: u64, end: u64) -> Vec<V> {
+    pub fn range(&self, start: ListIndex, end: ListIndex) -> Vec<V> {
         let mut result = Vec::new();
         for i in start..end {
             if let Some(key) = self.list.get(i) {
@@ -47,7 +48,7 @@ impl<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> HashList<K, V> {
         result
     }
 
-    pub fn len(&self) -> u64 {
+    pub fn len(&self) -> ListIndex {
         self.list.len()
     }
 }

@@ -1,16 +1,17 @@
 use scrypto::prelude::*;
+use utils::PairId;
 use super::errors::*;
 use super::exchange::Oracle;
 
 pub struct VirtualOracle {
     oracle: Global<Oracle>,
-    prices: HashMap<u64, Decimal>,
-    resource_feeds: HashMap<ResourceAddress, u64>,
+    prices: HashMap<PairId, Decimal>,
+    resource_feeds: HashMap<ResourceAddress, PairId>,
 }
 
 impl VirtualOracle {
-    pub fn new(oracle: Global<Oracle>, resource_feeds: HashMap<ResourceAddress, u64>) -> Self {
-        let prices = oracle.prices();
+    pub fn new(oracle: Global<Oracle>, resource_feeds: HashMap<ResourceAddress, PairId>, max_age: Instant) -> Self {
+        let prices = oracle.prices(max_age);
 
         Self {
             oracle,
@@ -19,7 +20,7 @@ impl VirtualOracle {
         }
     }
 
-    pub fn price(&self, pair_id: u64) -> Decimal {
+    pub fn price(&self, pair_id: PairId) -> Decimal {
         *self.prices.get(&pair_id).expect(ERROR_MISSING_PRICE)
     }
 

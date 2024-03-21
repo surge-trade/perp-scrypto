@@ -1,5 +1,6 @@
 use scrypto::prelude::*;
 use pool::*;
+use utils::PairId;
 use super::errors::*;
 use super::exchange::MarginPool;
 
@@ -26,7 +27,7 @@ impl VirtualLiquidityPool {
         }
     }
 
-    pub fn position(&self, pair_id: u64) -> PoolPosition {
+    pub fn position(&self, pair_id: PairId) -> PoolPosition {
         if let Some(position) = self.pool_updates.position_updates.get(&pair_id) {
             position.clone()
         } else {
@@ -82,7 +83,7 @@ impl VirtualLiquidityPool {
         self.pool.burn_lp(token);
     }
 
-    pub fn update_position(&mut self, pair_id: u64, position: PoolPosition) {
+    pub fn update_position(&mut self, pair_id: PairId, position: PoolPosition) {
         self.pool_updates.position_updates.insert(pair_id, position);
     }
 

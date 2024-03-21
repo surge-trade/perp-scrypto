@@ -1,7 +1,7 @@
 mod structs;
 
 use scrypto::prelude::*;
-use utils::{List, Vaults, _AUTHORITY_RESOURCE};
+use utils::{PairId, ListIndex, List, Vaults, _AUTHORITY_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]
@@ -23,27 +23,22 @@ pub mod margin_account {
             get_request => PUBLIC;
             get_requests => PUBLIC;
             get_requests_tail => PUBLIC;
+            get_requests_by_indexes => PUBLIC;
             get_requests_len => PUBLIC;
 
             // Authority protected methods
             update => restrict_to: [authority];
-            push_request => restrict_to: [authority];
-            set_request_status => restrict_to: [authority];
-            set_request_statuses => restrict_to: [authority];
-            process_request => restrict_to: [authority];
-            deposit_collateral => restrict_to: [authority];
             deposit_collateral_batch => restrict_to: [authority];
-            withdraw_collateral => restrict_to: [authority];
             withdraw_collateral_batch => restrict_to: [authority];
         }
     }
     
     struct MarginAccount {
         collateral: Vaults,
-        positions: HashMap<u64, AccountPosition>, // TODO: make kvs for efficient token movement
+        positions: HashMap<PairId, AccountPosition>, // TODO: make kvs for efficient token movement
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
-        last_liquidation: Instant,
+        last_liquidation_index: ListIndex,
     }
 
     impl MarginAccount {
@@ -58,7 +53,7 @@ pub mod margin_account {
                 positions: HashMap::new(), // TODO: make kvs for efficient token movement
                 virtual_balance: dec!(0),
                 requests: List::new(), // TODO: global ref list?
-                last_liquidation: Instant::new(0),
+                last_liquidation_index: 0,
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
@@ -77,23 +72,28 @@ pub mod margin_account {
                 positions: self.positions.clone(),
                 collateral_balances: self.collateral.amounts(collateral_resources),
                 virtual_balance: self.virtual_balance,
-                last_liquidation: self.last_liquidation,
+                requests_len: self.requests.len(),
+                last_liquidation_index: self.last_liquidation_index,
             }
         }
 
-        pub fn get_request(&self, index: u64) -> Option<KeeperRequest> {
+        pub fn get_request(&self, index: ListIndex) -> Option<KeeperRequest> {
             self.requests.get(index).map(|request| request.clone())
         }
 
-        pub fn get_requests(&self, start: u64, end: u64) -> Vec<KeeperRequest> {
+        pub fn get_requests(&self, start: ListIndex, end: ListIndex) -> Vec<KeeperRequest> {
             self.requests.range(start, end)
         }
 
-        pub fn get_requests_tail(&self, num: u64) -> Vec<KeeperRequest> {
+        pub fn get_requests_tail(&self, num: ListIndex) -> Vec<KeeperRequest> {
             self.requests.range(self.requests.len() - num, self.requests.len())
         }
 
-        pub fn get_requests_len(&self) -> u64 {
+        pub fn get_requests_by_indexes(&self, indexes: Vec<ListIndex>) -> HashMap<ListIndex, Option<KeeperRequest>> {
+            indexes.iter().map(|index| (*index, self.get_request(*index))).collect()
+        }
+
+        pub fn get_requests_len(&self) -> ListIndex {
             self.requests.len()
         }
 
@@ -107,47 +107,19 @@ pub mod margin_account {
             }
 
             self.virtual_balance = update.virtual_balance;
-            self.last_liquidation = update.last_liquidation;
-        }
+            self.last_liquidation_index = update.last_liquidation_index;
 
-        pub fn push_request(&mut self, request: KeeperRequest) {
-            self.requests.push(request);
-        }
-
-        pub fn set_request_status(&mut self, index: u64, status: u8) -> Option<u8> {
-            if let Some(mut request) = self.requests.get_mut(index) {
-                let temp = request.status;
-                request.status = status;
-                Some(temp)
-            } else {
-                None
+            for request in update.requests_new {
+                self.requests.push(request);
             }
-        }
 
-        pub fn set_request_statuses(&mut self, updates: Vec<(u64, u8)>) -> Vec<Option<u8>> {
-            updates
-                .into_iter()
-                .map(|(index, status)| self.set_request_status(index, status))
-                .collect()
-        }
-
-        pub fn process_request(&mut self, index: u64, status: u8) -> Option<KeeperRequest> {
-            let mut request = self.requests.get_mut(index)?;
-            let temp = request.clone();
-            request.status = status;
-            Some(temp)
-        }
-
-        pub fn deposit_collateral(&mut self, token: Bucket) {
-            self.collateral.put(token);
+            for (index, updated_request) in update.request_updates {
+                self.requests.update(index, updated_request);
+            }
         }
 
         pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
             self.collateral.put_batch(tokens);
-        }
-
-        pub fn withdraw_collateral(&mut self, resource: ResourceAddress, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket {
-            self.collateral.take_advanced(&resource, amount, withdraw_strategy)
         }
 
         pub fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket> {            

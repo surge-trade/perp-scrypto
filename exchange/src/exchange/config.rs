@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::HashList;
+use utils::{PairId, HashList};
 
 #[derive(ScryptoSbor)]
 pub struct Config {
@@ -25,7 +25,7 @@ pub struct ExchangeConfig {
     /// Flat fee to cover the keeper's expenses
     pub keeper_fee: Decimal,
     /// Maximum allowed number of positions per account
-    pub positions_max: u64,
+    pub positions_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
     pub skew_ratio_cap: Decimal,
     /// ADL offset calculation parameter
@@ -76,7 +76,7 @@ impl ExchangeConfig {
 #[derive(ScryptoSbor, Clone)]
 pub struct PairConfig {
     /// Price feed id
-    pub pair_id: u64,
+    pub pair_id: PairId,
     /// If the pair is disabled  // TODO: implement
     pub disabled: bool,
     /// Initial margin required
@@ -119,7 +119,7 @@ impl PairConfig {
 #[derive(ScryptoSbor, Clone)]
 pub struct CollateralConfig {
     /// Price feed id
-    pub pair_id: u64,
+    pub pair_id: PairId,
     /// Discount applied to the collateral
     pub discount: Decimal,
 }

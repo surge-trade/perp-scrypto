@@ -1,5 +1,6 @@
 use scrypto::prelude::*;
-use account::KeeperRequest;
+use account::{Status, KeeperRequest};
+use utils::{PairId, ListIndex};
 use super::errors::*;
 
 #[derive(ScryptoSbor, Clone)]
@@ -33,11 +34,11 @@ pub struct RequestRemoveCollateral {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct RequestMarginOrder {
-    pub pair_id: u64,
+    pub pair_id: PairId,
     pub amount: Decimal,
     pub price_limit: Limit,
-    pub active_requests: Vec<u64>,
-    pub cancel_requests: Vec<u64>,
+    pub active_requests: Vec<ListIndex>,
+    pub cancel_requests: Vec<ListIndex>,
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -57,7 +58,7 @@ impl Request {
     }
 }
 
-pub const STATUS_DORMANT: u8 = 0;
-pub const STATUS_ACTIVE: u8 = 1;
-pub const STATUS_EXECUTED: u8 = 2;
-pub const STATUS_CANCELLED: u8 = 3;
+pub const STATUS_DORMANT: Status = 0;
+pub const STATUS_ACTIVE: Status = 1;
+pub const STATUS_EXECUTED: Status = 2;
+pub const STATUS_CANCELLED: Status = 3;

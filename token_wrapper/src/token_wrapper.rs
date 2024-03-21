@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use utils::{List, _BASE_RESOURCE, TO_ZERO};
+use utils::{ListIndex, List, _BASE_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -84,7 +84,7 @@ mod token_wrapper {
             child_vault.wrappable = wrappable;
         }
 
-        pub fn get_children(&self, start: u64, end: u64) -> Vec<(ResourceAddress, bool, Decimal)> {
+        pub fn get_children(&self, start: ListIndex, end: ListIndex) -> Vec<(ResourceAddress, bool, Decimal)> {
             self.child_list.range(start, end).iter().map(|child_resource| {
                 let child_vault = self.child_vaults.get(child_resource).unwrap();
                 (*child_resource, child_vault.wrappable, child_vault.vault.amount())

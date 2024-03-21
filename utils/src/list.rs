@@ -1,9 +1,11 @@
 use scrypto::prelude::*;
 
+pub type ListIndex = u64;
+
 #[derive(ScryptoSbor)]
 pub struct List<T: ScryptoSbor + Clone> {
-    pointer: u64,
-    kvs: KeyValueStore<u64, T>,
+    pointer: ListIndex,
+    kvs: KeyValueStore<ListIndex, T>,
 }
 
 impl<T: ScryptoSbor + Clone> List<T> {
@@ -19,15 +21,20 @@ impl<T: ScryptoSbor + Clone> List<T> {
         self.pointer += 1;
     }
 
-    pub fn get(&self, index: u64) -> Option<KeyValueEntryRef<T>> {
+    pub fn get(&self, index: ListIndex) -> Option<KeyValueEntryRef<T>> {
         self.kvs.get(&index)
     }
 
-    pub fn get_mut(&mut self, index: u64) -> Option<KeyValueEntryRefMut<T>> {
+    pub fn get_mut(&mut self, index: ListIndex) -> Option<KeyValueEntryRefMut<T>> {
         self.kvs.get_mut(&index)
     }
 
-    pub fn range(&self, start: u64, end: u64) -> Vec<T> {
+    pub fn update(&mut self, index: ListIndex, item: T) {
+        assert!(index < self.pointer, "Index out of bounds");
+        self.kvs.insert(index, item);
+    }
+
+    pub fn range(&self, start: ListIndex, end: ListIndex) -> Vec<T> {
         let mut result = Vec::new();
         for i in start..end {
             if let Some(item) = self.get(i) {
@@ -39,7 +46,7 @@ impl<T: ScryptoSbor + Clone> List<T> {
         result
     }
 
-    pub fn len(&self) -> u64 {
+    pub fn len(&self) -> ListIndex {
         self.pointer
     }
 }

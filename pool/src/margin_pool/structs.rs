@@ -1,4 +1,5 @@
 use scrypto::prelude::*;
+use utils::PairId;
 
 #[derive(ScryptoSbor, Clone)]
 pub struct PoolPosition {
@@ -25,7 +26,7 @@ pub struct MarginPoolInfo {
 
 #[derive(ScryptoSbor)]
 pub struct MarginPoolUpdates {
-    pub position_updates: HashMap<u64, PoolPosition>,
+    pub position_updates: HashMap<PairId, PoolPosition>,
     pub virtual_balance: Decimal,
     pub unrealized_pool_funding: Decimal,
     pub skew_abs_snap: Decimal,

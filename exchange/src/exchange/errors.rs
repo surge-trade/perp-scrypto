@@ -43,11 +43,10 @@ pub const ERROR_ARITHMETIC: &str = "Arithmetic error";
 pub const ERROR_REQUEST_ENCODING: &str = "Request encoding error";
 pub const ERROR_REQUEST_DECODING: &str = "Request decoding error";
 
-pub const ERROR_REQUEST_NOT_ACTIVE: &str = "Request not active";
-pub const ERROR_REQUEST_NOT_DORMANT: &str = "Request not dormant";
-pub const ERROR_CANNOT_MAKE_DORMANT: &str = "Cannot make request dormant";
+pub const ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT: &str = "Request not active or dormant";
 
-pub const ERROR_REQUEST_EXPIRED: &str = "Request expired";
-pub const ERROR_REQUEST_BEFORE_LIQUIDATION: &str = "Request before liquidation";
+pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
+pub const ERROR_PROCESS_REQUEST_EXPIRED: &str = "Request expired";
+pub const ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION: &str = "Request before liquidation";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
