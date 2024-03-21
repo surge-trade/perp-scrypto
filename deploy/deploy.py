@@ -73,9 +73,9 @@ async def main():
         private_key, public_key, account = account_details
 
         balance = await gateway.get_xrd_balance(account)
-        if balance < 100:
+        if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
-        while balance < 100:
+        while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
@@ -366,36 +366,35 @@ async def main():
         release_path = join(dirname(dirname(realpath(__file__))), 'releases')
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
         release_path = join(release_path, timestamp + '_' + network_config['network_name'])
-        config_file_path = join(release_path, f'config_{timestamp}.json')
         
-        with open(config_file_path, 'w') as config_file:
+        with open(join(release_path, f'config.json'), 'w') as config_file:
             json.dump(config_data, config_file, indent=4)
-
-        print(f'Config saved to {config_file_path}')
+        with open(join(path, f'config.json'), 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        print(f'Config saved')
 
         print('-------------------------------------')
 
-        withdraw_account = input("Please enter your address to withdraw: ")
-        balance = await gateway.get_xrd_balance(account)
-        builder = ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.account_withdraw(
-            account,
-            Address(owner_resource),
-            Decimal('9')
-        )
-        builder = builder.account_withdraw(
-            account,
-            Address(network_config['xrd']),
-            Decimal(str(balance - 1))
-        )
-        builder = builder.account_deposit_entire_worktop(
-            Address(withdraw_account)
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
+        # withdraw_account = input("Please enter your address to withdraw: ")
+        # balance = await gateway.get_xrd_balance(account)
+        # builder = ManifestBuilder()
+        # builder = lock_fee(builder, account, 100)
+        # builder = builder.account_withdraw(
+        #     account,
+        #     Address(owner_resource),
+        #     Decimal('9')
+        # )
+        # builder = builder.account_withdraw(
+        #     account,
+        #     Address(network_config['xrd']),
+        #     Decimal(str(balance - 1))
+        # )
+        # builder = deposit_all(builder, Address(withdraw_account))
 
-        print('WITHDRAW SUBMITTED:', intent)
+        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        # await gateway.submit_transaction(payload)
+
+        # print('WITHDRAW SUBMITTED:', intent)
 
 if __name__ == '__main__':
     asyncio.run(main())
