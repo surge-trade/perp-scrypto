@@ -342,9 +342,10 @@ async def main():
 
         print('-------------------------------------')
 
-        user_address = input("Please enter your address to withdraw: ")
+        withdraw_account = input("Please enter your address to withdraw: ")
         balance = await gateway.get_xrd_balance(account)
         builder = ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
         builder = builder.account_withdraw(
             account,
             Address(owner_resource),
@@ -356,12 +357,12 @@ async def main():
             Decimal(str(balance - 1))
         )
         builder = builder.account_deposit_entire_worktop(
-            Address(user_address)
+            Address(withdraw_account)
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
 
-        print('--------- WITHDRAW SUBMITTED ---------')
+        print('WITHDRAW SUBMITTED:', intent)
 
 if __name__ == '__main__':
     asyncio.run(main())
