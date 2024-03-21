@@ -42,9 +42,11 @@ def build(name: str, envs: list) -> (bytes, bytes):
     release_path = join(dirname(dirname(realpath(__file__))), 'releases')
     makedirs(release_path, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
-    with open(join(release_path, f'{name}_{timestamp}.wasm'), 'wb') as f:
+    release_path = join(release_path, timestamp)
+    makedirs(release_path, exist_ok=True)
+    with open(join(release_path, f'{name}.wasm'), 'wb') as f:
         f.write(code)
-    with open(join(release_path, f'{name}_{timestamp}.rpd'), 'wb') as f:
+    with open(join(release_path, f'{name}.rpd'), 'wb') as f:
         f.write(definition)
     return code, definition
 
