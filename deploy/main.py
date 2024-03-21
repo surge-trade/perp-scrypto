@@ -1,6 +1,7 @@
 from radix_engine_toolkit import *
 import asyncio
 import datetime
+import json
 from os.path import dirname, join, realpath
 from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
@@ -343,6 +344,34 @@ async def main():
         print('ORACLE_COMPONENT:', oracle_component)
         print('REFERRALS_COMPONENT:', referrals_component)
         print('EXCHANGE_COMPONENT:', exchange_component)
+
+        config_data = {
+            'OWNER_RESOURCE': owner_resource,
+            'AUTHORITY_RESOURCE': authority_resource,
+            'BASE_RESOURCE': base_resource,
+            'KEEPER_REWARD_RESOURCE': keeper_reward_resource,
+            'TOKEN_WRAPPER_PACKAGE': token_wrapper_package,
+            'ACCOUNT_PACKAGE': account_package,
+            'POOL_PACKAGE': pool_package,
+            'ORACLE_PACKAGE': oracle_package,
+            'REFERRALS_PACKAGE': referrals_package,
+            'EXCHANGE_PACKAGE': exchange_package,
+            'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
+            'POOL_COMPONENT': pool_component,
+            'ORACLE_COMPONENT': oracle_component,
+            'REFERRALS_COMPONENT': referrals_component,
+            'EXCHANGE_COMPONENT': exchange_component
+        }
+
+        release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
+        release_path = join(release_path, timestamp + '_' + network_config['network_name'])
+        config_file_path = join(release_path, f'config_{timestamp}.json')
+        
+        with open(config_file_path, 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+
+        print(f'Config saved to {config_file_path}')
 
         print('-------------------------------------')
 
