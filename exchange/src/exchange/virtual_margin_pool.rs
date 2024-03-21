@@ -2,6 +2,7 @@ use scrypto::prelude::*;
 use pool::*;
 use utils::PairId;
 use super::errors::*;
+use super::events::*;
 use super::exchange::MarginPool;
 
 pub struct VirtualLiquidityPool {
@@ -25,6 +26,19 @@ impl VirtualLiquidityPool {
             },
             pool_info,
         }
+    }
+
+    pub fn realize(self) {
+        let current_time = Clock::current_time_rounded_to_seconds();
+        let updates: Vec<(PairId, PoolPosition)> = self.pool_updates.position_updates.iter()
+            .map(|(pair_id, position)| (*pair_id, position.clone())).collect();
+        let event_pair_updates = EventPairUpdates {
+            time: current_time,
+            updates,
+        };
+        Runtime::emit_event(event_pair_updates);
+
+        self.pool.update(self.pool_updates);
     }
 
     pub fn position(&self, pair_id: PairId) -> PoolPosition {
@@ -57,10 +71,6 @@ impl VirtualLiquidityPool {
 
     pub fn lp_token_manager(&self) -> ResourceManager {
         self.pool_info.lp_token_manager
-    }
-
-    pub fn realize(self) {
-        self.pool.update(self.pool_updates);
     }
 
     pub fn deposit(&mut self, token: Bucket) {

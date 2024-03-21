@@ -21,7 +21,11 @@ impl Config {
 #[derive(ScryptoSbor, Clone)]
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds
-    pub max_price_age_seconds: u64,
+    pub max_price_age_seconds: i64,
+    /// Price delta ratio before updating a pair will be rewarded
+    pub pair_update_price_delta_ratio: Decimal,
+    /// Time be before updating a pair will be rewarded
+    pub pair_update_period_seconds: i64,
     /// Flat fee to cover the keeper's expenses
     pub keeper_fee: Decimal,
     /// Maximum allowed number of positions per account
@@ -46,6 +50,8 @@ impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
             max_price_age_seconds: 60,
+            pair_update_price_delta_ratio: dec!(0.001),
+            pair_update_period_seconds: 10,
             keeper_fee: dec!(0.01),
             positions_max: 100,
             skew_ratio_cap: dec!(0.1),
@@ -62,6 +68,8 @@ impl Default for ExchangeConfig {
 impl ExchangeConfig {
     pub fn validate(&self) {
         assert!(self.max_price_age_seconds > 0, "Invalid max price age");
+        assert!(self.pair_update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
+        assert!(self.pair_update_period_seconds >= 0, "Invalid pair update period");
         assert!(self.keeper_fee >= dec!(0), "Invalid keeper fee");
         assert!(self.positions_max > 0, "Invalid max positions");
         assert!(self.skew_ratio_cap >= dec!(0), "Invalid skew ratio cap");

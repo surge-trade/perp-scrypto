@@ -4,8 +4,7 @@ use std::io::Write;
 use std::path::Path;
 use scrypto::prelude::*;
 
-const DEFAULT_BASE_RESOURCE: &str = "resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3";
-const DEFAULT_AUTHORITY_RESOURCE: &str = "resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3";
+const DEFAULT_RESOURCE: &str = "resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3";
 
 fn main() {
     // Determine the network to use
@@ -26,7 +25,7 @@ fn main() {
         env::var("BASE_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
         }).unwrap_or_else(|_| {
-            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_BASE_RESOURCE)
+            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
         }).unwrap().into_node_id().to_vec()
     ).unwrap();
 
@@ -34,7 +33,15 @@ fn main() {
         env::var("AUTHORITY_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
         }).unwrap_or_else(|_| {
-            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_AUTHORITY_RESOURCE)
+            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
+        }).unwrap().into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const _KEEPER_REWARD_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
+        env::var("KEEPER_REWARD_RESOURCE").map(|var| {
+            ResourceAddress::try_from_bech32(&decoder, &var)
+        }).unwrap_or_else(|_| {
+            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
         }).unwrap().into_node_id().to_vec()
     ).unwrap();
 }

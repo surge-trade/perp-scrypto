@@ -10,7 +10,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, create_base
+from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, create_base, create_keeper_reward
 
 def clean(name: str) -> None:
     path = join(dirname(dirname(realpath(__file__))), name)
@@ -117,10 +117,20 @@ async def main():
         base_resource = addresses[0]
         print('BASE_RESOURCE:', base_resource)
 
+        builder = ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = create_keeper_reward(builder, owner_role, authority_resource)
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        keeper_reward_resource = addresses[0]
+        print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
+
         envs = [
             ('NETWORK_ID', network_config['network_id']),
             ('AUTHORITY_RESOURCE', authority_resource),
             ('BASE_RESOURCE', base_resource),
+            ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
         ]
 
         code, definition = build('token_wrapper', envs)
@@ -285,11 +295,11 @@ async def main():
         builder = builder.account_withdraw(
             account,
             Address(authority_resource),
-            Decimal('0.000000000000000001')
-        )
+            Decimal('0.999999999999999999')
+        )            
         builder = builder.take_from_worktop(
             Address(authority_resource),
-            Decimal('0.000000000000000001'),
+            Decimal('0.999999999999999999'),
             ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
@@ -315,6 +325,7 @@ async def main():
         print('OWNER_RESOURCE:', owner_resource)
         print('AUTHORITY_RESOURCE:', authority_resource)
         print('BASE_RESOURCE:', base_resource)
+        print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
 
         print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
         print('ACCOUNT_PACKAGE:', account_package)
@@ -328,6 +339,29 @@ async def main():
         print('ORACLE_COMPONENT:', oracle_component)
         print('REFERRALS_COMPONENT:', referrals_component)
         print('EXCHANGE_COMPONENT:', exchange_component)
+
+        print('-------------------------------------')
+
+        user_address = input("Please enter your address to withdraw: ")
+        balance = await gateway.get_xrd_balance(account)
+        builder = ManifestBuilder()
+        builder = builder.account_withdraw(
+            account,
+            Address(owner_resource),
+            Decimal('9')
+        )
+        builder = builder.account_withdraw(
+            account,
+            Address(network_config['xrd']),
+            Decimal(str(balance - 1))
+        )
+        builder = builder.account_deposit_entire_worktop(
+            Address(user_address)
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+
+        print('--------- WITHDRAW SUBMITTED ---------')
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -12,6 +12,7 @@ pub struct PoolPosition {
     pub funding_long_index: Decimal,
     pub funding_short_index: Decimal,
     pub last_update: Instant,
+    pub last_price: Decimal,
 }
 
 #[derive(ScryptoSbor)]

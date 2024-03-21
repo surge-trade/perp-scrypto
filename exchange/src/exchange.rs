@@ -6,13 +6,14 @@
 
 mod config;
 mod errors;
+mod events;
 mod requests;
 mod virtual_margin_pool;
 mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use utils::{PairId, ListIndex, HashList, _BASE_RESOURCE, TO_ZERO, TO_INFINITY};
+use utils::{PairId, ListIndex, HashList, _BASE_RESOURCE, _KEEPER_REWARD_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
 use pool::*;
 use self::config::*;
@@ -25,6 +26,7 @@ use self::virtual_oracle::*;
 #[blueprint]
 mod exchange {
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
+    const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
@@ -514,7 +516,7 @@ mod exchange {
 
                 let mut pool = VirtualLiquidityPool::new(self.pool);
                 let current_time = Clock::current_time_rounded_to_seconds();
-                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds as i64)).expect(ERROR_ARITHMETIC);
+                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds)).expect(ERROR_ARITHMETIC);
                 let max_age = if max_age.compare(submission, TimeComparisonOperator::Gt) {
                     max_age
                 } else {
@@ -548,7 +550,7 @@ mod exchange {
                 let mut pool = VirtualLiquidityPool::new(self.pool);
 
                 let current_time = Clock::current_time_rounded_to_seconds();
-                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds as i64)).expect(ERROR_ARITHMETIC);
+                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds)).expect(ERROR_ARITHMETIC);
                 let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds(), max_age);
 
                 let token = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
@@ -570,7 +572,7 @@ mod exchange {
                 let mut pool = VirtualLiquidityPool::new(self.pool);
 
                 let current_time = Clock::current_time_rounded_to_seconds();
-                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds as i64)).expect(ERROR_ARITHMETIC);
+                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds)).expect(ERROR_ARITHMETIC);
                 let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds(), max_age);
 
                 let tokens = self._liquidate(&mut pool, &mut account, &oracle, payment_tokens);
@@ -592,7 +594,7 @@ mod exchange {
                 let mut pool = VirtualLiquidityPool::new(self.pool);
 
                 let current_time = Clock::current_time_rounded_to_seconds();
-                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds as i64)).expect(ERROR_ARITHMETIC);
+                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds)).expect(ERROR_ARITHMETIC);
                 let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds(), max_age);
 
                 self._auto_deleverage(&mut pool, &mut account, &oracle, pair_id);
@@ -605,17 +607,23 @@ mod exchange {
         pub fn update_pair(
             &self, 
             pair_id: PairId,
-        ) {
+        ) -> Bucket {
             authorize!(self, {
                 let mut pool = VirtualLiquidityPool::new(self.pool);
 
                 let current_time = Clock::current_time_rounded_to_seconds();
-                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds as i64)).expect(ERROR_ARITHMETIC);
+                let max_age = current_time.add_seconds(-(self.config.exchange.max_price_age_seconds)).expect(ERROR_ARITHMETIC);
                 let oracle = VirtualOracle::new(self.oracle, self._collateral_feeds(), max_age);
 
-                self._update_pair(&mut pool, &oracle, pair_id);
-    
+                let rewarded = self._update_pair(&mut pool, &oracle, pair_id);
+
                 pool.realize();
+
+                if rewarded {
+                    ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(1)
+                } else {
+                    Bucket::new(KEEPER_REWARD_RESOURCE)
+                }
             })
         }
 
@@ -1069,7 +1077,7 @@ mod exchange {
             pool: &mut VirtualLiquidityPool,
             oracle: &VirtualOracle,
             pair_id: PairId,
-        ) {
+        ) -> bool {
             let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
             let price_token = oracle.price(pair_id);
 
@@ -1088,54 +1096,62 @@ mod exchange {
             pool_position.pnl_snap = pnl;
             pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
             
-            let current_time = Clock::current_time_rounded_to_minutes();
-            let period_minutes = Decimal::from((current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch) / 60);
+            let current_time = Clock::current_time_rounded_to_seconds();
+            let period_seconds = current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch;
+            let period = Decimal::from(period_seconds);
             
-            if period_minutes.is_zero() {
-                return ;
+            if !period.is_zero() {
+                let funding_2_rate_delta = skew * config.funding_2_delta * period;
+                pool_position.funding_2_rate += funding_2_rate_delta;
+
+                if !oi_long.is_zero() && !oi_short.is_zero() {
+                    let funding_1_rate = skew * config.funding_1;
+                    let funding_2_rate = pool_position.funding_2_rate * config.funding_2;
+                    let funding_rate = funding_1_rate + funding_2_rate;
+
+                    let (funding_long_index, funding_short_index, funding_share) = if funding_rate.is_positive() {
+                        let funding_long = funding_rate * period;
+                        let funding_long_index = funding_long / oi_long;
+        
+                        let funding_share = funding_long * config.funding_share;
+                        let funding_short_index = -(funding_long - funding_share) / oi_short;
+        
+                        (funding_long_index, funding_short_index, funding_share)
+                    } else {
+                        let funding_short = -funding_rate * period * price_token;
+                        let funding_short_index = funding_short / oi_short;
+        
+                        let funding_share = funding_short * config.funding_share;
+                        let funding_long_index = -(funding_short - funding_share) / oi_long;
+        
+                        (funding_long_index, funding_short_index, funding_share)
+                    };
+
+                    let funding_pool_0_rate = (oi_long + oi_short) * price_token * config.funding_pool_0;
+                    let funding_pool_1_rate = skew_abs * config.funding_pool_1;
+                    let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
+
+                    let funding_pool = funding_pool_rate * period;
+                    let funding_pool_index = funding_pool / (oi_long + oi_short);
+                    pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding_pool + funding_share);
+
+                    pool_position.funding_long_index += funding_long_index + funding_pool_index;
+                    pool_position.funding_short_index += funding_short_index + funding_pool_index;
+                }
             }
-            
+
+            let price_delta_ratio = (price_token - pool_position.last_price).checked_abs().expect(ERROR_ARITHMETIC) / pool_position.last_price;
+            pool_position.last_price = price_token;
             pool_position.last_update = current_time;
 
-            let funding_2_rate_delta = skew * config.funding_2_delta * period_minutes;
-            pool_position.funding_2_rate += funding_2_rate_delta;
-
-            if !oi_long.is_zero() && !oi_short.is_zero() {
-                let funding_1_rate = skew * config.funding_1;
-                let funding_2_rate = pool_position.funding_2_rate * config.funding_2;
-                let funding_rate = funding_1_rate + funding_2_rate;
-
-                let (funding_long_index, funding_short_index, funding_share) = if funding_rate.is_positive() {
-                    let funding_long = funding_rate * period_minutes;
-                    let funding_long_index = funding_long / oi_long;
-    
-                    let funding_share = funding_long * config.funding_share;
-                    let funding_short_index = -(funding_long - funding_share) / oi_short;
-    
-                    (funding_long_index, funding_short_index, funding_share)
-                } else {
-                    let funding_short = -funding_rate * period_minutes * price_token;
-                    let funding_short_index = funding_short / oi_short;
-    
-                    let funding_share = funding_short * config.funding_share;
-                    let funding_long_index = -(funding_short - funding_share) / oi_long;
-    
-                    (funding_long_index, funding_short_index, funding_share)
-                };
-
-                let funding_pool_0_rate = (oi_long + oi_short) * price_token * config.funding_pool_0;
-                let funding_pool_1_rate = skew_abs * config.funding_pool_1;
-                let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
-
-                let funding_pool = funding_pool_rate * period_minutes;
-                let funding_pool_index = funding_pool / (oi_long + oi_short);
-                pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding_pool + funding_share);
-
-                pool_position.funding_long_index += funding_long_index + funding_pool_index;
-                pool_position.funding_short_index += funding_short_index + funding_pool_index;
-            }
-
             pool.update_position(pair_id, pool_position);
+
+            if period_seconds >= self.config.exchange.pair_update_period_seconds || 
+            price_delta_ratio >= self.config.exchange.pair_update_price_delta_ratio {
+                true
+            } else {
+                false
+            }
         }
 
         fn _update_pair_snaps(

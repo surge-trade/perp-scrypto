@@ -2,6 +2,7 @@ use scrypto::prelude::*;
 use account::*;
 use utils::{PairId, ListIndex};
 use super::errors::*;
+use super::events::*;
 use super::exchange::MarginAccount;
 use super::requests::*;
 
@@ -30,6 +31,16 @@ impl VirtualMarginAccount {
     }
 
     pub fn realize(self) {
+        let requests: Vec<(ListIndex, KeeperRequest)> = self.account_updates.requests_new.iter()
+            .enumerate().map(|(i, r)| (i as ListIndex + self.account_info.requests_len, r.clone()))
+            .chain(self.account_updates.request_updates.iter().map(|(&index, request)| (index, request.clone())))
+            .collect();
+        let event_requests = EventRequests {
+            account: self.account.address(),
+            requests,
+        };
+        Runtime::emit_event(event_requests);
+
         self.account.update(self.account_updates);
     }
 
