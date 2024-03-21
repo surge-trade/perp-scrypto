@@ -17,7 +17,7 @@ def clean(name: str) -> None:
     print(f'Clean: {path}')
     run(['cargo', 'clean'], cwd=path, check=True)
 
-def build(name: str, envs: list) -> (bytes, bytes):
+def build(name: str, envs: list, network: str) -> (bytes, bytes):
     # path = join(dirname(dirname(realpath(__file__))), name)
     # print(f'Build: {path}')
     # run(['scrypto', 'build'] + [f'{key}={value}' for key, value in envs], cwd=path, check=True)
@@ -41,9 +41,11 @@ def build(name: str, envs: list) -> (bytes, bytes):
 
     release_path = join(dirname(dirname(realpath(__file__))), 'releases')
     makedirs(release_path, exist_ok=True)
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
-    release_path = join(release_path, timestamp)
+    release_path = join(release_path, timestamp + '_' + network)
     makedirs(release_path, exist_ok=True)
+
     with open(join(release_path, f'{name}.wasm'), 'wb') as f:
         f.write(code)
     with open(join(release_path, f'{name}.rpd'), 'wb') as f:
