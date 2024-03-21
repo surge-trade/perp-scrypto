@@ -209,23 +209,21 @@ mod exchange {
 
         pub fn update_pair_configs(
             &mut self, 
-            pair_id: PairId, 
             configs: Vec<PairConfig>,
         ) {
             for config in configs.iter() {
                 config.validate();
-                self.config.pairs.insert(pair_id, config.clone());
+                self.config.pairs.insert(config.pair_id, config.clone());
             }
         }
 
         pub fn update_collateral_configs(
             &mut self, 
-            resource: ResourceAddress, 
-            configs: Vec<CollateralConfig>,
+                configs: Vec<(ResourceAddress, CollateralConfig)>,
         ) {
-            for config in configs.iter() {
+            for (resource, config) in configs.iter() {
                 config.validate();
-                self.config.collaterals.insert(resource, config.clone());
+                self.config.collaterals.insert(*resource, config.clone());
             }
         }
 
