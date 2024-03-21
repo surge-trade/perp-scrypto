@@ -70,3 +70,7 @@ async def main():
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
