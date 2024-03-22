@@ -52,7 +52,7 @@ async def main():
             'update_pair_configs',
             [ManifestBuilderValue.ARRAY_VALUE(ManifestBuilderValueKind.TUPLE_VALUE, [
                 ManifestBuilderValue.TUPLE_VALUE([
-                    ManifestBuilderValue.U64_VALUE(1),  # pub pair_id: PairId,
+                    ManifestBuilderValue.U16_VALUE(1),  # pub pair_id: PairId,
                     ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ManifestBuilderValue.DECIMAL_VALUE(Decimal('0.01')), # pub margin_initial: Decimal,
                     ManifestBuilderValue.DECIMAL_VALUE(Decimal('0.008')), # pub margin_maintenance: Decimal,
