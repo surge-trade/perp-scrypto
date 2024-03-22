@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use utils::{ListIndex, List, _BASE_RESOURCE, TO_ZERO};
+use utils::{ListIndex, List, _AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -17,6 +17,9 @@ pub struct ChildToken {
     ChildToken,
 )]
 mod token_wrapper {
+    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
+
     enable_method_auth!(
         roles {
             user => updatable_by: [OWNER];
@@ -34,8 +37,6 @@ mod token_wrapper {
         }
     );
 
-    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
-
     macro_rules! authorize {
         ($self:expr, $func:expr) => {{
             $self.authority_token.create_proof_of_amount(dec!(0.000000000000000001)).authorize(|| {
@@ -52,6 +53,11 @@ mod token_wrapper {
 
     impl TokenWrapper {
         pub fn new(owner_role: OwnerRole, authority_token: Bucket) -> Global<TokenWrapper> {
+            assert!(
+                authority_token.resource_address() == AUTHORITY_RESOURCE,
+                "{}", ERROR_INVALID_AUTHORITY
+            );
+
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 child_list: List::new(TokenWrapperKeyValueStore::new_with_registered_type),
