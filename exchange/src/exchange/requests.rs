@@ -10,14 +10,6 @@ pub enum Limit {
 }
 
 impl Limit {
-    pub fn gte(value: Decimal) -> Self {
-        Limit::Gte(value)
-    }
-
-    pub fn lte(value: Decimal) -> Self {
-        Limit::Lte(value)
-    }
-
     pub fn compare(&self, value: Decimal) -> bool {
         match self {
             Limit::Gte(limit) => value >= *limit,
