@@ -39,11 +39,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-<<<<<<< HEAD
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-=======
-        "package_tdx_2_1phzdgamyde6htkz9qn7jdk6476ms8ramfwwldx69dlr2mkkfkykmfe",
->>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
+        "package_tdx_2_1phwf9dfn3msc3hh9rawga0rqnqnjsty0mevfkw383as3dg459g8gqd",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -63,11 +59,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-<<<<<<< HEAD
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-=======
-        "package_tdx_2_1pha4qaz2lvdwemrz9449lydu2n2g946ppqs82a884z9qrv9q8gx6g8",
->>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
+        "package_tdx_2_1p4r2vq9qw92rzp2s7flyr8tcp02cxner5lp2t8r3l50tmcp7yua0hy",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -82,22 +74,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-<<<<<<< HEAD
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-=======
-        "package_tdx_2_1pktpjj655nfcce5l9w790anlf90aqrwaj6qj98e0dgxampnseh5fpc",
->>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-<<<<<<< HEAD
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-=======
-        "package_tdx_2_1pkqt8rvec37f5r6z7qyuk46a45e7y3w828effymy23jf643fp2h7h0",
->>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
