@@ -130,10 +130,13 @@ pub struct CollateralConfig {
     pub pair_id: PairId,
     /// Discount applied to the collateral
     pub discount: Decimal,
+    /// Margin required for the collateral
+    pub margin: Decimal,
 }
 
 impl CollateralConfig {
     pub fn validate(&self) {
         assert!(self.discount >= dec!(0), "Invalid discount");
+        assert!(self.margin >= dec!(0), "Invalid margin");
     }
 }

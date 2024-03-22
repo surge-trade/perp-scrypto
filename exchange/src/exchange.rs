@@ -29,7 +29,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1ph0tfat6m4srl7lqgx4jntut6x8zdgdqxj4mg993ltslzz2zcnp382",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -49,7 +49,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5hc4926ylqzs5ctvfsn2wdgjqjrm6jd44zud45rxd8tsscym9af4k",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -64,14 +64,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p46enjlnmuun4pt5rl2k06jjnz7mal5tf6mcg8ufcf5gl4dkra77ae",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phwprch0565rev6d9msn4pw56p4xhza5mja8rlf44hdy442y6qep2w",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -375,15 +375,21 @@ mod exchange {
         pub fn set_referrer(
             &self, 
             account: ComponentAddress, 
-            referrer: Option<ComponentAddress>,
+            referrer: ComponentAddress,
         ) {
             authorize!(self, {
                 let account = VirtualMarginAccount::new(account, self._collaterals());
                 account.verify_level_1_auth();
-                if let Some(referrer) = referrer {
-                    Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT); // TODO: check
-                }
-                self.referrals.set_referrer(account.address(), referrer);
+
+                let current_referrer = self.referrals.get_referrer(account.address());
+                assert!(
+                    current_referrer.is_none(),
+                    "{}", ERROR_REFERRAL_ALREADY_SET
+                );
+
+                Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT);
+
+                self.referrals.set_referrer(account.address(), Some(referrer));
                 account.realize();
             })
         }
@@ -672,9 +678,10 @@ mod exchange {
             account: &VirtualMarginAccount,
             oracle: &VirtualOracle,
         ) {
-            let (pnl, margin) = self._value_positions(pool, account, oracle);
-            let collateral_value = self._value_collateral(account, oracle);
-            let account_value = pnl + collateral_value + account.virtual_balance();
+            let (pnl, margin_positions) = self._value_positions(pool, account, oracle);
+            let (collateral_value_discounted, margin_collateral) = self._value_collateral(account, oracle);
+            let account_value = pnl + collateral_value_discounted + account.virtual_balance();
+            let margin = margin_positions + margin_collateral;
 
             if account_value < margin {
                 panic!("{}", ERROR_INSUFFICIENT_MARGIN);
@@ -755,10 +762,9 @@ mod exchange {
         ) {
             if let Some(index) = tokens.iter().position(|token| token.resource_address() == BASE_RESOURCE) {
                 let base_token = tokens.remove(index);
-                let base_amount = base_token.amount();
+                let value = base_token.amount();
                 pool.deposit(base_token);
-                pool.update_virtual_balance(pool.virtual_balance() - base_amount);
-                account.update_virtual_balance(account.virtual_balance() + base_amount);
+                self._settle_with_pool(pool, account, value);
             }
             for token in tokens.iter() {
                 self._assert_valid_collateral(token.resource_address());
@@ -786,9 +792,8 @@ mod exchange {
                     );
 
                     let base_token = pool.withdraw(*amount, TO_ZERO);
-                    let base_amount = base_token.amount();
-                    pool.update_virtual_balance(pool.virtual_balance() + base_amount);
-                    account.update_virtual_balance(account.virtual_balance() - base_amount);
+                    let value = base_token.amount();
+                    self._settle_with_pool(pool, account, -value);
                     tokens.push(base_token);
                     false
                 } else {
@@ -887,8 +892,7 @@ mod exchange {
             // TODO: check amount first? take less of two?
 
             pool.deposit(payment_token);
-            pool.update_virtual_balance(pool.virtual_balance() - value);
-            account.update_virtual_balance(virtual_balance + value);
+            self._settle_with_pool(pool, account, value);
             let collateral = account.withdraw_collateral_batch(vec![(*resource, amount)], TO_ZERO).pop().unwrap();
 
             collateral
@@ -906,9 +910,10 @@ mod exchange {
                 "{}", ERROR_INVALID_PAYMENT
             );
 
-            let (pnl, margin, fee_referral) = self._liquidate_positions(pool, account, oracle);
-            let (collateral_value, mut collateral_tokens) = self._liquidate_collateral(account, oracle);
+            let (pnl, margin_positions, fee_referral) = self._liquidate_positions(pool, account, oracle);
+            let (collateral_value, margin_collateral, mut collateral_tokens) = self._liquidate_collateral(account, oracle);
             let account_value = pnl + collateral_value + account.virtual_balance();
+            let margin = margin_positions + margin_collateral;
 
             assert!(
                 account_value < margin,
@@ -919,13 +924,9 @@ mod exchange {
             let value = payment_token.amount();
 
             pool.deposit(deposit_token);
-            pool.update_virtual_balance(pool.virtual_balance() - value);
-            account.update_virtual_balance(account.virtual_balance() + value);
-            
-            self._settle_with_pool(pool, account, pnl);
+            let settlement = (pnl + value).min(account.virtual_balance()); // TODO: check if this is correct
+            self._settle_with_pool(pool, account, settlement);
             self._settle_with_referrals(pool, account, fee_referral);
-            // TODO: insurance fund for outstanding_base
-            // TODO: unsettled balance vs collateral value movement leaving debt
 
             account.update_last_liquidation_index();
 
@@ -1262,34 +1263,42 @@ mod exchange {
             &self, 
             account: &VirtualMarginAccount, 
             oracle: &VirtualOracle,
-        ) -> Decimal {
-            let mut total_value = dec!(0);
+        ) -> (Decimal, Decimal) {
+            let mut total_value_discounted = dec!(0);
+            let mut total_margin = dec!(0);
             for (resource, config) in self.config.collaterals.iter() {
                 let price_resource = oracle.price_resource(*resource);
                 let amount = account.collateral_amount(resource);
-                let value = amount * price_resource * config.discount;
-                total_value += value;
+                let value = amount * price_resource;
+                let value_discounted = value * config.discount;
+                let margin = value * config.margin;
+                total_value_discounted += value;
+                total_margin += value * config.margin;
             }
-            total_value
+            (total_value_discounted, total_margin)
         }
 
         fn _liquidate_collateral(
             &self, 
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
-        ) -> (Decimal, Vec<Bucket>) {            
-            let mut total_value = dec!(0);
+        ) -> (Decimal, Decimal, Vec<Bucket>) {            
+            let mut total_value_discounted = dec!(0);
+            let mut total_margin = dec!(0);
             let mut withdraw_collateral = vec![];
             for (resource, config) in self.config.collaterals.iter() {
                 let price_resource = oracle.price_resource(*resource);
                 let amount = account.collateral_amount(resource);
-                let value = amount * price_resource * config.discount;
+                let value = amount * price_resource;
+                let value_discounted = value * config.discount;
+                let margin = value * config.margin;
+                total_value_discounted += value_discounted;
+                total_margin += margin;
                 withdraw_collateral.push((*resource, amount));
-                total_value += value;
             }
             let collateral_tokens = account.withdraw_collateral_batch(withdraw_collateral, TO_ZERO);
 
-            (total_value, collateral_tokens)
+            (total_value_discounted, total_margin, collateral_tokens)
         }
 
         fn _settle_with_pool(

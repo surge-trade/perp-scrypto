@@ -2,7 +2,6 @@ pub const ERROR_COLLATERAL_INVALID: &str = "Invalid collateral";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";
 pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 
-
 pub const ERROR_LEVERAGE_TOO_LOW: &str = "Leverage exceeds minimum";
 pub const ERROR_LEVERAGE_TOO_HIGH: &str = "Leverage exceeds maximum";
 
@@ -50,3 +49,5 @@ pub const ERROR_PROCESS_REQUEST_EXPIRED: &str = "Request expired";
 pub const ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION: &str = "Request before liquidation";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
+
+pub const ERROR_REFERRAL_ALREADY_SET: &str = "Referral already set";
