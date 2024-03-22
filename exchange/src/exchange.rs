@@ -19,6 +19,15 @@ use self::virtual_margin_account::*;
 use self::virtual_oracle::*;
 
 #[blueprint]
+#[events(
+    EventSignalUpgrade,
+    EventRequests,
+    EventPairUpdates,
+    EventExchangeConfigUpdate,
+    EventPairConfigUpdates,
+    EventCollateralConfigUpdates,
+    EventCollateralConfigRemoval,
+)]
 mod exchange {
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
@@ -209,7 +218,11 @@ mod exchange {
             config: ExchangeConfig,
         ) {
             config.validate();
-            self.config.exchange = config;
+            self.config.exchange = config.clone();
+
+            Runtime::emit_event(EventExchangeConfigUpdate {
+                config,
+            });
         }
 
         pub fn update_pair_configs(
@@ -220,6 +233,10 @@ mod exchange {
                 config.validate();
                 self.config.pairs.insert(config.pair_id, config.clone());
             }
+
+            Runtime::emit_event(EventPairConfigUpdates {
+                configs,
+            });
         }
 
         pub fn update_collateral_configs(
@@ -230,6 +247,10 @@ mod exchange {
                 config.validate();
                 self.config.collaterals.insert(*resource, config.clone());
             }
+
+            Runtime::emit_event(EventCollateralConfigUpdates {
+                configs
+            });
         }
 
         pub fn remove_collateral_config(
@@ -237,6 +258,10 @@ mod exchange {
             resource: ResourceAddress,
         ) {
             self.config.collaterals.remove(&resource);
+
+            Runtime::emit_event(EventCollateralConfigRemoval {
+                resource
+            });
         }
 
         pub fn update_referral_rebate(
