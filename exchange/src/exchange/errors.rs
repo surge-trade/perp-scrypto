@@ -5,6 +5,8 @@ pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 pub const ERROR_LEVERAGE_TOO_LOW: &str = "Leverage exceeds minimum";
 pub const ERROR_LEVERAGE_TOO_HIGH: &str = "Leverage exceeds maximum";
 
+pub const ERROR_PAIR_DISABLED: &str = "Pair disabled";
+
 pub const ERROR_MARGIN_ORDER_PRICE_LIMIT: &str = "Price limit not met";
 
 pub const ERROR_INVALID_PAYMENT: &str = "Invalid payment resource";

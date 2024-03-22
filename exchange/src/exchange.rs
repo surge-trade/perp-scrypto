@@ -1005,6 +1005,12 @@ mod exchange {
             amount: Decimal, 
         ) {
             let config = self.config.pairs.get(&pair_id).expect(ERROR_MISSING_PAIR_CONFIG);
+
+            assert!(
+                !config.disabled, 
+                "{}", ERROR_PAIR_DISABLED
+            );
+
             let price_token = oracle.price(pair_id);
 
             let value = amount * price_token;
