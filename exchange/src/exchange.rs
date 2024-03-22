@@ -39,7 +39,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1phwf9dfn3msc3hh9rawga0rqnqnjsty0mevfkw383as3dg459g8gqd",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -59,7 +59,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4r2vq9qw92rzp2s7flyr8tcp02cxner5lp2t8r3l50tmcp7yua0hy",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
