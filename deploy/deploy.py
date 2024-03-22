@@ -58,12 +58,12 @@ async def main():
     chdir(path)
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
-        # clean('utils')
-        # clean('account')
-        # clean('pool')
-        # clean('referrals')
-        # clean('token_wrapper')
-        # clean('exchange')
+        clean('utils')
+        clean('account')
+        clean('pool')
+        clean('referrals')
+        clean('token_wrapper')
+        clean('exchange')
 
         gateway = Gateway(session)
         network_config = await gateway.network_configuration()
