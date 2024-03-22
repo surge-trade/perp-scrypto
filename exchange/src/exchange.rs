@@ -7,7 +7,7 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use utils::{PairId, ListIndex, HashList, _BASE_RESOURCE, _KEEPER_REWARD_RESOURCE, TO_ZERO, TO_INFINITY};
+use utils::{PairId, ListIndex, HashList, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _KEEPER_REWARD_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
 use pool::*;
 use self::config::*;
@@ -34,11 +34,16 @@ use self::virtual_oracle::*;
     PairConfig,
 )]
 mod exchange {
+    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
+<<<<<<< HEAD
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+=======
         "package_tdx_2_1phzdgamyde6htkz9qn7jdk6476ms8ramfwwldx69dlr2mkkfkykmfe",
+>>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -58,7 +63,11 @@ mod exchange {
         }
     }
     extern_blueprint! {
+<<<<<<< HEAD
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+=======
         "package_tdx_2_1pha4qaz2lvdwemrz9449lydu2n2g946ppqs82a884z9qrv9q8gx6g8",
+>>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -73,14 +82,22 @@ mod exchange {
         }
     }
     extern_blueprint! {
+<<<<<<< HEAD
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+=======
         "package_tdx_2_1pktpjj655nfcce5l9w790anlf90aqrwaj6qj98e0dgxampnseh5fpc",
+>>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
+<<<<<<< HEAD
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+=======
         "package_tdx_2_1pkqt8rvec37f5r6z7qyuk46a45e7y3w828effymy23jf643fp2h7h0",
+>>>>>>> a2656eab3230cfacf4d47d13e024070895209f08
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -171,6 +188,11 @@ mod exchange {
             oracle: ComponentAddress,
             referrals: ComponentAddress,
         ) -> Global<Exchange> {
+            assert!(
+                authority_token.resource_address() == AUTHORITY_RESOURCE,
+                "{}", ERROR_INVALID_AUTHORITY
+            );
+
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 config: Config {
