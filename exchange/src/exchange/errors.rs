@@ -2,9 +2,6 @@ pub const ERROR_COLLATERAL_INVALID: &str = "Invalid collateral";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";
 pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 
-pub const ERROR_LEVERAGE_TOO_LOW: &str = "Leverage exceeds minimum";
-pub const ERROR_LEVERAGE_TOO_HIGH: &str = "Leverage exceeds maximum";
-
 pub const ERROR_PAIR_DISABLED: &str = "Pair disabled";
 
 pub const ERROR_MARGIN_ORDER_PRICE_LIMIT: &str = "Price limit not met";
@@ -27,11 +24,8 @@ pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
 
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
-pub const ERROR_INVALID_POOL: &str = "Invalid pool";
-pub const ERROR_INVALID_ORACLE: &str = "Invalid oracle";
 pub const ERROR_INVALID_REQUEST_STATUS: &str = "Invalid request status";
 
-pub const ERROR_MISSING_ACCOUNT_POSITION: &str = "Account position not found";
 pub const ERROR_MISSING_POOL_POSITION: &str = "Position not found";
 pub const ERROR_MISSING_PAIR_CONFIG: &str = "Pair config not found";
 pub const ERROR_MISSING_PRICE: &str = "Price not found";

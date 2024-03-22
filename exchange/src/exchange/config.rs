@@ -8,16 +8,6 @@ pub struct Config {
     pub collaterals: HashMap<ResourceAddress, CollateralConfig>, // TODO: HashList?
 }
 
-impl Config {
-    pub fn new() -> Self {
-        Self {
-            exchange: ExchangeConfig::default(),
-            pairs: HashList::new(),
-            collaterals: HashMap::new(),
-        }
-    }
-}
-
 #[derive(ScryptoSbor, Clone)]
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds

@@ -4,7 +4,6 @@ use super::errors::*;
 use super::exchange::Oracle;
 
 pub struct VirtualOracle {
-    oracle: Global<Oracle>,
     prices: HashMap<PairId, Decimal>,
     resource_feeds: HashMap<ResourceAddress, PairId>,
 }
@@ -14,7 +13,6 @@ impl VirtualOracle {
         let prices = oracle.prices(max_age);
 
         Self {
-            oracle,
             prices,
             resource_feeds,
         }

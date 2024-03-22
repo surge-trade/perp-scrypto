@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use account::{Status, KeeperRequest};
+use account::Status;
 use utils::{PairId, ListIndex};
 use super::errors::*;
 

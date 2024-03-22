@@ -56,9 +56,9 @@ impl VirtualMarginAccount {
         self.account_info.positions.get(&pair_id).cloned().unwrap_or_default()
     }
 
-    pub fn position_amount(&self, pair_id: PairId) -> Decimal {
-        self.account_info.positions.get(&pair_id).map(|position| position.amount).unwrap_or_default()
-    }
+    // pub fn position_amount(&self, pair_id: PairId) -> Decimal {
+    //     self.account_info.positions.get(&pair_id).map(|position| position.amount).unwrap_or_default()
+    // }
 
     pub fn keeper_request(&self, index: ListIndex) -> KeeperRequest {
         if let Some(request) = self.account_updates.request_updates.get(&index) {
@@ -84,9 +84,9 @@ impl VirtualMarginAccount {
         requests
     }
 
-    pub fn collateral_balances(&self) -> &HashMap<ResourceAddress, Decimal> {
-        &self.account_info.collateral_balances
-    }
+    // pub fn collateral_balances(&self) -> &HashMap<ResourceAddress, Decimal> {
+    //     &self.account_info.collateral_balances
+    // }
 
     pub fn collateral_amount(&self, resource: &ResourceAddress) -> Decimal {
         self.account_info.collateral_balances.get(resource).copied().unwrap_or_default()
@@ -96,9 +96,9 @@ impl VirtualMarginAccount {
         self.account_info.virtual_balance
     }
 
-    pub fn requests_len(&self) -> ListIndex {
-        self.account_info.requests_len
-    }
+    // pub fn requests_len(&self) -> ListIndex {
+    //     self.account_info.requests_len
+    // }
 
     pub fn last_liquidation_index(&self) -> ListIndex {
         self.account_info.last_liquidation_index
@@ -114,10 +114,10 @@ impl VirtualMarginAccount {
         Runtime::assert_access_rule(rule);
     }
 
-    pub fn verify_level_3_auth(&self) {
-        let rule = self.account.get_role("level_3").expect(ERROR_MISSING_AUTH);
-        Runtime::assert_access_rule(rule);
-    }
+    // pub fn verify_level_3_auth(&self) {
+    //     let rule = self.account.get_role("level_3").expect(ERROR_MISSING_AUTH);
+    //     Runtime::assert_access_rule(rule);
+    // }
 
     pub fn set_level_1_auth(&self, rule: AccessRule) {
         self.account.set_role("level_1", rule);
@@ -131,7 +131,7 @@ impl VirtualMarginAccount {
         self.account.set_role("level_3", rule);
     }
 
-    pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: u8) {
+    pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status) {
         assert!(
             status == STATUS_DORMANT || status == STATUS_ACTIVE,
             "{}", ERROR_INVALID_REQUEST_STATUS
@@ -150,7 +150,7 @@ impl VirtualMarginAccount {
         self.account_updates.requests_new.push(keeper_request);
     }
 
-    fn _status_phases(&self, status: u8) -> Vec<u8> {
+    fn _status_phases(&self, status: Status) -> Vec<Status> {
         match status {
             STATUS_ACTIVE => vec![STATUS_DORMANT],
             STATUS_EXECUTED => vec![STATUS_ACTIVE],
@@ -159,10 +159,10 @@ impl VirtualMarginAccount {
         }
     }
 
-    pub fn try_set_keeper_request_statuses(&mut self, updates: Vec<(ListIndex, u8)>) {
+    pub fn try_set_keeper_request_statuses(&mut self, updates: Vec<(ListIndex, Status)>) {
         let current_time = Clock::current_time_rounded_to_seconds();
         let indexes: Vec<ListIndex> = updates.iter().map(|(index, _)| *index).collect();
-        let statuses: Vec<u8> = updates.iter().map(|(_, status)| *status).collect();
+        let statuses: Vec<Status> = updates.iter().map(|(_, status)| *status).collect();
 
         let keeper_request = self.keeper_requests(indexes);
         for ((index, keeper_request), status) in keeper_request.iter().zip(statuses.iter()) {

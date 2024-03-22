@@ -1,9 +1,3 @@
-// TODO: remove
-#![allow(dead_code)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-
-
 mod config;
 mod errors;
 mod events;
@@ -300,7 +294,6 @@ mod exchange {
 
         pub fn get_collateral_configs(
             &self, 
-            resource: ResourceAddress,
         ) -> HashMap<ResourceAddress, CollateralConfig> {
             self.config.collaterals.clone()
         }
@@ -1289,8 +1282,8 @@ mod exchange {
                 let value = amount * price_resource;
                 let value_discounted = value * config.discount;
                 let margin = value * config.margin;
-                total_value_discounted += value;
-                total_margin += value * config.margin;
+                total_value_discounted += value_discounted;
+                total_margin += margin;
             }
             (total_value_discounted, total_margin)
         }
