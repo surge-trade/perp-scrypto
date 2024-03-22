@@ -1,7 +1,6 @@
 use scrypto::prelude::*;
 use pool::*;
 use utils::PairId;
-use super::errors::*;
 use super::events::*;
 use super::exchange::MarginPool;
 
@@ -44,8 +43,21 @@ impl VirtualLiquidityPool {
     pub fn position(&self, pair_id: PairId) -> PoolPosition {
         if let Some(position) = self.pool_updates.position_updates.get(&pair_id) {
             position.clone()
+        } else if let Some(position) = self.pool.get_position(pair_id) {
+            position
         } else {
-            self.pool.get_position(pair_id).expect(ERROR_MISSING_POOL_POSITION)
+            PoolPosition {
+                oi_long: dec!(0),
+                oi_short: dec!(0),
+                cost: dec!(0),
+                skew_abs_snap: dec!(0),
+                pnl_snap: dec!(0),
+                funding_2_rate: dec!(0),
+                funding_long_index: dec!(0),
+                funding_short_index: dec!(0),
+                last_update: Clock::current_time_rounded_to_seconds(),
+                last_price: dec!(1),
+            }
         }
     }
 

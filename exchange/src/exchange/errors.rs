@@ -26,7 +26,6 @@ pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
 pub const ERROR_INVALID_REQUEST_STATUS: &str = "Invalid request status";
 
-pub const ERROR_MISSING_POOL_POSITION: &str = "Position not found";
 pub const ERROR_MISSING_PAIR_CONFIG: &str = "Pair config not found";
 pub const ERROR_MISSING_PRICE: &str = "Price not found";
 pub const ERROR_MISSING_RESOURCE_FEED: &str = "Resource feed not found";
