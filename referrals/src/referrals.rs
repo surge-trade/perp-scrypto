@@ -17,6 +17,10 @@ impl ReferralAccount {
 }
 
 #[blueprint]
+#[types(
+    ComponentAddress,
+    ReferralAccount,
+)]
 mod referrals {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
@@ -47,7 +51,7 @@ mod referrals {
     impl Referrals {
         pub fn new(owner_role: OwnerRole) -> Global<Referrals> {
             Self {
-                referral_accounts: KeyValueStore::new(),
+                referral_accounts: KeyValueStore::new_with_registered_type(),
                 undirected_rewards: Vault::new(BASE_RESOURCE),
                 rebate: dec!(0),
                 trickle_up: dec!(0),

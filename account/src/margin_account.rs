@@ -5,6 +5,12 @@ use utils::{PairId, ListIndex, List, Vaults, _AUTHORITY_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]
+#[types(
+    ListIndex,
+    KeeperRequest,
+    ResourceAddress,
+    Vault,
+)]
 pub mod margin_account {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
@@ -49,10 +55,10 @@ pub mod margin_account {
             };
 
             Self {
-                collateral: Vaults::new(),
+                collateral: Vaults::new(MarginAccountKeyValueStore::new_with_registered_type),
                 positions: HashMap::new(), // TODO: make kvs for efficient token movement
                 virtual_balance: dec!(0),
-                requests: List::new(), // TODO: global ref list?
+                requests: List::new(MarginAccountKeyValueStore::new_with_registered_type),
                 last_liquidation_index: 0,
             }
             .instantiate()

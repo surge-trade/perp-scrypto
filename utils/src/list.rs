@@ -9,13 +9,16 @@ pub struct List<T: ScryptoSbor + Clone> {
 }
 
 impl<T: ScryptoSbor + Clone> List<T> {
-    pub fn new() -> Self {
+    pub fn new<F>(create_fn: F) -> Self 
+    where
+        F: Fn() -> KeyValueStore<ListIndex, T>,
+    {
         Self { 
             pointer: 0,
-            kvs: KeyValueStore::new(),
+            kvs: create_fn(),
         }
     }
-
+    
     pub fn push(&mut self, item: T) {
         self.kvs.insert(self.pointer, item);
         self.pointer += 1;

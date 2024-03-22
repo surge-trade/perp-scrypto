@@ -9,10 +9,14 @@ pub struct HashList<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> {
 }
 
 impl<K: ScryptoSbor + Clone, V: ScryptoSbor + Clone> HashList<K, V> {
-    pub fn new() -> Self {
+    pub fn new<Fa, Fb>(create_fn0: Fa, create_fn1: Fb) -> Self 
+    where
+        Fa: Fn() -> KeyValueStore<K, V>,
+        Fb: Fn() -> KeyValueStore<ListIndex, K>,
+    {
         Self { 
-            kvs: KeyValueStore::new(),
-            list: List::new(),
+            kvs: create_fn0(),
+            list: List::new(create_fn1),
         }
     }
 

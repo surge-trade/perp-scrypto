@@ -28,6 +28,11 @@ use self::virtual_oracle::*;
     EventCollateralConfigUpdates,
     EventCollateralConfigRemoval,
 )]
+#[types(
+    PairId,
+    ListIndex,
+    PairConfig,
+)]
 mod exchange {
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
@@ -170,7 +175,7 @@ mod exchange {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 config: Config {
                     exchange: ExchangeConfig::default(),
-                    pairs: HashList::new(),
+                    pairs: HashList::new(ExchangeKeyValueStore::new_with_registered_type, ExchangeKeyValueStore::new_with_registered_type),
                     collaterals: HashMap::new(),
                 },
                 pool: pool.into(),

@@ -11,6 +11,11 @@ pub struct ChildToken {
 }
 
 #[blueprint]
+#[types(
+    ListIndex,
+    ResourceAddress,
+    ChildToken,
+)]
 mod token_wrapper {
     enable_method_auth!(
         roles {
@@ -49,8 +54,8 @@ mod token_wrapper {
         pub fn new(owner_role: OwnerRole, authority_token: Bucket) -> Global<TokenWrapper> {
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
-                child_list: List::new(),
-                child_vaults: KeyValueStore::new(),
+                child_list: List::new(TokenWrapperKeyValueStore::new_with_registered_type),
+                child_vaults: KeyValueStore::new_with_registered_type(),
             }
             .instantiate()  
             .prepare_to_globalize(owner_role)

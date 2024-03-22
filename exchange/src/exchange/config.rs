@@ -4,7 +4,7 @@ use utils::{PairId, HashList};
 #[derive(ScryptoSbor)]
 pub struct Config {
     pub exchange: ExchangeConfig,
-    pub pairs: HashList<u64, PairConfig>,
+    pub pairs: HashList<PairId, PairConfig>,
     pub collaterals: HashMap<ResourceAddress, CollateralConfig>, // TODO: HashList?
 }
 

@@ -6,9 +6,12 @@ pub struct Vaults {
 }
 
 impl Vaults {
-    pub fn new() -> Self {
-        Self {
-            vaults: KeyValueStore::new(),
+    pub fn new<F>(create_fn: F) -> Self 
+    where
+        F: Fn() -> KeyValueStore<ResourceAddress, Vault>,
+    {
+        Self { 
+            vaults: create_fn(),
         }
     }
 

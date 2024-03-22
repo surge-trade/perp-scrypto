@@ -5,6 +5,10 @@ use utils::{PairId, _AUTHORITY_RESOURCE, _BASE_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]
+#[types(
+    PairId,
+    PoolPosition,
+)]
 pub mod margin_pool {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
@@ -65,7 +69,7 @@ pub mod margin_pool {
             Self {
                 base_tokens: Vault::new(BASE_RESOURCE),
                 virtual_balance: dec!(0),
-                positions: KeyValueStore::new(),
+                positions: KeyValueStore::new_with_registered_type(),
                 unrealized_pool_funding: dec!(0),
                 skew_abs_snap: dec!(0),
                 pnl_snap: dec!(0),
