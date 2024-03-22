@@ -3,7 +3,6 @@ use account::KeeperRequest;
 use utils::{PairId, ListIndex};
 use pool::PoolPosition;
 
-// TODO: create emitter for this event
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventSignalUpgrade {
     pub new_exchange: ComponentAddress,

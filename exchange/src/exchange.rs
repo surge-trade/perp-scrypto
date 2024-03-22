@@ -18,6 +18,7 @@ use account::*;
 use pool::*;
 use self::config::*;
 use self::errors::*;
+use self::events::*;
 use self::requests::*;
 use self::virtual_margin_pool::*;
 use self::virtual_margin_account::*;
@@ -95,6 +96,7 @@ mod exchange {
             // Owner methods
             deposit_authority => restrict_to: [OWNER];
             withdraw_authority => restrict_to: [OWNER];
+            signal_upgrade => restrict_to: [OWNER];
             update_exchange_config => restrict_to: [OWNER];
             update_pair_configs => restrict_to: [OWNER];
             update_collateral_configs => restrict_to: [OWNER];
@@ -195,6 +197,15 @@ mod exchange {
             &mut self
         ) -> Bucket {
             self.authority_token.take_all().into()
+        }
+
+        pub fn signal_upgrade(
+            &self, 
+            new_exchange: ComponentAddress,
+        ) {
+            Runtime::emit_event(EventSignalUpgrade {
+                new_exchange,
+            });
         }
 
         // --- ADMIN METHODS ---
