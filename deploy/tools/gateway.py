@@ -1,13 +1,11 @@
-from radix_engine_toolkit import *
+import radix_engine_toolkit as ret
 from typing import Tuple
-from aiohttp import ClientSession
-import asyncio
-import json
+import aiohttp
 import os
 import random
 
 class Gateway:
-    def __init__(self, session: ClientSession) -> None:
+    def __init__(self, session: aiohttp.ClientSession) -> None:
         self.gateway_url = os.getenv('GATEWAY_URL')
         self.session = session
 
@@ -43,7 +41,7 @@ class Gateway:
             data = await response.json()
             return data['ledger_state']['epoch']
 
-    async def get_xrd_balance(self, account: Address) -> float:
+    async def get_xrd_balance(self, account: ret.Address) -> float:
         network_config = await self.network_configuration()
         xrd = network_config['xrd']
 
@@ -138,9 +136,9 @@ class Gateway:
 
     async def build_transaction(
             self,
-            builder: ManifestBuilder, 
-            public_key: PublicKey, 
-            private_key: PrivateKey,
+            builder: ret.ManifestBuilder, 
+            public_key: ret.PublicKey, 
+            private_key: ret.PrivateKey,
             blobs: list = [],
             epochs_valid: int = 10
         ) -> Tuple[str, str]:
@@ -149,9 +147,9 @@ class Gateway:
         network_config = await self.network_configuration()
         network_id = network_config['network_id']
 
-        manifest: TransactionManifest = builder.build(network_id)
+        manifest: ret.TransactionManifest = builder.build(network_id)
         manifest.statically_validate()
-        header: TransactionHeader = TransactionHeader(
+        header: ret.TransactionHeader = ret.TransactionHeader(
             network_id=network_id,
             start_epoch_inclusive=epoch,
             end_epoch_exclusive=epoch + epochs_valid,
@@ -160,8 +158,8 @@ class Gateway:
             notary_is_signatory=False,
             tip_percentage=0,
         )
-        transaction: NotarizedTransaction = (
-            TransactionBuilder()
+        transaction: ret.NotarizedTransaction = (
+            ret.TransactionBuilder()
                 .header(header)
                 .manifest(manifest)
                 .sign_with_private_key(private_key)
@@ -176,9 +174,9 @@ class Gateway:
         account: str,
         code: bytes,
         definition: bytes,
-        owner_role: OwnerRole,
-        public_key: PublicKey,
-        private_key: PrivateKey,
+        owner_role: ret.OwnerRole,
+        public_key: ret.PublicKey,
+        private_key: ret.PrivateKey,
         metadata: dict = {},
         epochs_valid: int = 10
     ) -> Tuple[str, str]:
@@ -187,8 +185,8 @@ class Gateway:
         network_config = await self.network_configuration()
         network_id = network_config['network_id']
 
-        manifest: TransactionManifest = (
-            ManifestBuilder().account_lock_fee(account, Decimal('300'))
+        manifest: ret.TransactionManifest = (
+            ret.ManifestBuilder().account_lock_fee(account, ret.Decimal('300'))
             .package_publish_advanced(
                 owner_role=owner_role,
                 code=code,
@@ -199,7 +197,7 @@ class Gateway:
             .build(network_id)
         )
         manifest.statically_validate()
-        header: TransactionHeader = TransactionHeader(
+        header: ret.TransactionHeader = ret.TransactionHeader(
             network_id=network_id,
             start_epoch_inclusive=epoch,
             end_epoch_exclusive=epoch + epochs_valid,
@@ -208,8 +206,8 @@ class Gateway:
             notary_is_signatory=False,
             tip_percentage=0,
         )
-        transaction: NotarizedTransaction = (
-            TransactionBuilder()
+        transaction: ret.NotarizedTransaction = (
+            ret.TransactionBuilder()
                 .header(header)
                 .manifest(manifest)
                 .sign_with_private_key(private_key)

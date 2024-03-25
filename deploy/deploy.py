@@ -1,4 +1,6 @@
-from radix_engine_toolkit import *
+import qrcode
+import io
+import radix_engine_toolkit as ret
 import asyncio
 import datetime
 import json
@@ -73,13 +75,19 @@ async def main():
         private_key, public_key, account = account_details
 
         balance = await gateway.get_xrd_balance(account)
-        if balance < 1000:
+        if balance < 10000:
             print('FUND ACCOUNT:', account.as_str())
-        while balance < 1000:
+            qr = qrcode.QRCode()
+            qr.add_data(account.as_str())
+            f = io.StringIO()
+            qr.print_ascii(out=f)
+            f.seek(0)
+            print(f.read())
+        while balance < 10000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = mint_owner_badge(builder)
         builder = deposit_all(builder, account)
@@ -90,20 +98,20 @@ async def main():
         owner_resource = addresses[0]
         print('OWNER_RESOURCE:', owner_resource)
 
-        owner_role = OwnerRole.UPDATABLE(AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(owner_resource))))
-        manifest_owner_role = ManifestBuilderValue.ENUM_VALUE(2, 
-            [ManifestBuilderValue.ENUM_VALUE(2, 
-                [ManifestBuilderValue.ENUM_VALUE(0, 
-                    [ManifestBuilderValue.ENUM_VALUE(0, 
-                        [ManifestBuilderValue.ENUM_VALUE(1, 
-                            [ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(owner_resource)))]
+        owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
+        manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
+            [ret.ManifestBuilderValue.ENUM_VALUE(2, 
+                [ret.ManifestBuilderValue.ENUM_VALUE(0, 
+                    [ret.ManifestBuilderValue.ENUM_VALUE(0, 
+                        [ret.ManifestBuilderValue.ENUM_VALUE(1, 
+                            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
                         )]
                     )]
                 )]
             )]
         )
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = mint_authority(builder)
         builder = deposit_all(builder, account)
@@ -113,7 +121,7 @@ async def main():
         authority_resource = addresses[0]
         print('AUTHORITY_RESOURCE:', authority_resource)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = create_base(builder, owner_role, authority_resource)
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
@@ -122,7 +130,7 @@ async def main():
         base_resource = addresses[0]
         print('BASE_RESOURCE:', base_resource)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = create_keeper_reward(builder, owner_role, authority_resource)
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
@@ -153,23 +161,23 @@ async def main():
         envs.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
         print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.account_withdraw(
             account,
-            Address(authority_resource),
-            Decimal('0.000000000000000001')
+            ret.Address(authority_resource),
+            ret.Decimal('0.000000000000000001')
         )
         builder = builder.take_from_worktop(
-            Address(authority_resource),
-            Decimal('0.000000000000000001'),
-            ManifestBuilderBucket("authority")
+            ret.Address(authority_resource),
+            ret.Decimal('0.000000000000000001'),
+            ret.ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(token_wrapper_package)),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_package)),
             'TokenWrapper',
             'new',
-            [manifest_owner_role, ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority"))]
+            [manifest_owner_role, ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority"))]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
@@ -207,10 +215,10 @@ async def main():
         envs.append(('POOL_PACKAGE', pool_package))
         print('POOL_PACKAGE:', pool_package)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(pool_package)),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(pool_package)),
             'MarginPool',
             'new',
             [manifest_owner_role]
@@ -237,10 +245,10 @@ async def main():
         envs.append(('ORACLE_PACKAGE', oracle_package))
         print('ORACLE_PACKAGE:', oracle_package)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(oracle_package)),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
             'Oracle',
             'new',
             [manifest_owner_role]
@@ -266,10 +274,10 @@ async def main():
         envs.append(('REFERRALS_PACKAGE', referrals_package))
         print('REFERRALS_PACKAGE:', referrals_package)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(referrals_package)),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_package)),
             'Referrals',
             'new',
             [manifest_owner_role]
@@ -295,28 +303,28 @@ async def main():
         envs.append(('EXCHANGE_PACKAGE', exchange_package))
         print('EXCHANGE_PACKAGE:', exchange_package)
 
-        builder = ManifestBuilder()
+        builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.account_withdraw(
             account,
-            Address(authority_resource),
-            Decimal('0.999999999999999999')
+            ret.Address(authority_resource),
+            ret.Decimal('0.999999999999999999')
         )            
         builder = builder.take_from_worktop(
-            Address(authority_resource),
-            Decimal('0.999999999999999999'),
-            ManifestBuilderBucket("authority")
+            ret.Address(authority_resource),
+            ret.Decimal('0.999999999999999999'),
+            ret.ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
-            ManifestBuilderAddress.STATIC(Address(exchange_package)),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
             'Exchange',
             'new',
             [
                 manifest_owner_role, 
-                ManifestBuilderValue.BUCKET_VALUE(ManifestBuilderBucket("authority")),
-                ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(pool_component))),
-                ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(oracle_component))),
-                ManifestBuilderValue.ADDRESS_VALUE(ManifestBuilderAddress.STATIC(Address(referrals_component))),
+                ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
             ]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)

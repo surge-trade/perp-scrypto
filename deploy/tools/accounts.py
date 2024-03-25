@@ -1,5 +1,4 @@
-from radix_engine_toolkit import *
-from decimal import Decimal
+import radix_engine_toolkit as ret
 from typing import Tuple
 import secrets
 import json
@@ -10,11 +9,11 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-def new_account(network_id) -> Tuple[PrivateKey, PublicKey, Address]:
+def new_account(network_id) -> Tuple[ret.PrivateKey, ret.PublicKey, ret.Address]:
     private_key_bytes: bytes = secrets.randbits(256).to_bytes(32, 'little')
-    private_key: PrivateKey = PrivateKey.new_ed25519(private_key_bytes)
-    public_key: PublicKey = private_key.public_key()
-    account: Address = derive_virtual_account_address_from_public_key(
+    private_key: ret.PrivateKey = ret.PrivateKey.new_ed25519(private_key_bytes)
+    public_key: ret.PublicKey = private_key.public_key()
+    account: ret.Address = ret.derive_virtual_account_address_from_public_key(
         public_key, network_id
     )
 
@@ -32,7 +31,7 @@ def new_account(network_id) -> Tuple[PrivateKey, PublicKey, Address]:
 
     return private_key, public_key, account
 
-def load_account(network_id, account_index: int = 0,) -> Tuple[PrivateKey, PublicKey, Address]:
+def load_account(network_id, account_index: int = 0,) -> Tuple[ret.PrivateKey, ret.PublicKey, ret.Address]:
     try:
         with open('accounts.json', 'r') as f:
             data = json.load(f)
@@ -45,9 +44,9 @@ def load_account(network_id, account_index: int = 0,) -> Tuple[PrivateKey, Publi
         return None
 
     private_key_bytes = bytes.fromhex(data['accounts'][account_index])
-    private_key: PrivateKey = PrivateKey.new_ed25519(private_key_bytes)
-    public_key: PublicKey = private_key.public_key()
-    account: Address = derive_virtual_account_address_from_public_key(
+    private_key: ret.PrivateKey = ret.PrivateKey.new_ed25519(private_key_bytes)
+    public_key: ret.PublicKey = private_key.public_key()
+    account: ret.Address = ret.derive_virtual_account_address_from_public_key(
         public_key, network_id
     )
 
