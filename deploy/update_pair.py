@@ -47,6 +47,7 @@ async def main():
             'update_pair',
             [ManifestBuilderValue.U16_VALUE(1)]
         )
+        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
