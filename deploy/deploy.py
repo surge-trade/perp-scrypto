@@ -75,7 +75,7 @@ async def main():
         private_key, public_key, account = account_details
 
         balance = await gateway.get_xrd_balance(account)
-        if balance < 10000:
+        if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
             qr = qrcode.QRCode()
             qr.add_data(account.as_str())
@@ -83,7 +83,7 @@ async def main():
             qr.print_ascii(out=f)
             f.seek(0)
             print(f.read())
-        while balance < 10000:
+        while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
