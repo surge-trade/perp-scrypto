@@ -39,7 +39,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1p42gxc2wan5udxzl6wwjlpagzreza7jxrkkgjwyvtsnl39vr6xxyxu",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -59,7 +59,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pklupldcldmkk6aelmdr5m3rx53j0aglxcjnlf0up28pcyy38erqv5",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -74,14 +74,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pk6lz7p35jna85wc2m7fmfj9fhsssdc0yp97hk2mvnwtdcy0nx5r42",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5fkyzgjdc5v07653cm8gs8jsanwu0j9rvyfl9azhyhf0pvm7zr09h",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -699,7 +699,7 @@ mod exchange {
             &self,
             pool: &VirtualLiquidityPool,
         ) -> Decimal {
-            pool.skew_abs_snap() / self._pool_value(pool)
+            pool.skew_abs_snap() / self._pool_value(pool).max(dec!(1))
         }
 
         fn _assert_pool_integrity(
@@ -760,8 +760,12 @@ mod exchange {
             let value = payment.amount();
             let fee = value * self.config.exchange.fee_liquidity;
             let lp_supply = pool.lp_token_manager().total_supply().unwrap();
-
-            let lp_amount = (value - fee) / pool_value * lp_supply;
+            
+            let lp_amount = if lp_supply.is_zero() {
+                value
+            } else {
+                (value - fee) / pool_value.max(dec!(1)) * lp_supply // TODO: check this in case of bankrupt
+            };
 
             pool.deposit(payment);
             let lp_token = pool.mint_lp(lp_amount);
@@ -783,7 +787,7 @@ mod exchange {
             let lp_supply = pool.lp_token_manager().total_supply().unwrap();
             let lp_amount = lp_token.amount();
 
-            let value = lp_amount / lp_supply * pool_value;
+            let value = lp_amount / lp_supply * pool_value.max(dec!(0));
             let fee = value * self.config.exchange.fee_liquidity;
 
             pool.burn_lp(lp_token);
@@ -1052,7 +1056,7 @@ mod exchange {
             let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short + amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_delta = skew_abs_1 - skew_abs_0;
-            let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
+            let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
             let fee_referral = fee * self.config.exchange.fee_share_referral;
             let cost = value + fee;
 
@@ -1095,7 +1099,7 @@ mod exchange {
             let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_delta = skew_abs_1 - skew_abs_0;
-            let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
+            let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
             let fee_referral = fee * self.config.exchange.fee_share_referral;
             let cost = -amount / position.amount * position.cost;
             let pnl = value - cost - fee;
@@ -1247,7 +1251,7 @@ mod exchange {
                 let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let skew_abs_delta = skew_abs_1 - skew_abs_0;
-                let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
+                let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
                 let cost = position.cost;
 
                 let pnl = value - cost - fee;
@@ -1282,7 +1286,7 @@ mod exchange {
                 let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price_token).checked_abs().expect(ERROR_ARITHMETIC);
                 let skew_abs_delta = skew_abs_1 - skew_abs_0;
-                let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
+                let fee = value_abs * (config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * config.fee_1).clamp(dec!(0), self.config.exchange.fee_max);
                 let cost = position.cost;
 
                 if position.amount.is_positive() {
