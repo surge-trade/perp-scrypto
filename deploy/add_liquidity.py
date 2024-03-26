@@ -11,7 +11,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all
+from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 
 async def main():
     path = dirname(realpath(__file__))
@@ -31,6 +31,7 @@ async def main():
         print('Config loaded:', config_data)
 
         owner_resource = config_data['OWNER_RESOURCE']
+        base_resource = config_data['BASE_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
@@ -42,31 +43,19 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = builder.account_create_proof_of_amount(
-            account,
-            ret.Address(owner_resource),
-            ret.Decimal('1')
+        builder = withdraw_to_bucket(
+            builder, 
+            account, 
+            ret.Address(base_resource), 
+            ret.Decimal('100'), 
+            'bucket1'
         )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'update_pair_configs',
-            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
-                ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(1),  # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.008')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001'))  # pub fee_1: Decimal,
-                ])
-            ])]
+            'add_liquidity',
+            [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
         )
+        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)

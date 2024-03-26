@@ -6,6 +6,11 @@ def lock_fee(builder: ManifestBuilder, account: Address, fee: int) -> ManifestBu
 def deposit_all(builder: ManifestBuilder, account: Address) -> ManifestBuilder:
     return builder.account_deposit_entire_worktop(account)
 
+def withdraw_to_bucket(builder: ManifestBuilder, account: Address, resource: Address, amount: Decimal, name: str) -> ManifestBuilder:
+    builder = builder.account_withdraw(account, resource, amount)
+    builder = builder.take_from_worktop(resource, amount, ManifestBuilderBucket(name))
+    return builder
+
 def mint_owner_badge(builder: ManifestBuilder) -> ManifestBuilder:
     resource_roles = FungibleResourceRoles(
         mint_roles=None,

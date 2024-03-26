@@ -11,7 +11,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all
+from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 
 async def main():
     path = dirname(realpath(__file__))
@@ -31,7 +31,8 @@ async def main():
         print('Config loaded:', config_data)
 
         owner_resource = config_data['OWNER_RESOURCE']
-        exchange_component = config_data['EXCHANGE_COMPONENT']
+        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
+        xrd = network_config['xrd']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -48,24 +49,9 @@ async def main():
             ret.Decimal('1')
         )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'update_pair_configs',
-            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
-                ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(1),  # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.008')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001'))  # pub fee_1: Decimal,
-                ])
-            ])]
+            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
+            'add_child',
+            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xrd)))]
         )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
