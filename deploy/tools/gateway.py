@@ -108,6 +108,13 @@ class Gateway:
         for e in details['transaction']['receipt']['state_updates']['new_global_entities']:
             addresses.append(e['entity_address'])
         return addresses
+    
+    async def get_transaction_status(self, intent: str) -> dict:
+        details = None
+        while details is None:
+            details = await self.get_transaction_details(intent)
+        status = details['transaction']['transaction_status']
+        return status
 
     async def preview_transaction(self, manifest: str) -> dict:
         headers = {
