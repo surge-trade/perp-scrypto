@@ -28,6 +28,7 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
         '-v', f'/root/surge-scrypto/utils:/utils', 
+        '-v', f'/root/surge-scrypto/config:/config', 
         '-v', f'/root/surge-scrypto/account:/account',
         '-v', f'/root/surge-scrypto/pool:/pool'] + 
     [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
