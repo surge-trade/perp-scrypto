@@ -2,7 +2,7 @@ use scrypto::prelude::*;
 use account::KeeperRequest;
 use utils::{PairId, ListIndex};
 use pool::PoolPosition;
-use super::config::*;
+use config::*;
 
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventSignalUpgrade {

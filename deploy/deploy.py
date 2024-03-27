@@ -62,6 +62,7 @@ async def main():
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         clean('utils')
         clean('account')
+        clean('config')
         clean('pool')
         clean('referrals')
         clean('token_wrapper')
@@ -184,6 +185,35 @@ async def main():
         addresses = await gateway.get_new_addresses(intent)
         token_wrapper_component = addresses[0]
         print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
+
+        code, definition = build('config', envs, network_config['network_name'])
+        payload, intent = await gateway.build_publish_transaction(
+            account,
+            code,
+            definition,
+            owner_role,
+            public_key,
+            private_key,
+        )
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        config_package = addresses[0]
+        envs.append(('CONFIG_PACKAGE', config_package))
+        print('CONFIG_PACKAGE:', config_package)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.call_function(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(config_package)),
+            'Config',
+            'new',
+            [manifest_owner_role]
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        config_component = addresses[0]
+        print('CONFIG_COMPONENT:', config_component)
 
         code, definition = build('account', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
@@ -322,6 +352,7 @@ async def main():
             [
                 manifest_owner_role, 
                 ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
@@ -341,6 +372,7 @@ async def main():
         print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
 
         print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
+        print('CONFIG_PACKAGE:', config_package)
         print('ACCOUNT_PACKAGE:', account_package)
         print('POOL_PACKAGE:', pool_package)
         print('ORACLE_PACKAGE:', oracle_package)
@@ -348,6 +380,7 @@ async def main():
         print('EXCHANGE_PACKAGE:', exchange_package)
 
         print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
+        print('CONFIG_COMPONENT:', config_component)
         print('POOL_COMPONENT:', pool_component)
         print('ORACLE_COMPONENT:', oracle_component)
         print('REFERRALS_COMPONENT:', referrals_component)
@@ -359,12 +392,14 @@ async def main():
             'BASE_RESOURCE': base_resource,
             'KEEPER_REWARD_RESOURCE': keeper_reward_resource,
             'TOKEN_WRAPPER_PACKAGE': token_wrapper_package,
+            'CONFIG_PACKAGE': config_package,
             'ACCOUNT_PACKAGE': account_package,
             'POOL_PACKAGE': pool_package,
             'ORACLE_PACKAGE': oracle_package,
             'REFERRALS_PACKAGE': referrals_package,
             'EXCHANGE_PACKAGE': exchange_package,
             'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
+            'CONFIG_COMPONENT': config_component,
             'POOL_COMPONENT': pool_component,
             'ORACLE_COMPONENT': oracle_component,
             'REFERRALS_COMPONENT': referrals_component,

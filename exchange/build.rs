@@ -15,6 +15,7 @@ fn main() {
 
     // Fetch the addresses from the environment
     let packages = vec![
+        env::var("CONFIG_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ACCOUNT_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("POOL_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),

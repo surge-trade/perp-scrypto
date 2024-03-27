@@ -1,11 +1,10 @@
 use scrypto::prelude::*;
-use utils::{PairId, HashList};
+use utils::PairId;
 
 #[derive(ScryptoSbor)]
-pub struct Config {
+pub struct ConfigInfo {
     pub exchange: ExchangeConfig,
-    pub pairs: HashList<PairId, PairConfig>,
-    pub collaterals: HashMap<ResourceAddress, CollateralConfig>, // TODO: HashList?
+    pub collaterals: HashMap<ResourceAddress, CollateralConfig>,
 }
 
 #[derive(ScryptoSbor, Clone)]

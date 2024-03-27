@@ -32,8 +32,8 @@ impl VirtualMarginAccount {
 
     pub fn realize(self) {
         let requests: Vec<(ListIndex, KeeperRequest)> = self.account_updates.requests_new.iter()
-            .enumerate().map(|(i, r)| (i as ListIndex + self.account_info.requests_len, r.clone()))
-            .chain(self.account_updates.request_updates.iter().map(|(&index, request)| (index, request.clone())))
+            .enumerate().map(|(i, request)| (i as ListIndex + self.account_info.requests_len, request.clone()))
+            .chain(self.account_updates.request_updates.iter().map(|(index, request)| (*index, request.clone())))
             .collect();
         let event_requests = EventRequests {
             account: self.account.address(),
@@ -50,6 +50,10 @@ impl VirtualMarginAccount {
 
     pub fn positions(&self) -> &HashMap<PairId, AccountPosition> {
         &self.account_info.positions
+    }
+
+    pub fn position_ids(&self) -> HashSet<PairId> {
+        self.account_info.positions.keys().cloned().collect()
     }
 
     pub fn position(&self, pair_id: PairId) -> AccountPosition {
@@ -119,15 +123,15 @@ impl VirtualMarginAccount {
     //     Runtime::assert_access_rule(rule);
     // }
 
-    pub fn set_level_1_auth(&self, rule: AccessRule) {
+    pub fn set_level_1_auth(&mut self, rule: AccessRule) {
         self.account.set_role("level_1", rule);
     }
 
-    pub fn set_level_2_auth(&self, rule: AccessRule) {
+    pub fn set_level_2_auth(&mut self, rule: AccessRule) {
         self.account.set_role("level_2", rule);
     }
 
-    pub fn set_level_3_auth(&self, rule: AccessRule) {
+    pub fn set_level_3_auth(&mut self, rule: AccessRule) {
         self.account.set_role("level_3", rule);
     }
 
@@ -164,16 +168,16 @@ impl VirtualMarginAccount {
         let indexes: Vec<ListIndex> = updates.iter().map(|(index, _)| *index).collect();
         let statuses: Vec<Status> = updates.iter().map(|(_, status)| *status).collect();
 
-        let keeper_request = self.keeper_requests(indexes);
-        for ((index, keeper_request), status) in keeper_request.iter().zip(statuses.iter()) {
-            let status_phases = self._status_phases(*status);
+        let keeper_requests = self.keeper_requests(indexes);
+        for ((index, keeper_request), status) in keeper_requests.into_iter().zip(statuses.into_iter()) {
+            let status_phases = self._status_phases(status);
             if !status_phases.contains(&keeper_request.status) {
                 continue;
             } else {
-                let mut keeper_request = keeper_request.clone();
-                keeper_request.status = *status;
+                let mut keeper_request = keeper_request;
+                keeper_request.status = status;
                 keeper_request.submission = current_time;
-                self.account_updates.request_updates.insert(*index, keeper_request);
+                self.account_updates.request_updates.insert(index, keeper_request);
             }
         }
     }
