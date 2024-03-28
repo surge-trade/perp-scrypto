@@ -106,8 +106,8 @@ mod exchange {
             fn update_rebate(&self, rebate: Decimal);
             fn update_trickle_up(&self, trickle_up: Decimal);
             fn set_referrer(&self, account: ComponentAddress, referrer: Option<ComponentAddress>);
-            fn reward(&self, referred_account: ComponentAddress, token: Bucket);
-            fn collect(&self, account: ComponentAddress) -> Bucket;
+            fn reward(&self, referred_account: ComponentAddress, amount: Decimal);
+            fn collect(&self, account: ComponentAddress) -> Decimal;
         }
     }
 
@@ -474,10 +474,15 @@ mod exchange {
         ) -> Bucket {
             authorize!(self, {
                 let account = VirtualMarginAccount::new(account, vec![]);
+                let mut pool = VirtualLiquidityPool::new(self.pool);
                 account.verify_level_1_auth();
-                let token = self.referrals.collect(account.address());
+
+                let amount = self.referrals.collect(account.address());
+                let payment = pool.withdraw(amount, TO_ZERO);
+
                 account.realize();
-                token
+                pool.realize();
+                payment
             })
         }
 
@@ -1472,11 +1477,10 @@ mod exchange {
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
-            fee_referral: Decimal,
+            amount: Decimal,
         ) {
-            let fee_referral = fee_referral.min(pool.base_tokens_amount());
-            let fee_referral_tokens = pool.withdraw(fee_referral, TO_ZERO);
-            self.referrals.reward(account.address(), fee_referral_tokens);
+            pool.update_virtual_balance(pool.virtual_balance() - amount);
+            self.referrals.reward(account.address(), amount);
         }
         
         fn _save_funding_index(

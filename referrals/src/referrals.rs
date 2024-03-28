@@ -1,16 +1,16 @@
 use scrypto::prelude::*;
-use utils::{_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
+use utils::{_AUTHORITY_RESOURCE, _BASE_RESOURCE};
 
 #[derive(ScryptoSbor)]
 struct ReferralAccount {
-    rewards: Vault,
+    rewards: Decimal,
     referrer_account: Option<ComponentAddress>,
 }
 
 impl ReferralAccount {
     fn new(referrer_account: Option<ComponentAddress>) -> Self {
         Self {
-            rewards: Vault::new(_BASE_RESOURCE),
+            rewards: dec!(0),
             referrer_account,
         }
     }
@@ -43,7 +43,7 @@ mod referrals {
 
     struct Referrals {
         referral_accounts: KeyValueStore<ComponentAddress, ReferralAccount>,
-        undirected_rewards: Vault,
+        undirected_rewards: Decimal,
         rebate: Decimal,
         trickle_up: Decimal,
     }
@@ -52,7 +52,7 @@ mod referrals {
         pub fn new(owner_role: OwnerRole) -> Global<Referrals> {
             Self {
                 referral_accounts: KeyValueStore::new_with_registered_type(),
-                undirected_rewards: Vault::new(BASE_RESOURCE),
+                undirected_rewards: dec!(0),
                 rebate: dec!(0),
                 trickle_up: dec!(0),
             }
@@ -71,10 +71,12 @@ mod referrals {
         }
 
         pub fn update_rebate(&mut self, rebate: Decimal) {
+            assert!(rebate >= dec!(0));
             self.rebate = rebate;
         }
 
         pub fn update_trickle_up(&mut self, trickle_up: Decimal) {
+            assert!(trickle_up >= dec!(0));
             self.trickle_up = trickle_up;
         }
 
@@ -86,12 +88,15 @@ mod referrals {
                 });
         }
 
-        pub fn reward(&mut self, referred_account: ComponentAddress, mut token: Bucket) {
+        pub fn reward(&mut self, referred_account: ComponentAddress, mut amount: Decimal) {
+            assert!(amount >= dec!(0));
+
             let maybe_referrer = self.referral_accounts.get_mut(&referred_account)
                 .and_then(|mut referral| {
                     referral.referrer_account.map(|referrer_account| {
-                        let rebate = token.amount() * self.rebate;
-                        referral.rewards.put(token.take_advanced(rebate, TO_ZERO));
+                        let rebate = amount * self.rebate;
+                        amount -= rebate;
+                        referral.rewards += rebate;
                         referrer_account
                     })
                 })
@@ -100,23 +105,28 @@ mod referrals {
                 });
 
             match maybe_referrer {
-                Some(mut referrer) => referrer.rewards.put(token),
-                None => self.undirected_rewards.put(token),
+                Some(mut referrer) => referrer.rewards += amount,
+                None => self.undirected_rewards += amount,
             }
         }
 
-        pub fn collect(&mut self, account: ComponentAddress) -> Bucket {
-            let (mut token, maybe_referrer_account) = self.referral_accounts.get_mut(&account)
-                .map(|mut referral| (referral.rewards.take_all(), referral.referrer_account))
-                .unwrap_or((Bucket::new(BASE_RESOURCE), None));
+        pub fn collect(&mut self, account: ComponentAddress) -> Decimal {
+            let (mut amount, maybe_referrer_account) = self.referral_accounts.get_mut(&account)
+                .map(|mut referral| {
+                    let amount = referral.rewards;
+                    referral.rewards = dec!(0);
+                    (amount, referral.referrer_account)
+                })
+                .unwrap_or((dec!(0), None));
 
-            let trickle_up = token.take_advanced(token.amount() * self.trickle_up, TO_ZERO);
+            let trickle_up = amount * self.trickle_up;
+            amount -= trickle_up;
             match maybe_referrer_account.and_then(|referrer_account| self.referral_accounts.get_mut(&referrer_account)) {
-                Some(mut referrer) => referrer.rewards.put(trickle_up),
-                None => self.undirected_rewards.put(trickle_up),
+                Some(mut referrer) => referrer.rewards += trickle_up,
+                None => self.undirected_rewards += trickle_up,
             }
 
-            token
+            amount
         }
     }
 }
