@@ -395,10 +395,15 @@ mod exchange {
             &self, 
             initial_rule: AccessRule,
         ) -> ComponentAddress {
-            // TODO: globalize within exchange?
-            authorize!(self, {
+            let account = authorize!(self, {
                 Blueprint::<MarginAccount>::new(initial_rule).address()
-            })
+            });
+
+            Runtime::emit_event(EventAccountCreation {
+                account,
+            });
+
+            account
         }
 
         pub fn set_level_1_auth(

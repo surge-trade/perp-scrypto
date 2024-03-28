@@ -30,10 +30,10 @@ impl VirtualConfig {
     }
 
     pub fn pair_config(&self, pair_id: PairId) -> &PairConfig {
-        self.pair_configs.get(&pair_id)
-            .unwrap()
-            .as_ref()
-            .expect(ERROR_MISSING_PAIR_CONFIG)
+        match self.pair_configs.get(&pair_id) {
+            Some(Some(config)) => config,
+            _ => panic!("{}", ERROR_MISSING_PAIR_CONFIG),
+        }
     }
     
     pub fn collateral_config(&self, resource: ResourceAddress) -> &CollateralConfig {
