@@ -35,7 +35,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1p4tamr7cyadr6q2sxnshjgv4frk5n29vd5kz85n27wgu78wvgfje5v",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -55,7 +55,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phtur3la52rmejlu4u9xp8pkswjjcyz0um7f4jqhv0yw3sxexsey8k",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -75,7 +75,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkmpwan0vrfkcjtk68x5u9uczqm09sxrw4wvep0u06avgn9c6yznr5",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -90,14 +90,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phpe7282qn5la3vnycxrj5345d4nenlu4w6jqkg2uckvfq5hqqpe3p",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkh2l98nk3fj85m7sswa39fhta2j84nd3trk08gfq2vd4m0q5xm0hl",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -401,7 +401,7 @@ mod exchange {
             });
 
             Runtime::emit_event(EventAccountCreation {
-                account,
+                account: account.address(),
             });
 
             account
