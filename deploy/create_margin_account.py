@@ -70,7 +70,16 @@ async def main():
         payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
+        addresses = await gateway.get_new_addresses(intent)
+        account_component = addresses[0]
         print('Transaction status:', status)
+        print('ACCOUNT COMPONENT:', account_component)
+
+        config_data['ACCOUNT_COMPONENT'] = account_component
+
+        with open(join(path, f'config.json'), 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        print(f'Config saved')
 
 if __name__ == '__main__':
     asyncio.run(main())
