@@ -30,8 +30,8 @@ async def main():
             config_data = json.load(config_file)
         print('Config loaded:', config_data)
 
-        owner_resource = config_data['OWNER_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
+        account_component = config_data['ACCOUNT_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -40,44 +40,28 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
-        public_key_hash = ret.hash(public_key.value).as_str()[-58:]
-        initial_rule = f'{network_config["ed25519_virtual_badge"]}:[{public_key_hash}]'
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.call_method(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            'margin_order_request',
+            [
+                ret.ManifestBuilderValue.U64_VALUE(10000000000),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
+                ret.ManifestBuilderValue.U16_VALUE(1),
+                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),
+                ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))]),
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []),
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []),
+                ret.ManifestBuilderValue.U8_VALUE(1),
+            ]
+        )
+        builder = deposit_all(builder, account)
 
-        manifest = f'''
-            CALL_METHOD
-                Address("{account.as_str()}")
-                "lock_fee"
-                Decimal("10")
-            ;
-            CALL_METHOD
-                Address("{exchange_component}")
-                "create_account"
-                Enum<2u8>(
-                    Enum<0u8>(
-                        Enum<0u8>(
-                            Enum<0u8>(
-                                NonFungibleGlobalId("{initial_rule}")
-                            )
-                        )
-                    )
-                )
-                Enum<0u8>()
-            ;
-        '''
-
-        payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
-        addresses = await gateway.get_new_addresses(intent)
-        account_component = addresses[0]
         print('Transaction status:', status)
-        print('ACCOUNT COMPONENT:', account_component)
-
-        config_data['ACCOUNT_COMPONENT'] = account_component
-
-        with open(join(path, f'config.json'), 'w') as config_file:
-            json.dump(config_data, config_file, indent=4)
-        print(f'Config saved')
 
 if __name__ == '__main__':
     asyncio.run(main())
