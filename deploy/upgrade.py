@@ -5,7 +5,7 @@ import asyncio
 import datetime
 import json
 from os.path import dirname, join, realpath
-from os import makedirs, chdir
+from os import makedirs, chdir, environ
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
@@ -21,9 +21,12 @@ def clean(name: str) -> None:
     run(['cargo', 'clean'], cwd=path, check=True)
 
 def build(name: str, envs: list, network: str) -> (bytes, bytes):
-    # path = join(dirname(dirname(realpath(__file__))), name)
-    # print(f'Build: {path}')
-    # run(['scrypto', 'build'] + [f'{key}={value}' for key, value in envs], cwd=path, check=True)
+    path = join(dirname(dirname(realpath(__file__))), name)
+    print(f'Build: {path}')
+    
+    # env = environ.copy()
+    # env.update({str(key): str(value) for key, value in envs})
+    # run(['scrypto', 'build'], env=env, cwd=path, check=True)
 
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
@@ -35,7 +38,6 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
         check=True
     )
 
-    path = join(dirname(dirname(realpath(__file__))), name)
     code, definition = None, None
     with open(join(path, f'target/wasm32-unknown-unknown/release/{name}.wasm'), 'rb') as f:
         code = f.read()
@@ -96,16 +98,9 @@ async def main():
         authority_resource = config_data['AUTHORITY_RESOURCE']
         base_resource = config_data['BASE_RESOURCE']
         keeper_reward_resource = config_data['KEEPER_REWARD_RESOURCE']
-        token_wrapper_package = config_data['TOKEN_WRAPPER_PACKAGE']
-        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        config_package = config_data['CONFIG_PACKAGE']
         config_component = config_data['CONFIG_COMPONENT']
-        account_package = config_data['ACCOUNT_PACKAGE']
-        pool_package = config_data['POOL_PACKAGE']
         pool_component = config_data['POOL_COMPONENT']
-        oracle_package = config_data['ORACLE_PACKAGE']
         oracle_component = config_data['ORACLE_COMPONENT']
-        referrals_package = config_data['REFERRALS_PACKAGE']
         referrals_component = config_data['REFERRALS_COMPONENT']
         exchange_package = config_data['EXCHANGE_PACKAGE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
@@ -196,45 +191,11 @@ async def main():
 
         print('---------- DEPLOY COMPLETE ----------')
 
-        print('OWNER_RESOURCE:', owner_resource)
-        print('AUTHORITY_RESOURCE:', authority_resource)
-        print('BASE_RESOURCE:', base_resource)
-        print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
-
-        print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
-        print('CONFIG_PACKAGE:', config_package)
-        print('ACCOUNT_PACKAGE:', account_package)
-        print('POOL_PACKAGE:', pool_package)
-        print('ORACLE_PACKAGE:', oracle_package)
-        print('REFERRALS_PACKAGE:', referrals_package)
         print('EXCHANGE_PACKAGE:', exchange_package)
-
-        print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
-        print('CONFIG_COMPONENT:', config_component)
-        print('POOL_COMPONENT:', pool_component)
-        print('ORACLE_COMPONENT:', oracle_component)
-        print('REFERRALS_COMPONENT:', referrals_component)
         print('EXCHANGE_COMPONENT:', exchange_component)
 
-        config_data = {
-            'OWNER_RESOURCE': owner_resource,
-            'AUTHORITY_RESOURCE': authority_resource,
-            'BASE_RESOURCE': base_resource,
-            'KEEPER_REWARD_RESOURCE': keeper_reward_resource,
-            'TOKEN_WRAPPER_PACKAGE': token_wrapper_package,
-            'CONFIG_PACKAGE': config_package,
-            'ACCOUNT_PACKAGE': account_package,
-            'POOL_PACKAGE': pool_package,
-            'ORACLE_PACKAGE': oracle_package,
-            'REFERRALS_PACKAGE': referrals_package,
-            'EXCHANGE_PACKAGE': exchange_package,
-            'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
-            'CONFIG_COMPONENT': config_component,
-            'POOL_COMPONENT': pool_component,
-            'ORACLE_COMPONENT': oracle_component,
-            'REFERRALS_COMPONENT': referrals_component,
-            'EXCHANGE_COMPONENT': exchange_component
-        }
+        config_data['EXCHANGE_PACKAGE'] = exchange_package
+        config_data['EXCHANGE_COMPONENT'] = exchange_component
 
         release_path = join(dirname(dirname(realpath(__file__))), 'releases')
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H")

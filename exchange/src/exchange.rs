@@ -35,7 +35,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1phd5smrk4lszyn5qh7q57ve2grtczwe5c6mp7w09sxxryshltfwzhv",
+        "package_tdx_2_1p5xg3na2rnqtczqu6cva6tdex8wh29g873zdgdlwnylftpczmt5tdp",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -55,10 +55,10 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5ueehecn4hphjxp7t5gnttgq932serc5h48cy9ulkjhsxl4r6fpg8",
+        "package_tdx_2_1p4n5luzk2j2g65y32vcdf4k3g06z66dwraslss87v8twx6up4sgu6p",
         MarginAccount {
             // Constructor
-            fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
+            fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
 
             // Getter methods
             fn get_info(&self, collateral_resources: Vec<ResourceAddress>) -> MarginAccountInfo;
@@ -75,7 +75,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phhgxqjs3pcmxl6eka3amt84xt724qyw039ew4utxh50uhfv303dcg",
+        "package_tdx_2_1pktgrqpkrjur07apyfnfznf7quakj8w5gsvezs3szzajsrxgzn8f8c",
         MarginPool {
             // Getter methods
             fn get_info(&self) -> MarginPoolInfo;
@@ -90,14 +90,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4y2tcvjuayqcnsx9uf2da2zunzxf7x0xrqjs22ckwww5c7973h0lw",
+        "package_tdx_2_1p5nypxf2v2dq7z6ajjkqk82zzfpdeuktsd6wj4kqujyx00vhrlzy9f",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5p5jvupppejflf66pc94kc3fj0mpmq9tzf5vzyjpzhaqu8msjmrrm",
+        "package_tdx_2_1p5fn9scyzqtxw4xh4arlf3dxcyeq9rv9apam0ggu52x3pygv7xeeuw",
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -394,10 +394,11 @@ mod exchange {
         pub fn create_account(
             &self, 
             initial_rule: AccessRule,
-        ) -> ComponentAddress {
+            reservation: Option<GlobalAddressReservation>,
+        ) -> Global<MarginAccount> {
             // TODO: globalize within exchange?
             authorize!(self, {
-                Blueprint::<MarginAccount>::new(initial_rule).address()
+                Blueprint::<MarginAccount>::new(initial_rule, reservation)
             })
         }
 

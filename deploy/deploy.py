@@ -5,7 +5,7 @@ import asyncio
 import datetime
 import json
 from os.path import dirname, join, realpath
-from os import makedirs, chdir
+from os import makedirs, chdir, environ
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
@@ -21,9 +21,12 @@ def clean(name: str) -> None:
     run(['cargo', 'clean'], cwd=path, check=True)
 
 def build(name: str, envs: list, network: str) -> (bytes, bytes):
-    # path = join(dirname(dirname(realpath(__file__))), name)
-    # print(f'Build: {path}')
-    # run(['scrypto', 'build'] + [f'{key}={value}' for key, value in envs], cwd=path, check=True)
+    path = join(dirname(dirname(realpath(__file__))), name)
+    print(f'Build: {path}')
+    
+    # env = environ.copy()
+    # env.update({str(key): str(value) for key, value in envs})
+    # run(['scrypto', 'build'], env=env, cwd=path, check=True)
 
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
@@ -36,7 +39,6 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
         check=True
     )
 
-    path = join(dirname(dirname(realpath(__file__))), name)
     code, definition = None, None
     with open(join(path, f'target/wasm32-unknown-unknown/release/{name}.wasm'), 'rb') as f:
         code = f.read()
@@ -61,13 +63,13 @@ async def main():
     chdir(path)
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
-        clean('utils')
-        clean('account')
-        clean('config')
-        clean('pool')
-        clean('referrals')
-        clean('token_wrapper')
-        clean('exchange')
+        # clean('utils')
+        # clean('account')
+        # clean('config')
+        # clean('pool')
+        # clean('referrals')
+        # clean('token_wrapper')
+        # clean('exchange')
 
         gateway = Gateway(session)
         network_config = await gateway.network_configuration()

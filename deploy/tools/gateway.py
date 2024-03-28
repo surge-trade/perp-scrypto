@@ -27,6 +27,7 @@ class Gateway:
                 'network_id': data['network_id'],
                 'network_name': data['network_name'],
                 'xrd': data['well_known_addresses']['xrd'],
+                'ed25519_virtual_badge': data['well_known_addresses']['ed25519_signature_virtual_badge'],
             }
 
     async def get_current_epoch(self) -> int:
@@ -155,6 +156,41 @@ class Gateway:
         network_id = network_config['network_id']
 
         manifest: ret.TransactionManifest = builder.build(network_id)
+        manifest.statically_validate()
+        header: ret.TransactionHeader = ret.TransactionHeader(
+            network_id=network_id,
+            start_epoch_inclusive=epoch,
+            end_epoch_exclusive=epoch + epochs_valid,
+            nonce=self.random_nonce(),
+            notary_public_key=public_key,
+            notary_is_signatory=False,
+            tip_percentage=0,
+        )
+        transaction: ret.NotarizedTransaction = (
+            ret.TransactionBuilder()
+                .header(header)
+                .manifest(manifest)
+                .sign_with_private_key(private_key)
+                .notarize_with_private_key(private_key)
+        )
+        intent = transaction.intent_hash().as_str()
+        payload = bytearray(transaction.compile()).hex()
+        return payload, intent
+    
+    async def build_transaction_str(
+        self,
+        manifest: str, 
+        public_key: ret.PublicKey, 
+        private_key: ret.PrivateKey,
+        blobs: list = [],
+        epochs_valid: int = 10
+    ) -> Tuple[str, str]:
+    
+        epoch = await self.get_current_epoch()
+        network_config = await self.network_configuration()
+        network_id = network_config['network_id']
+
+        manifest: ret.TransactionManifest = ret.TransactionManifest(ret.Instructions.from_string(manifest, network_id), blobs)
         manifest.statically_validate()
         header: ret.TransactionHeader = ret.TransactionHeader(
             network_id=network_id,
