@@ -23,6 +23,10 @@ mod oracle {
             .globalize()
         }
 
+        pub fn push_price(&mut self, pair_id: PairId, price: Decimal) {
+            self.prices.insert(pair_id, price);
+        }
+
         pub fn prices(&self, _max_age: Instant) -> HashMap<PairId, Decimal> {
             self.prices.clone()
         }
