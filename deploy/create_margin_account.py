@@ -63,6 +63,7 @@ async def main():
                         )
                     )
                 )
+                Enum<0u8>()
             ;
         '''
 
