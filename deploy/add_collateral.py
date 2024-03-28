@@ -11,7 +11,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all
+from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 
 async def main():
     path = dirname(realpath(__file__))
@@ -30,6 +30,7 @@ async def main():
             config_data = json.load(config_file)
         print('Config loaded:', config_data)
 
+        base_resource = config_data['BASE_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
 
@@ -42,20 +43,18 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
+        builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('100'), 'bucket1')
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'margin_order_request',
+            'add_collateral',
             [
-                ret.ManifestBuilderValue.U64_VALUE(10000000000),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
-                ret.ManifestBuilderValue.U16_VALUE(1),
-                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),
-                ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))]),
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []),
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []),
-                ret.ManifestBuilderValue.U8_VALUE(1),
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.BUCKET_VALUE, [
+                    ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))
+                ]),
             ]
         )
+        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)

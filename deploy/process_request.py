@@ -44,18 +44,13 @@ async def main():
         builder = lock_fee(builder, account, 100)
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'margin_order_request',
+            'process_request',
             [
-                ret.ManifestBuilderValue.U64_VALUE(10000000000),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
-                ret.ManifestBuilderValue.U16_VALUE(1),
-                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),
-                ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))]),
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []),
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []),
-                ret.ManifestBuilderValue.U8_VALUE(1),
+                ret.ManifestBuilderValue.U64_VALUE(0),
             ]
         )
+        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
