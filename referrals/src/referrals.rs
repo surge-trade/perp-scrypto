@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::{_AUTHORITY_RESOURCE, _BASE_RESOURCE};
+use utils::{_AUTHORITY_RESOURCE};
 
 #[derive(ScryptoSbor)]
 struct ReferralAccount {
@@ -23,7 +23,6 @@ impl ReferralAccount {
 )]
 mod referrals {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
-    const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     enable_method_auth!(
         roles {
