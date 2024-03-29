@@ -22,12 +22,13 @@ use self::virtual_oracle::*;
 #[blueprint]
 #[events(
     EventSignalUpgrade,
-    EventRequests,
-    EventPairUpdates,
     EventExchangeConfigUpdate,
     EventPairConfigUpdates,
     EventCollateralConfigUpdates,
     EventCollateralConfigRemoval,
+    EventPairUpdates,
+    EventAccountCreation,
+    EventRequests,
 )]
 mod exchange {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
