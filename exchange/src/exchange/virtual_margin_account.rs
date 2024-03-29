@@ -35,11 +35,13 @@ impl VirtualMarginAccount {
             .enumerate().map(|(i, request)| (i as ListIndex + self.account_info.requests_len, request.clone()))
             .chain(self.account_updates.request_updates.iter().map(|(index, request)| (*index, request.clone())))
             .collect();
-        let event_requests = EventRequests {
-            account: self.account.address(),
-            requests,
-        };
-        Runtime::emit_event(event_requests);
+        if !requests.is_empty() {
+            let event_requests = EventRequests {
+                account: self.account.address(),
+                requests,
+            };
+            Runtime::emit_event(event_requests);
+        }
 
         self.account.update(self.account_updates);
     }
