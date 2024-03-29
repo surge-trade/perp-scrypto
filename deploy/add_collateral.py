@@ -48,6 +48,7 @@ async def main():
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
             'add_collateral',
             [
+                ret.ManifestBuilderValue.ENUM_VALUE(0, []),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
                 ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.BUCKET_VALUE, [
                     ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))

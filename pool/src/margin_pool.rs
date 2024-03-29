@@ -51,6 +51,7 @@ pub mod margin_pool {
                         "package" => GlobalAddress::from(Runtime::package_address()), locked;
                         "component" => GlobalAddress::from(this), locked;
                         "name" => format!("LP Token"), updatable;
+                        "symbol" => format!("LPT"), updatable;
                         "description" => format!("Liquidity provider token the represents a share of ownership of a pool."), updatable;
                     }
                 ))

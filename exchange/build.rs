@@ -20,6 +20,7 @@ fn main() {
         env::var("POOL_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("REFERRALS_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
+        env::var("FEE_DELEGATOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
     ];
 
     // Find all matches and replace them sequentially with the new addresses

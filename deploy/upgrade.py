@@ -63,10 +63,12 @@ async def main():
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         clean('utils')
+        clean('token_wrapper')
         clean('account')
+        clean('config')
         clean('pool')
         clean('referrals')
-        clean('token_wrapper')
+        clean('fee_delegator')
         clean('exchange')
 
         gateway = Gateway(session)
@@ -102,6 +104,7 @@ async def main():
         pool_component = config_data['POOL_COMPONENT']
         oracle_component = config_data['ORACLE_COMPONENT']
         referrals_component = config_data['REFERRALS_COMPONENT']
+        fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
         exchange_package = config_data['EXCHANGE_PACKAGE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
@@ -162,6 +165,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
             ]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)

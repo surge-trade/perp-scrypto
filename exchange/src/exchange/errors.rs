@@ -1,4 +1,5 @@
 pub const ERROR_INVALID_AUTHORITY: &str = "Invalid authority";
+pub const ERROR_INVALID_FEE_OATH: &str = "Invalid fee oath";
 
 pub const ERROR_COLLATERAL_INVALID: &str = "Invalid collateral";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";

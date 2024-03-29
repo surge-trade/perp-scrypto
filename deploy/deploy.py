@@ -63,13 +63,14 @@ async def main():
     chdir(path)
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
-        # clean('utils')
-        # clean('account')
-        # clean('config')
-        # clean('pool')
-        # clean('referrals')
-        # clean('token_wrapper')
-        # clean('exchange')
+        clean('utils')
+        clean('token_wrapper')
+        clean('account')
+        clean('config')
+        clean('pool')
+        clean('referrals')
+        clean('fee_delegator')
+        clean('exchange')
 
         gateway = Gateway(session)
         network_config = await gateway.network_configuration()
@@ -321,6 +322,35 @@ async def main():
         referrals_component = addresses[0]
         print('REFERRALS_COMPONENT:', referrals_component)
 
+        code, definition = build('fee_delegator', envs, network_config['network_name'])
+        payload, intent = await gateway.build_publish_transaction(
+            account,
+            code,
+            definition,
+            owner_role,
+            public_key,
+            private_key,
+        )
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        fee_delegator_package = addresses[0]
+        envs.append(('FEE_DELEGATOR_PACKAGE', fee_delegator_package))
+        print('FEE_DELEGATOR_PACKAGE:', fee_delegator_package)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.call_function(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_package)),
+            'FeeDelegator',
+            'new',
+            [manifest_owner_role]
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        fee_delegator_component = addresses[0]
+        print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
+
         code, definition = build('exchange', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
@@ -359,6 +389,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
             ]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
@@ -380,6 +411,7 @@ async def main():
         print('POOL_PACKAGE:', pool_package)
         print('ORACLE_PACKAGE:', oracle_package)
         print('REFERRALS_PACKAGE:', referrals_package)
+        print('FEE_DELEGATOR_PACKAGE:', fee_delegator_package)
         print('EXCHANGE_PACKAGE:', exchange_package)
 
         print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
@@ -387,6 +419,7 @@ async def main():
         print('POOL_COMPONENT:', pool_component)
         print('ORACLE_COMPONENT:', oracle_component)
         print('REFERRALS_COMPONENT:', referrals_component)
+        print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
         print('EXCHANGE_COMPONENT:', exchange_component)
 
         config_data = {
@@ -400,12 +433,14 @@ async def main():
             'POOL_PACKAGE': pool_package,
             'ORACLE_PACKAGE': oracle_package,
             'REFERRALS_PACKAGE': referrals_package,
+            'FEE_DELEGATOR_PACKAGE': fee_delegator_package,
             'EXCHANGE_PACKAGE': exchange_package,
             'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
             'CONFIG_COMPONENT': config_component,
             'POOL_COMPONENT': pool_component,
             'ORACLE_COMPONENT': oracle_component,
             'REFERRALS_COMPONENT': referrals_component,
+            'FEE_DELEGATOR_COMPONENT': fee_delegator_component,
             'EXCHANGE_COMPONENT': exchange_component
         }
 

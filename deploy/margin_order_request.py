@@ -46,6 +46,7 @@ async def main():
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
             'margin_order_request',
             [
+                ret.ManifestBuilderValue.ENUM_VALUE(0, []),
                 ret.ManifestBuilderValue.U64_VALUE(10000000000),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
                 ret.ManifestBuilderValue.U16_VALUE(1),
