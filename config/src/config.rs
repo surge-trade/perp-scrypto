@@ -13,7 +13,6 @@ pub use self::structs::*;
 mod exchange_config {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
-    // Set access rules
     enable_method_auth! { 
         roles {
             authority => updatable_by: [];

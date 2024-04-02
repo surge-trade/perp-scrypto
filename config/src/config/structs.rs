@@ -74,7 +74,7 @@ impl ExchangeConfig {
 pub struct PairConfig {
     /// Price feed id
     pub pair_id: PairId,
-    /// If the pair is disabled  // TODO: implement
+    /// If the pair is disabled
     pub disabled: bool,
     /// Initial margin required
     pub margin_initial: Decimal,

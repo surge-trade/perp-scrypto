@@ -120,10 +120,10 @@ impl VirtualMarginAccount {
         Runtime::assert_access_rule(rule);
     }
 
-    // pub fn verify_level_3_auth(&self) {
-    //     let rule = self.account.get_role("level_3").expect(ERROR_MISSING_AUTH);
-    //     Runtime::assert_access_rule(rule);
-    // }
+    pub fn verify_level_3_auth(&self) {
+        let rule = self.account.get_role("level_3").expect(ERROR_MISSING_AUTH);
+        Runtime::assert_access_rule(rule);
+    }
 
     pub fn set_level_1_auth(&mut self, rule: AccessRule) {
         self.account.set_role("level_1", rule);

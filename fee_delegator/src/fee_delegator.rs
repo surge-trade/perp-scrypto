@@ -8,7 +8,6 @@ use self::errors::*;
 mod fee_delegator {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
-    // Set access rules
     enable_method_auth! { 
         roles {
             authority => updatable_by: [];

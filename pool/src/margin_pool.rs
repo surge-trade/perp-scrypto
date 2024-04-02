@@ -13,7 +13,6 @@ pub mod margin_pool {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
-    // Set access rules
     enable_method_auth! { 
         roles {
             authority => updatable_by: [];
