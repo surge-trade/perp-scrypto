@@ -40,7 +40,7 @@ impl Default for ExchangeConfig {
         Self {
             max_price_age_seconds: 60,
             pair_update_price_delta_ratio: dec!(0.001),
-            pair_update_period_seconds: 10,
+            pair_update_period_seconds: 120,
             keeper_fee: dec!(0.01),
             positions_max: 10,
             skew_ratio_cap: dec!(0.1),
