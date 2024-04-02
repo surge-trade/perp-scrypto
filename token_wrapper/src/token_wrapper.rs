@@ -96,9 +96,9 @@ mod token_wrapper {
         }
 
         pub fn get_children(&self, start: ListIndex, end: ListIndex) -> Vec<(ResourceAddress, bool, Decimal)> {
-            self.child_list.range(start, end).iter().map(|child_resource| {
-                let child_vault = self.child_vaults.get(child_resource).unwrap();
-                (*child_resource, child_vault.wrappable, child_vault.vault.amount())
+            self.child_list.range(start, end).into_iter().map(|child_resource| {
+                let child_vault = self.child_vaults.get(&child_resource).unwrap();
+                (child_resource, child_vault.wrappable, child_vault.vault.amount())
             }).collect()
         }
 

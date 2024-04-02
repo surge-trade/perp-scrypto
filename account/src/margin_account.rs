@@ -25,6 +25,7 @@ pub mod margin_account {
             level_3 => updatable_by: [authority];
         },
         methods { 
+            // Public methods
             get_info => PUBLIC;
             get_request => PUBLIC;
             get_requests => PUBLIC;
@@ -96,7 +97,7 @@ pub mod margin_account {
         }
 
         pub fn get_requests_by_indexes(&self, indexes: Vec<ListIndex>) -> HashMap<ListIndex, Option<KeeperRequest>> {
-            indexes.iter().map(|index| (*index, self.get_request(*index))).collect()
+            indexes.into_iter().map(|index| (index, self.get_request(index))).collect()
         }
 
         pub fn get_requests_len(&self) -> ListIndex {

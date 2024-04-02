@@ -75,18 +75,19 @@ impl VirtualMarginAccount {
     }
 
     pub fn keeper_requests(&self, indexes: Vec<ListIndex>) -> HashMap<ListIndex, KeeperRequest> {
-        let mut indexes_remaining = vec![];
         let mut requests = HashMap::new();
-        for index in indexes.iter() {
-            if let Some(request) = self.account_updates.request_updates.get(index) {
-                requests.insert(*index, request.clone());
+        let indexes = indexes.into_iter().filter(|&index| {
+            if let Some(request) = self.account_updates.request_updates.get(&index) {
+                requests.insert(index, request.clone());
+                false
             } else {
-                indexes_remaining.push(*index);
+                true
             }
-        }
-        let requests_remaining: HashMap<ListIndex, KeeperRequest> = self.account.get_requests_by_indexes(indexes_remaining)
+        }).collect();
+
+        let requests_fetched: HashMap<ListIndex, KeeperRequest> = self.account.get_requests_by_indexes(indexes)
             .into_iter().map(|(index, request)| (index, request.expect(ERROR_MISSING_REQUEST))).collect();
-        requests.extend(requests_remaining);
+        requests.extend(requests_fetched);
         requests
     }
 
