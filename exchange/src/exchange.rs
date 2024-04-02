@@ -79,15 +79,14 @@ mod exchange {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
-            fn get_info(&self) -> MarginPoolInfo;
-            fn get_position(&self, pair_id: PairId) -> Option<PoolPosition>;            
+            fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
+            fn get_position(&self, pair_id: PairId) -> Option<PoolPosition>;
+            fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PoolPosition>>;     
 
             // Authority protected methods
             fn update(&self, update: MarginPoolUpdates);
             fn deposit(&self, token: Bucket);
             fn withdraw(&self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket;            
-            fn mint_lp(&self, amount: Decimal) -> Bucket;
-            fn burn_lp(&self, token: Bucket);
         }
     }
     extern_blueprint! {
@@ -370,7 +369,7 @@ mod exchange {
             &self, 
         ) -> Bucket {
             authorize!(self, {
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
                 let amount = self.fee_delegator.get_virtual_balance();
 
                 self.fee_delegator.update_virtual_balance(dec!(0));
@@ -464,14 +463,14 @@ mod exchange {
         pub fn get_pool_value(
             &self,
         ) -> Decimal {
-            let pool = VirtualLiquidityPool::new(self.pool);
+            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
             self._pool_value(&pool)
         }
 
         pub fn get_skew_ratio(
             &self,
         ) -> Decimal {
-            let pool = VirtualLiquidityPool::new(self.pool);
+            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
             self._skew_ratio(&pool)
         }
 
@@ -613,7 +612,7 @@ mod exchange {
                 } else {
                     VirtualMarginAccount::new(account, vec![])
                 };
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
                 account.verify_level_2_auth();
 
                 let amount = self.referrals.collect(account.address());
@@ -631,7 +630,7 @@ mod exchange {
         ) -> Bucket {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
                 let lp_token = self._add_liquidity(&config, &mut pool, payment);
                 pool.realize();
                 lp_token
@@ -644,7 +643,7 @@ mod exchange {
         ) -> Bucket {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
                 let payment = self._remove_liquidity(&config, &mut pool, lp_token);
                 pool.realize();
                 payment
@@ -667,7 +666,7 @@ mod exchange {
                 } else {
                     VirtualMarginAccount::new(account, vec![])
                 };
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
 
                 self._add_collateral(&config, &mut pool, &mut account, tokens);
                 pool.realize();
@@ -777,10 +776,14 @@ mod exchange {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                let mut pair_ids = account.position_ids();
                 let (request, submission) = account.process_request(index);
-
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                
+                let mut pair_ids = account.position_ids();
+                if let Request::MarginOrder(request) = &request {
+                    pair_ids.insert(request.pair_id);
+                }
+                config.load_pair_configs(pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
 
                 let max_age = self._max_age(&config);
                 let max_age = if max_age.compare(submission, TimeComparisonOperator::Gt) {
@@ -793,12 +796,9 @@ mod exchange {
 
                 match request {
                     Request::RemoveCollateral(request) => {
-                        config.load_pair_configs(pair_ids);
                         self._remove_collateral(&config, &mut pool, &mut account, &oracle, request);
                     },
                     Request::MarginOrder(request) => {
-                        pair_ids.insert(request.pair_id);
-                        config.load_pair_configs(pair_ids);
                         self._margin_order(&config, &mut pool, &mut account, &oracle, request);
                     },
                 }
@@ -820,7 +820,7 @@ mod exchange {
                 let config = VirtualConfig::new(self.config);
                 self._assert_valid_collateral(&config, resource);
                 let mut account = VirtualMarginAccount::new(account, vec![resource]);
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
 
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
@@ -842,9 +842,10 @@ mod exchange {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
+
                 let pair_ids = account.position_ids();
-                config.load_pair_configs(pair_ids);
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                config.load_pair_configs(pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
 
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
@@ -868,10 +869,11 @@ mod exchange {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
+
                 let mut pair_ids = account.position_ids();
                 pair_ids.insert(pair_id);
-                config.load_pair_configs(pair_ids);
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                config.load_pair_configs(pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
 
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
@@ -891,9 +893,10 @@ mod exchange {
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
+
                 let pair_ids = HashSet::from([pair_id]);
-                config.load_pair_configs(pair_ids);
-                let mut pool = VirtualLiquidityPool::new(self.pool);
+                config.load_pair_configs(pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
 
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);

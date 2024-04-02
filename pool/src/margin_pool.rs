@@ -18,22 +18,22 @@ pub mod margin_pool {
             authority => updatable_by: [];
         },
         methods { 
+            // Get methods
             get_info => PUBLIC;
             get_position => PUBLIC;
+            get_positions => PUBLIC;
 
             // Authority protected methods
             update => restrict_to: [authority];
             deposit => restrict_to: [authority];
             withdraw => restrict_to: [authority];
-            mint_lp => restrict_to: [authority];
-            burn_lp => restrict_to: [authority];
         }
     }
 
     struct MarginPool {
+        positions: KeyValueStore<PairId, PoolPosition>,
         base_tokens: Vault,
         virtual_balance: Decimal,
-        positions: KeyValueStore<PairId, PoolPosition>,
         unrealized_pool_funding: Decimal,
         skew_abs_snap: Decimal,
         pnl_snap: Decimal,
@@ -55,21 +55,21 @@ pub mod margin_pool {
                     }
                 ))
                 .mint_roles(mint_roles!{
-                        minter => rule!(require(global_caller(this))); 
+                        minter => rule!(require(AUTHORITY_RESOURCE)); 
                         minter_updater => rule!(deny_all);
                     }
                 )
                 .burn_roles(burn_roles!{
-                        burner => rule!(require(global_caller(this))); 
+                        burner => rule!(require(AUTHORITY_RESOURCE)); 
                         burner_updater => rule!(deny_all);
                     }
                 )
                 .create_with_no_initial_supply();
 
             Self {
+                positions: KeyValueStore::new_with_registered_type(),
                 base_tokens: Vault::new(BASE_RESOURCE),
                 virtual_balance: dec!(0),
-                positions: KeyValueStore::new_with_registered_type(),
                 unrealized_pool_funding: dec!(0),
                 skew_abs_snap: dec!(0),
                 pnl_snap: dec!(0),
@@ -84,8 +84,9 @@ pub mod margin_pool {
             .globalize()
         }
 
-        pub fn get_info(&self) -> MarginPoolInfo {
+        pub fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo {
             MarginPoolInfo {
+                positions: self.get_positions(pair_ids),
                 base_tokens_amount: self.base_tokens.amount(),
                 virtual_balance: self.virtual_balance,
                 unrealized_pool_funding: self.unrealized_pool_funding,
@@ -97,6 +98,10 @@ pub mod margin_pool {
 
         pub fn get_position(&self, pair_id: PairId) -> Option<PoolPosition> {
             self.positions.get(&pair_id).map(|position| position.clone())
+        }
+
+        pub fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PoolPosition>> {
+            pair_ids.into_iter().map(|k| (k, self.positions.get(&k).map(|v| v.clone()))).collect()
         }
 
         pub fn update(&mut self, update: MarginPoolUpdates) {
@@ -116,14 +121,6 @@ pub mod margin_pool {
 
         pub fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket {
             self.base_tokens.take_advanced(amount, withdraw_strategy)
-        }
-
-        pub fn mint_lp(&mut self, amount: Decimal) -> Bucket {
-            self.lp_token_manager.mint(amount)
-        }
-
-        pub fn burn_lp(&mut self, token: Bucket) {
-            token.burn();
         }
     }
 }

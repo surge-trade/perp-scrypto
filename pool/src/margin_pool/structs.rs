@@ -17,6 +17,7 @@ pub struct PoolPosition {
 
 #[derive(ScryptoSbor)]
 pub struct MarginPoolInfo {
+    pub positions: HashMap<PairId, Option<PoolPosition>>,
     pub base_tokens_amount: Decimal,
     pub virtual_balance: Decimal,
     pub unrealized_pool_funding: Decimal,

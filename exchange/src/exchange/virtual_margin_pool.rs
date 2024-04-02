@@ -11,8 +11,8 @@ pub struct VirtualLiquidityPool {
 }
 
 impl VirtualLiquidityPool {
-    pub fn new(pool: Global<MarginPool>) -> Self {
-        let pool_info = pool.get_info();
+    pub fn new(pool: Global<MarginPool>, pair_ids: HashSet<PairId>) -> Self {
+        let pool_info = pool.get_info(pair_ids);
 
         Self {
             pool,
@@ -43,10 +43,8 @@ impl VirtualLiquidityPool {
     }
 
     pub fn position(&self, pair_id: PairId) -> PoolPosition {
-        if let Some(position) = self.pool_updates.position_updates.get(&pair_id) {
+        if let Some(Some(position)) = self.pool_info.positions.get(&pair_id) {
             position.clone()
-        } else if let Some(position) = self.pool.get_position(pair_id) {
-            position
         } else {
             PoolPosition {
                 oi_long: dec!(0),
@@ -98,16 +96,15 @@ impl VirtualLiquidityPool {
     }
 
     pub fn mint_lp(&mut self, amount: Decimal) -> Bucket {
-        self.pool_info.virtual_balance += amount;
-        self.pool.mint_lp(amount)
+        self.pool_info.lp_token_manager.mint(amount)
     }
 
     pub fn burn_lp(&mut self, token: Bucket) {
-        self.pool_info.virtual_balance -= token.amount();
-        self.pool.burn_lp(token);
+        token.burn();
     }
 
     pub fn update_position(&mut self, pair_id: PairId, position: PoolPosition) {
+        self.pool_info.positions.insert(pair_id, Some(position.clone()));
         self.pool_updates.position_updates.insert(pair_id, position);
     }
 
