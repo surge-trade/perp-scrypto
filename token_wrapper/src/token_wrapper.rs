@@ -39,7 +39,7 @@ mod token_wrapper {
 
     macro_rules! authorize {
         ($self:expr, $func:expr) => {{
-            $self.authority_token.create_proof_of_amount(dec!(0.000000000000000001)).authorize(|| {
+            $self.authority_token.authorize_with_amount(dec!(0.000000000000000001),|| {
                 $func
             })
         }};
