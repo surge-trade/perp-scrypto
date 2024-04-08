@@ -15,6 +15,8 @@ from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, create_base, create_keeper_reward
 
+timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
+
 def clean(name: str) -> None:
     path = join(dirname(dirname(realpath(__file__))), name)
     print(f'Clean: {path}')
@@ -48,7 +50,6 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
     release_path = join(dirname(dirname(realpath(__file__))), 'releases')
     makedirs(release_path, exist_ok=True)
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
     release_path = join(release_path, timestamp + '_' + network)
     makedirs(release_path, exist_ok=True)
 
@@ -445,7 +446,6 @@ async def main():
         }
 
         release_path = join(dirname(dirname(realpath(__file__))), 'releases')
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
         release_path = join(release_path, timestamp + '_' + network_config['network_name'])
         
         with open(join(release_path, f'config.json'), 'w') as config_file:

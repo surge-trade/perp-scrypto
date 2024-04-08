@@ -63,7 +63,6 @@ async def stream_prices(oracle: Oracle, pair_id: int, pair_name: str):
                                     tick = datetime.datetime.now()
                             except Exception as e:
                                 print(f"Error processing chunk: {e}")
-                    end_time = datetime.datetime.now()
                 else:
                     print(f"Failed to fetch data for {pair_name}, status code: {response.status_code}")
 
