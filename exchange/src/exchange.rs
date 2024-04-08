@@ -36,17 +36,17 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1pk6m5g3r43adnkz93d7zm207swujrexgqlgv8sp6w9zc0addp6hqnx",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
 
             // Getter methods
-            fn get_info(&self) -> ConfigInfo;
+            fn get_info(&self) -> ConfigInfoCompressed;
             fn get_pair_config_len(&self) -> ListIndex;
-            fn get_pair_config(&self, pair_id: PairId) -> Option<PairConfig>;
-            fn get_pair_configs(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfig>>;
-            fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfig>;
+            fn get_pair_config(&self, pair_id: PairId) -> Option<PairConfigCompressed>;
+            fn get_pair_configs(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>>;
+            fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfigCompressed>;
 
             // Authority protected methods
             fn update_exchange_config(&mut self, config: ExchangeConfig);
@@ -56,7 +56,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4texry834rpkmuqwtpqqcm8rly2nqkxq3uhgh8afzxgnje2fzqafk",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -76,7 +76,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phjekdgyh0m7jndarlhcm6kw5mrfaz86k82wghg89zx2cfa28efc2e",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -90,14 +90,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkf7knrtlk688z2sj57qcvqyu4zkm2kejxrf85nkxudha4kf33k2ns",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5wfc7myfspx704vq8ke8mpy4lrcux208eztqt23emhyrtu7jddnwv",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Referrals {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -111,7 +111,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkn0hq86kyhnw229cu9wsrgyfy5wthkuqacwk39p6dquqqlpenrr3q",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -419,7 +419,7 @@ mod exchange {
             &self, 
             pair_id: PairId,
         ) -> PairConfig {
-            self.config.get_pair_config(pair_id).expect(ERROR_MISSING_PAIR_CONFIG)
+            self.config.get_pair_config(pair_id).expect(ERROR_MISSING_PAIR_CONFIG).decompress()
         }
 
         pub fn get_pair_configs(
@@ -427,7 +427,7 @@ mod exchange {
             pair_ids: HashSet<PairId>,
         ) -> HashMap<PairId, PairConfig> {
             self.config.get_pair_configs(pair_ids).into_iter()
-                .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG))).collect()
+                .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect()
         }
 
         pub fn get_pair_config_range(
@@ -435,7 +435,7 @@ mod exchange {
             start: ListIndex, 
             end: ListIndex,
         ) -> Vec<PairConfig> {
-            self.config.get_pair_config_range(start, end)
+            self.config.get_pair_config_range(start, end).into_iter().map(|v| v.decompress()).collect()
         }
 
         pub fn get_collateral_config(

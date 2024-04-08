@@ -8,7 +8,7 @@ pub use self::structs::*;
 #[types(
     PairId,
     ListIndex,
-    PairConfig,
+    PairConfigCompressed,
 )]
 mod exchange_config {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
@@ -34,14 +34,14 @@ mod exchange_config {
     }
 
     struct Config {
-        pub exchange: ExchangeConfig,
-        pub pairs: HashList<PairId, PairConfig>,
-        pub collaterals: HashMap<ResourceAddress, CollateralConfig>, // TODO: HashList?
+        pub exchange: ExchangeConfigCompressed,
+        pub pairs: HashList<PairId, PairConfigCompressed>,
+        pub collaterals: HashMap<ResourceAddress, CollateralConfigCompressed>, // TODO: HashList?
     }
 
     impl Config {
         pub fn new(owner_role: OwnerRole) -> Global<Config> {
-            let exchange = ExchangeConfig::default();
+            let exchange = ExchangeConfig::default().compress();
             let pairs = HashList::new(ConfigKeyValueStore::new_with_registered_type, ConfigKeyValueStore::new_with_registered_type);
             let collaterals = HashMap::new();
 
@@ -58,11 +58,11 @@ mod exchange_config {
             .globalize()
         }
 
-        pub fn get_info(&self) -> ConfigInfo {
+        pub fn get_info(&self) -> ConfigInfoCompressed {
             let exchange = self.exchange.clone();
             let collaterals = self.collaterals.iter().map(|(k, v)| (*k, v.clone())).collect();
 
-            ConfigInfo {
+            ConfigInfoCompressed {
                 exchange,
                 collaterals,
             }
@@ -72,27 +72,27 @@ mod exchange_config {
             self.pairs.len()
         }
 
-        pub fn get_pair_config(&self, pair_id: PairId) -> Option<PairConfig> {
+        pub fn get_pair_config(&self, pair_id: PairId) -> Option<PairConfigCompressed> {
             self.pairs.get(&pair_id).map(|v| v.clone())
         }
 
-        pub fn get_pair_configs(&self, pair_ids: HashSet<u16>) -> HashMap<PairId, Option<PairConfig>> {
+        pub fn get_pair_configs(&self, pair_ids: HashSet<u16>) -> HashMap<PairId, Option<PairConfigCompressed>> {
             pair_ids.into_iter().map(|k| (k, self.pairs.get(&k).map(|v| v.clone()))).collect()
         }
 
-        pub fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfig> {
+        pub fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfigCompressed> {
             self.pairs.range(start, end)
         }
 
         pub fn update_exchange_config(&mut self, config: ExchangeConfig) {
             config.validate();
-            self.exchange = config;
+            self.exchange = config.compress();
         }
 
         pub fn update_pair_configs(&mut self, configs: Vec<PairConfig>) {
             for config in configs.into_iter() {
                 config.validate();
-                self.pairs.insert(config.pair_id, config);
+                self.pairs.insert(config.pair_id, config.compress());
             }
         }
 
@@ -100,7 +100,7 @@ mod exchange_config {
             for (_, config) in configs.iter() {
                 config.validate();
             }
-            self.collaterals.extend(configs.into_iter());
+            self.collaterals.extend(configs.into_iter().map(|(k, v)| (k, v.compress())));
         }
 
         pub fn remove_collateral_config(&mut self, resource: ResourceAddress) {

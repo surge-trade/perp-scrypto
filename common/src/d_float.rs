@@ -3,7 +3,7 @@ use scrypto::prelude::*;
 /// Decimal floating point number
 ///
 /// This is a 16-bit floating point number with 5 bits for the exponent and 11 bits for the significand.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(ScryptoSbor, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DFloat16(u16);
 
 impl DFloat16 {

@@ -7,7 +7,7 @@ use super::exchange::Config;
 pub struct VirtualConfig {
     config: Global<Config>,
     config_info: ConfigInfo,
-    pair_configs: HashMap<PairId, Option<PairConfig>>,
+    pair_configs: HashMap<PairId, PairConfig>,
 }
 
 impl VirtualConfig {
@@ -16,13 +16,14 @@ impl VirtualConfig {
 
         Self {
             config,
-            config_info,
+            config_info: config_info.decompress(),
             pair_configs: HashMap::new(),
         }
     }
 
     pub fn load_pair_configs(&mut self, pair_ids: HashSet<PairId>) {
-        self.pair_configs = self.config.get_pair_configs(pair_ids);
+        self.pair_configs = self.config.get_pair_configs(pair_ids).into_iter()
+            .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect();
     }
 
     pub fn exchange_config(&self) -> &ExchangeConfig {
@@ -31,7 +32,7 @@ impl VirtualConfig {
 
     pub fn pair_config(&self, pair_id: PairId) -> &PairConfig {
         match self.pair_configs.get(&pair_id) {
-            Some(Some(config)) => config,
+            Some(config) => config,
             _ => panic!("{}", ERROR_MISSING_PAIR_CONFIG),
         }
     }
