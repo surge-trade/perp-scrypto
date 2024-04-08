@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 use account::*;
-use utils::{PairId, ListIndex};
+use common::{PairId, ListIndex};
 use super::errors::*;
 use super::events::*;
 use super::exchange::MarginAccount;

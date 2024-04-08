@@ -30,7 +30,7 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
 
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
-        '-v', f'/root/surge-scrypto/utils:/utils', 
+        '-v', f'/root/surge-scrypto/common:/common', 
         '-v', f'/root/surge-scrypto/config:/config', 
         '-v', f'/root/surge-scrypto/account:/account',
         '-v', f'/root/surge-scrypto/pool:/pool'] + 
@@ -63,7 +63,7 @@ async def main():
     chdir(path)
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
-        clean('utils')
+        clean('common')
         clean('token_wrapper')
         clean('account')
         clean('config')

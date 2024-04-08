@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 use pool::*;
-use utils::PairId;
+use common::PairId;
 use super::events::*;
 use super::exchange::MarginPool;
 

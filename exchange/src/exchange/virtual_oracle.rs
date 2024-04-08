@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::PairId;
+use common::PairId;
 use super::errors::*;
 use super::exchange::Oracle;
 

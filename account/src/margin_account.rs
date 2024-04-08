@@ -1,7 +1,7 @@
 mod structs;
 
 use scrypto::prelude::*;
-use utils::{PairId, ListIndex, List, Vaults, _AUTHORITY_RESOURCE};
+use common::{PairId, ListIndex, List, Vaults, _AUTHORITY_RESOURCE};
 pub use self::structs::*;
 
 #[blueprint]

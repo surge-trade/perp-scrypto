@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use utils::{ListIndex, List, _AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
+use common::{ListIndex, List, _AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]

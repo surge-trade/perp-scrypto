@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use utils::{_AUTHORITY_RESOURCE, TO_ZERO};
+use common::{_AUTHORITY_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[blueprint]

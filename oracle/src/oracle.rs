@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::PairId;
+use common::PairId;
 
 // THIS IS A MOCK IMPLEMENTATION
 #[blueprint]

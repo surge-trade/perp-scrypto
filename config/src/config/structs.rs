@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::PairId;
+use common::PairId;
 
 #[derive(ScryptoSbor)]
 pub struct ConfigInfo {

@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 use account::KeeperRequest;
-use utils::{PairId, ListIndex};
+use common::{PairId, ListIndex};
 use pool::PoolPosition;
 use config::*;
 

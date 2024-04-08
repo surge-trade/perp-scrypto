@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::{PairId, ListIndex};
+use common::{PairId, ListIndex};
 
 #[derive(ScryptoSbor, Clone, Default)]
 pub struct AccountPosition {

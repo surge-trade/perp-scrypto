@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 use account::Status;
-use utils::{PairId, ListIndex};
+use common::{PairId, ListIndex};
 use super::errors::*;
 
 #[derive(ScryptoSbor, Clone)]

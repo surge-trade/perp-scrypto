@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use utils::{_AUTHORITY_RESOURCE};
+use common::{_AUTHORITY_RESOURCE};
 
 #[derive(ScryptoSbor)]
 struct ReferralAccount {
