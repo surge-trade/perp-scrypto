@@ -31,8 +31,8 @@ async def main():
         print('Config loaded:', config_data)
 
         owner_resource = config_data['OWNER_RESOURCE']
-        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        xrd = network_config['xrd']
+        base_resource = config_data['BASE_RESOURCE']
+        exchange_component = config_data['EXCHANGE_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -42,17 +42,17 @@ async def main():
             balance = await gateway.get_xrd_balance(account)
 
         builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
+        builder = lock_fee(builder, account, 800)
         builder = withdraw_to_bucket(
             builder, 
             account, 
-            ret.Address(xrd), 
+            ret.Address(base_resource), 
             ret.Decimal('100'), 
             'bucket1'
         )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
-            'wrap',
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            'add_liquidity',
             [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
         )
         builder = deposit_all(builder, account)
