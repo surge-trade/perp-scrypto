@@ -11,9 +11,9 @@ mod oracle {
     impl Oracle {
         pub fn new(owner_role: OwnerRole) -> Global<Oracle> {    
             let mut prices = HashMap::new();
-                prices.insert(1, dec!(100));
-                prices.insert(2, dec!(200));
-                prices.insert(3, dec!(300));
+                prices.insert(0, dec!(71107.81));
+                prices.insert(1, dec!(3687.39));
+                prices.insert(2, dec!(177.45));
 
             Self {
                 prices
