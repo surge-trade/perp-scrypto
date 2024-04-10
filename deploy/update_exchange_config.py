@@ -53,8 +53,6 @@ async def main():
             [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.I64_VALUE(60), # max_price_age_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pair_update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(120), # pair_update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # keeper_fee
                     ret.ManifestBuilderValue.U16_VALUE(10), # positions_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # skew_ratio_cap

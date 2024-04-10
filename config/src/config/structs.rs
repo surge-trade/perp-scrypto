@@ -26,10 +26,6 @@ impl ConfigInfoCompressed {
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: i64,
-    /// Price delta ratio before updating a pair will be rewarded
-    pub pair_update_price_delta_ratio: Decimal,
-    /// Time be before updating a pair will be rewarded
-    pub pair_update_period_seconds: i64,
     /// Flat fee to cover the keeper's expenses
     pub keeper_fee: Decimal,
     /// Maximum allowed number of positions per account
@@ -54,10 +50,6 @@ pub struct ExchangeConfig {
 pub struct ExchangeConfigCompressed {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: u32,
-    /// Price delta ratio before updating a pair will be rewarded
-    pub pair_update_price_delta_ratio: DFloat16,
-    /// Time be before updating a pair will be rewarded
-    pub pair_update_period_seconds: u16,
     /// Flat fee to cover the keeper's expenses
     pub keeper_fee: DFloat16,
     /// Maximum allowed number of positions per account
@@ -82,8 +74,6 @@ impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
             max_price_age_seconds: 60,
-            pair_update_price_delta_ratio: dec!(0.001),
-            pair_update_period_seconds: 120,
             keeper_fee: dec!(0.01),
             positions_max: 10,
             skew_ratio_cap: dec!(0.1),
@@ -100,8 +90,6 @@ impl Default for ExchangeConfig {
 impl ExchangeConfig {
     pub fn validate(&self) {
         assert!(self.max_price_age_seconds > 0, "Invalid max price age");
-        assert!(self.pair_update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
-        assert!(self.pair_update_period_seconds >= 0, "Invalid pair update period");
         assert!(self.keeper_fee >= dec!(0), "Invalid keeper fee");
         assert!(self.positions_max > 0, "Invalid max positions");
         assert!(self.skew_ratio_cap >= dec!(0), "Invalid skew ratio cap");
@@ -115,8 +103,6 @@ impl ExchangeConfig {
     pub fn compress(&self) -> ExchangeConfigCompressed {
         ExchangeConfigCompressed {
             max_price_age_seconds: self.max_price_age_seconds as u32,
-            pair_update_price_delta_ratio: DFloat16::from(self.pair_update_price_delta_ratio),
-            pair_update_period_seconds: self.pair_update_period_seconds as u16,
             keeper_fee: DFloat16::from(self.keeper_fee),
             positions_max: self.positions_max,
             skew_ratio_cap: DFloat16::from(self.skew_ratio_cap),
@@ -134,8 +120,6 @@ impl ExchangeConfigCompressed {
     pub fn decompress(&self) -> ExchangeConfig {
         ExchangeConfig {
             max_price_age_seconds: self.max_price_age_seconds as i64,
-            pair_update_price_delta_ratio: self.pair_update_price_delta_ratio.into(),
-            pair_update_period_seconds: self.pair_update_period_seconds as i64,
             keeper_fee: self.keeper_fee.into(),
             positions_max: self.positions_max,
             skew_ratio_cap: self.skew_ratio_cap.into(),
@@ -155,6 +139,10 @@ pub struct PairConfig {
     pub pair_id: PairId,
     /// If the pair is disabled
     pub disabled: bool,
+    /// Price delta ratio before updating a pair will be rewarded
+    pub update_price_delta_ratio: Decimal,
+    /// Time before updating a pair will be rewarded
+    pub update_period_seconds: i64,
     /// Initial margin required
     pub margin_initial: Decimal,
     /// Maintenance margin required
@@ -183,6 +171,10 @@ pub struct PairConfigCompressed {
     pub pair_id: PairId,
     /// If the pair is disabled
     pub disabled: bool,
+    /// Price delta ratio before updating a pair will be rewarded
+    pub update_price_delta_ratio: DFloat16,
+    /// Time before updating a pair will be rewarded
+    pub update_period_seconds: u16,
     /// Initial margin required
     pub margin_initial: DFloat16,
     /// Maintenance margin required
@@ -207,6 +199,8 @@ pub struct PairConfigCompressed {
 
 impl PairConfig {
     pub fn validate(&self) {
+        assert!(self.update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
+        assert!(self.update_period_seconds >= 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0), "Invalid initial margin");
         assert!(self.margin_maintenance >= dec!(0), "Invalid maintenance margin");
         assert!(self.funding_1 >= dec!(0), "Invalid funding 1");
@@ -223,6 +217,8 @@ impl PairConfig {
         PairConfigCompressed {
             pair_id: self.pair_id,
             disabled: self.disabled,
+            update_price_delta_ratio: DFloat16::from(self.update_price_delta_ratio),
+            update_period_seconds: self.update_period_seconds as u16,
             margin_initial: DFloat16::from(self.margin_initial),
             margin_maintenance: DFloat16::from(self.margin_maintenance),
             funding_1: DFloat16::from(self.funding_1),
@@ -242,6 +238,8 @@ impl PairConfigCompressed {
         PairConfig {
             pair_id: self.pair_id,
             disabled: self.disabled,
+            update_price_delta_ratio: self.update_price_delta_ratio.into(),
+            update_period_seconds: self.update_period_seconds as i64,
             margin_initial: self.margin_initial.into(),
             margin_maintenance: self.margin_maintenance.into(),
             funding_1: self.funding_1.into(),
