@@ -13,7 +13,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, create_base, create_keeper_reward
+from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority, create_base, create_keeper_reward
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
@@ -129,7 +129,17 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = create_base(builder, owner_role, authority_resource)
+        builder = mint_base_authority(builder)
+        builder = deposit_all(builder, account)
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        base_authority_resource = addresses[0]
+        print('BASE_AUTHORITY_RESOURCE:', base_authority_resource)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = create_base(builder, owner_role, base_authority_resource)
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
@@ -148,6 +158,7 @@ async def main():
         envs = [
             ('NETWORK_ID', network_config['network_id']),
             ('AUTHORITY_RESOURCE', authority_resource),
+            ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
             ('BASE_RESOURCE', base_resource),
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
         ]
@@ -171,12 +182,12 @@ async def main():
         builder = lock_fee(builder, account, 100)
         builder = builder.account_withdraw(
             account,
-            ret.Address(authority_resource),
-            ret.Decimal('0.000000000000000001')
+            ret.Address(base_authority_resource),
+            ret.Decimal('1')
         )
         builder = builder.take_from_worktop(
-            ret.Address(authority_resource),
-            ret.Decimal('0.000000000000000001'),
+            ret.Address(base_authority_resource),
+            ret.Decimal('1'),
             ret.ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
@@ -372,11 +383,11 @@ async def main():
         builder = builder.account_withdraw(
             account,
             ret.Address(authority_resource),
-            ret.Decimal('0.999999999999999999')
+            ret.Decimal('1')
         )            
         builder = builder.take_from_worktop(
             ret.Address(authority_resource),
-            ret.Decimal('0.999999999999999999'),
+            ret.Decimal('1'),
             ret.ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
@@ -403,6 +414,7 @@ async def main():
 
         print('OWNER_RESOURCE:', owner_resource)
         print('AUTHORITY_RESOURCE:', authority_resource)
+        print('BASE_AUTHORITY_RESOURCE:', base_authority_resource)
         print('BASE_RESOURCE:', base_resource)
         print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
 
@@ -426,6 +438,7 @@ async def main():
         config_data = {
             'OWNER_RESOURCE': owner_resource,
             'AUTHORITY_RESOURCE': authority_resource,
+            'BASE_AUTHORITY_RESOURCE': base_authority_resource,
             'BASE_RESOURCE': base_resource,
             'KEEPER_REWARD_RESOURCE': keeper_reward_resource,
             'TOKEN_WRAPPER_PACKAGE': token_wrapper_package,

@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use common::{ListIndex, List, _AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
+use common::{ListIndex, List, _BASE_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -17,7 +17,7 @@ pub struct ChildToken {
     ChildToken,
 )]
 mod token_wrapper {
-    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+    const BASE_AUTHORITY_RESOURCE: ResourceAddress = _BASE_AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     enable_method_auth!(
@@ -54,7 +54,7 @@ mod token_wrapper {
     impl TokenWrapper {
         pub fn new(owner_role: OwnerRole, authority_token: Bucket) -> Global<TokenWrapper> {
             assert!(
-                authority_token.resource_address() == AUTHORITY_RESOURCE,
+                authority_token.resource_address() == BASE_AUTHORITY_RESOURCE,
                 "{}", ERROR_INVALID_AUTHORITY
             );
 

@@ -67,6 +67,34 @@ def mint_authority(builder: ManifestBuilder) -> ManifestBuilder:
         address_reservation=None,
     )
 
+def mint_base_authority(builder: ManifestBuilder) -> ManifestBuilder:
+    resource_roles = FungibleResourceRoles(
+        mint_roles=None,
+        burn_roles=None,
+        freeze_roles=None,
+        recall_roles=None,
+        withdraw_roles=None,
+        deposit_roles=None,
+    )
+    metadata: MetadataModuleConfig = MetadataModuleConfig(
+        init={
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Base Authority'), True),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('BAUTH'), True),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('A single attos holds exceptional power.'), True),
+        },
+        roles={},
+    )
+
+    return builder.create_fungible_resource_manager(
+        owner_role=OwnerRole.NONE(),
+        track_total_supply=True,
+        divisibility=18,
+        initial_supply=Decimal('1'),
+        resource_roles=resource_roles,
+        metadata=metadata,
+        address_reservation=None,
+    )
+
 def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resource: str) -> ManifestBuilder:
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=ResourceManagerRole(
