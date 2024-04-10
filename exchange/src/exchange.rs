@@ -713,7 +713,7 @@ mod exchange {
             pair_id: PairId,
             amount: Decimal,
             price_limit: Limit,
-            active_requests: Vec<ListIndex>,
+            activate_requests: Vec<ListIndex>,
             cancel_requests: Vec<ListIndex>,
             status: Status,
         ) {
@@ -734,7 +734,7 @@ mod exchange {
                     pair_id,
                     amount,
                     price_limit,
-                    active_requests,
+                    activate_requests,
                     cancel_requests,
                 });
                 account.push_request(request, expiry_seconds, status);
@@ -1191,7 +1191,7 @@ mod exchange {
 
             let skew_1 = pool.skew_abs_snap();
 
-            let status_updates = request.active_requests.into_iter().map(|index| (index, STATUS_ACTIVE))
+            let status_updates = request.activate_requests.into_iter().map(|index| (index, STATUS_ACTIVE))
                 .chain(request.cancel_requests.into_iter().map(|index| (index, STATUS_CANCELLED)))
                 .collect();
             account.try_set_keeper_request_statuses(status_updates);
