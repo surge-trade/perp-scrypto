@@ -45,7 +45,7 @@ async def main():
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
             'update_pair',
-            [ret.ManifestBuilderValue.U16_VALUE(1)]
+            [ret.ManifestBuilderValue.U16_VALUE(0)]
         )
         builder = deposit_all(builder, account)
 

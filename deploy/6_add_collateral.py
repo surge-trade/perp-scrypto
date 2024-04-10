@@ -42,7 +42,7 @@ async def main():
             balance = await gateway.get_xrd_balance(account)
 
         builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
+        builder = lock_fee(builder, account, 200)
         builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('100'), 'bucket1')
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
