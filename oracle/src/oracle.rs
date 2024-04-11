@@ -38,17 +38,22 @@ mod oracle {
             self.prices.insert(pair_id, price);
         }
 
-        pub fn push_prices(&mut self, data: Vec<u8>, signature: Bls12381G2Signature) {
-            let hash = CryptoUtils::keccak256_hash(data).to_vec();
-            assert!(
-                CryptoUtils::bls12381_v1_verify(hash, self.public_key, signature),
-                "Invalid signature."
-            );
+        // pub fn push_prices(&mut self, data: Vec<u8>, signature: Bls12381G2Signature) -> Vec<u8> {
+        //     let hash = CryptoUtils::keccak256_hash(data).to_vec();
+
+            // assert!(
+            //     CryptoUtils::bls12381_v1_verify(hash, self.public_key, signature),
+            //     "Invalid signature."
+            // );
 
             // for (pair_name, price) in prices.into_iter() {
             //     let pair_id = self.get_pair_id(pair_name);
             //     self.prices.insert(pair_id, price);
             // }
+        // }
+
+        pub fn hash(&self, data: Vec<u8>) -> Vec<u8> {
+            CryptoUtils::keccak256_hash(data).to_vec()
         }
 
         pub fn prices(&self, _max_age: Instant) -> HashMap<PairId, Decimal> {
