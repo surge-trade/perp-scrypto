@@ -30,7 +30,7 @@ fn main() {
     ).unwrap();
 
     writeln!(f, "pub const _BASE_AUTHORITY_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("EXCHANGE_AUTHORITY_RESOURCE").map(|var| {
+        env::var("BASE_AUTHORITY_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
         }).unwrap_or_else(|_| {
             ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
