@@ -40,6 +40,8 @@ pub struct ExchangeConfig {
     pub adl_b: Decimal,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: Decimal,
+    /// Share of fees that go to the protocol
+    pub fee_share_protocol: Decimal,
     /// Share of fees that go to the referrer
     pub fee_share_referral: Decimal,
     /// Maximum fee that can be charged
@@ -64,6 +66,8 @@ pub struct ExchangeConfigCompressed {
     pub adl_b: DFloat16,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: DFloat16,
+    /// Share of fees that go to the protocol
+    pub fee_share_protocol: DFloat16,
     /// Share of fees that go to the referrer
     pub fee_share_referral: DFloat16,
     /// Maximum fee that can be charged
@@ -81,6 +85,7 @@ impl Default for ExchangeConfig {
             adl_a: dec!(0.1),
             adl_b: dec!(0.1),
             fee_liquidity: dec!(0.01),
+            fee_share_protocol: dec!(0.1),
             fee_share_referral: dec!(0.1),
             fee_max: dec!(0.1),
         }
@@ -110,6 +115,7 @@ impl ExchangeConfig {
             adl_a: DFloat16::from(self.adl_a),
             adl_b: DFloat16::from(self.adl_b),
             fee_liquidity: DFloat16::from(self.fee_liquidity),
+            fee_share_protocol: DFloat16::from(self.fee_share_protocol),
             fee_share_referral: DFloat16::from(self.fee_share_referral),
             fee_max: DFloat16::from(self.fee_max),
         }
@@ -127,6 +133,7 @@ impl ExchangeConfigCompressed {
             adl_a: self.adl_a.into(),
             adl_b: self.adl_b.into(),
             fee_liquidity: self.fee_liquidity.into(),
+            fee_share_protocol: self.fee_share_protocol.into(),
             fee_share_referral: self.fee_share_referral.into(),
             fee_max: self.fee_max.into(),
         }

@@ -305,7 +305,7 @@ async def main():
         oracle_component = addresses[0]
         print('ORACLE_COMPONENT:', oracle_component)
 
-        code, definition = build('referrals', envs, network_config['network_name'])
+        code, definition = build('fee_distributor', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -316,23 +316,23 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
-        referrals_package = addresses[0]
-        envs.append(('REFERRALS_PACKAGE', referrals_package))
-        print('REFERRALS_PACKAGE:', referrals_package)
+        fee_distributor_package = addresses[0]
+        envs.append(('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package))
+        print('FEE_DISTRIBUTOR_PACKAGE:', fee_distributor_package)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_package)),
-            'Referrals',
+            ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_package)),
+            'FeeDistributor',
             'new',
             [manifest_owner_role]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
-        referrals_component = addresses[0]
-        print('REFERRALS_COMPONENT:', referrals_component)
+        fee_distributor_component = addresses[0]
+        print('FEE_DISTRIBUTOR_COMPONENT:', fee_distributor_component)
 
         code, definition = build('fee_delegator', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
@@ -400,7 +400,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
             ]
         )
@@ -423,7 +423,7 @@ async def main():
         print('ACCOUNT_PACKAGE:', account_package)
         print('POOL_PACKAGE:', pool_package)
         print('ORACLE_PACKAGE:', oracle_package)
-        print('REFERRALS_PACKAGE:', referrals_package)
+        print('FEE_DISTRIBUTOR_PACKAGE:', fee_distributor_package)
         print('FEE_DELEGATOR_PACKAGE:', fee_delegator_package)
         print('EXCHANGE_PACKAGE:', exchange_package)
 
@@ -431,7 +431,7 @@ async def main():
         print('CONFIG_COMPONENT:', config_component)
         print('POOL_COMPONENT:', pool_component)
         print('ORACLE_COMPONENT:', oracle_component)
-        print('REFERRALS_COMPONENT:', referrals_component)
+        print('FEE_DISTRIBUTOR_COMPONENT:', fee_distributor_component)
         print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
         print('EXCHANGE_COMPONENT:', exchange_component)
 
@@ -446,14 +446,14 @@ async def main():
             'ACCOUNT_PACKAGE': account_package,
             'POOL_PACKAGE': pool_package,
             'ORACLE_PACKAGE': oracle_package,
-            'REFERRALS_PACKAGE': referrals_package,
+            'FEE_DISTRIBUTOR_PACKAGE': fee_distributor_package,
             'FEE_DELEGATOR_PACKAGE': fee_delegator_package,
             'EXCHANGE_PACKAGE': exchange_package,
             'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
             'CONFIG_COMPONENT': config_component,
             'POOL_COMPONENT': pool_component,
             'ORACLE_COMPONENT': oracle_component,
-            'REFERRALS_COMPONENT': referrals_component,
+            'FEE_DISTRIBUTOR_COMPONENT': fee_distributor_component,
             'FEE_DELEGATOR_COMPONENT': fee_delegator_component,
             'EXCHANGE_COMPONENT': exchange_component
         }
