@@ -68,7 +68,7 @@ async def main():
         clean('account')
         clean('config')
         clean('pool')
-        clean('referrals')
+        clean('fee_distributor')
         clean('fee_delegator')
         clean('exchange')
 
@@ -104,7 +104,7 @@ async def main():
         config_component = config_data['CONFIG_COMPONENT']
         pool_component = config_data['POOL_COMPONENT']
         oracle_component = config_data['ORACLE_COMPONENT']
-        referrals_component = config_data['REFERRALS_COMPONENT']
+        fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
         fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
         exchange_package = config_data['EXCHANGE_PACKAGE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
@@ -165,7 +165,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
             ]
         )

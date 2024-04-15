@@ -69,7 +69,7 @@ async def main():
         clean('account')
         clean('config')
         clean('pool')
-        clean('referrals')
+        clean('fee_distributor')
         clean('fee_delegator')
         clean('exchange')
 
