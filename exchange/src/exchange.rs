@@ -935,6 +935,7 @@ mod exchange {
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
+                config.load_exchange_config();
 
                 let pair_ids = HashSet::from([pair_id]);
                 config.load_pair_configs(pair_ids.clone());
