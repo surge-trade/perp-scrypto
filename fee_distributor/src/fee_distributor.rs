@@ -32,11 +32,13 @@ mod fee_distributor {
             get_referrer => PUBLIC;
             get_rebate => PUBLIC;
             get_trickle_up => PUBLIC;
-            get_virtual_balance => PUBLIC;
+            get_protocol_virtual_balance => PUBLIC;
+            get_treasury_virtual_balance => PUBLIC;
 
             update_rebate => restrict_to: [authority];
             update_trickle_up => restrict_to: [authority];
-            update_virtual_balance => restrict_to: [authority];
+            update_protocol_virtual_balance => restrict_to: [authority];
+            update_treasury_virtual_balance => restrict_to: [authority];
 
             set_referrer => restrict_to: [authority];
             reward => restrict_to: [authority];
@@ -46,7 +48,8 @@ mod fee_distributor {
 
     struct FeeDistributor {
         referral_accounts: KeyValueStore<ComponentAddress, ReferralAccount>,
-        virtual_balance: Decimal,
+        treasury_virtual_balance: Decimal,
+        protocol_virtual_balance: Decimal,
         rebate: Decimal,
         trickle_up: Decimal,
     }
@@ -55,7 +58,8 @@ mod fee_distributor {
         pub fn new(owner_role: OwnerRole) -> Global<FeeDistributor> {
             Self {
                 referral_accounts: KeyValueStore::new_with_registered_type(),
-                virtual_balance: dec!(0),
+                treasury_virtual_balance: dec!(0),
+                protocol_virtual_balance: dec!(0),
                 rebate: dec!(0),
                 trickle_up: dec!(0),
             }
@@ -80,9 +84,13 @@ mod fee_distributor {
         pub fn get_trickle_up(&self) -> Decimal {
             self.trickle_up
         }
-
-        pub fn get_virtual_balance(&self) -> Decimal {
-            self.virtual_balance
+        
+        pub fn get_protocol_virtual_balance(&self) -> Decimal {
+            self.protocol_virtual_balance
+        }
+        
+        pub fn get_treasury_virtual_balance(&self) -> Decimal {
+            self.treasury_virtual_balance
         }
 
         pub fn update_rebate(&mut self, rebate: Decimal) {
@@ -95,9 +103,14 @@ mod fee_distributor {
             self.trickle_up = trickle_up;
         }
 
-        pub fn update_virtual_balance(&mut self, virtual_balance: Decimal) {
-            assert!(virtual_balance >= dec!(0));
-            self.virtual_balance = virtual_balance;
+        pub fn update_protocol_virtual_balance(&mut self, protocol_virtual_balance: Decimal) {
+            assert!(protocol_virtual_balance >= dec!(0));
+            self.protocol_virtual_balance = protocol_virtual_balance;
+        }
+        
+        pub fn update_treasury_virtual_balance(&mut self, treasury_virtual_balance: Decimal) {
+            assert!(treasury_virtual_balance >= dec!(0));
+            self.treasury_virtual_balance = treasury_virtual_balance;
         }
 
         pub fn set_referrer(&mut self, account: ComponentAddress, referrer: Option<ComponentAddress>) {
@@ -108,11 +121,13 @@ mod fee_distributor {
                 });
         }
 
-        pub fn reward(&mut self, amount_protocol: Decimal, mut amount_referral: Decimal, referred_account: ComponentAddress) {
+        pub fn reward(&mut self, amount_protocol: Decimal, amount_treasury: Decimal, mut amount_referral: Decimal, referred_account: ComponentAddress) {
             assert!(amount_protocol >= dec!(0));
+            assert!(amount_treasury >= dec!(0));
             assert!(amount_referral >= dec!(0));
 
-            self.virtual_balance += amount_protocol;
+            self.protocol_virtual_balance += amount_protocol;
+            self.treasury_virtual_balance += amount_treasury;
 
             let maybe_referrer = self.referral_accounts.get_mut(&referred_account)
                 .and_then(|mut referral| {
@@ -129,7 +144,7 @@ mod fee_distributor {
 
             match maybe_referrer {
                 Some(mut referrer) => referrer.rewards += amount_referral,
-                None => self.virtual_balance += amount_referral,
+                None => self.treasury_virtual_balance += amount_referral,
             }
         }
 
@@ -146,7 +161,7 @@ mod fee_distributor {
             amount -= trickle_up;
             match maybe_referrer_account.and_then(|referrer_account| self.referral_accounts.get_mut(&referrer_account)) {
                 Some(mut referrer) => referrer.rewards += trickle_up,
-                None => self.virtual_balance += trickle_up,
+                None => self.treasury_virtual_balance += trickle_up,
             }
 
             amount
