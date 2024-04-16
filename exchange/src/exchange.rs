@@ -1470,7 +1470,7 @@ mod exchange {
             let pair_config = config.pair_config(pair_id);
             let price_token = oracle.price(pair_id);
             
-            let value = amount * price_token;
+            let value = -amount * price_token;
             let value_abs = value.checked_abs().unwrap();
             let pool_value = self._pool_value(pool);
 
