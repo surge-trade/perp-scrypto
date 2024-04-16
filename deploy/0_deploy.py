@@ -415,6 +415,8 @@ async def main():
 
         print('---------- DEPLOY COMPLETE ----------')
 
+        print('STATE_VERSION:', state_version)
+
         print('OWNER_RESOURCE:', owner_resource)
         print('AUTHORITY_RESOURCE:', authority_resource)
         print('BASE_AUTHORITY_RESOURCE:', base_authority_resource)
