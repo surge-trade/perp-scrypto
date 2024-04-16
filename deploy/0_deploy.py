@@ -93,6 +93,9 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        state_version = await gateway.get_state_version()
+        print('STATE_VERSION:', state_version)
+
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = mint_owner_badge(builder)

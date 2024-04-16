@@ -41,6 +41,18 @@ class Gateway:
         
             data = await response.json()
             return data['ledger_state']['epoch']
+        
+    async def get_state_version(self) -> int:
+        headers = {
+            'Content-Type': 'application/json',
+        }
+        async with self.session.post(
+            f'{self.gateway_url}/transaction/construction',
+            json={},
+            headers=headers) as response:
+        
+            data = await response.json()
+            return data['state_version']
 
     async def get_xrd_balance(self, account: ret.Address) -> float:
         network_config = await self.network_configuration()

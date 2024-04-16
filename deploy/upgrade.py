@@ -92,6 +92,9 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        state_version = await gateway.get_state_version()
+        print('STATE_VERSION:', state_version)
+
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
