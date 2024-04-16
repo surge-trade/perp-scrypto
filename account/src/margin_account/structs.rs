@@ -14,14 +14,14 @@ pub struct MarginAccountInfo {
     pub collateral_balances: HashMap<ResourceAddress, Decimal>,
     pub virtual_balance: Decimal,
     pub requests_len: ListIndex,
-    pub last_liquidation_index: ListIndex,
+    pub valid_requests_start: ListIndex,
 }
 
 #[derive(ScryptoSbor)]
 pub struct MarginAccountUpdates {
     pub position_updates: HashMap<PairId, AccountPosition>,
     pub virtual_balance: Decimal,
-    pub last_liquidation_index: ListIndex,
+    pub valid_requests_start: ListIndex,
     pub requests_new: Vec<KeeperRequest>,
     pub request_updates: HashMap<ListIndex, KeeperRequest>,
 }

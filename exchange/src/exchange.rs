@@ -189,6 +189,7 @@ mod exchange {
             remove_collateral_request => restrict_to: [user];
             margin_order_request => restrict_to: [user];
             cancel_request => restrict_to: [user];
+            cancel_all_requests => restrict_to: [user];
 
             // Keeper methods
             process_request => restrict_to: [keeper];
@@ -806,6 +807,30 @@ mod exchange {
             })
         }
 
+        pub fn cancel_all_requests(
+            &self, 
+            fee_oath: Option<Bucket>,
+            account: ComponentAddress, 
+        ) {
+            authorize!(self, {
+                let mut account = if let Some(fee_oath) = fee_oath {
+                    let mut config = VirtualConfig::new(self.config);
+                    config.load_collateral_configs();
+                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
+                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
+                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
+                    account
+                } else {
+                    VirtualMarginAccount::new(account, vec![])
+                };
+
+                account.verify_level_3_auth();
+                account.update_valid_requests_start();
+
+                account.realize();
+            })
+        }
+
         // --- KEEPER METHODS ---
 
         pub fn process_request(
@@ -1344,7 +1369,7 @@ mod exchange {
             self._settle_account(pool, account, settlement);
             self._settle_fee_distributor(pool, account, fee_protocol, fee_treasury, fee_referral);
 
-            account.update_last_liquidation_index();
+            account.update_valid_requests_start();
 
             collateral_tokens.push(payment_token);
             collateral_tokens

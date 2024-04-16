@@ -45,7 +45,7 @@ pub mod margin_account {
         positions: HashMap<PairId, AccountPosition>, // TODO: make kvs for efficient token movement
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
-        last_liquidation_index: ListIndex,
+        valid_requests_start: ListIndex,
     }
 
     impl MarginAccount {
@@ -60,7 +60,7 @@ pub mod margin_account {
                 positions: HashMap::new(), // TODO: make kvs for efficient token movement
                 virtual_balance: dec!(0),
                 requests: List::new(MarginAccountKeyValueStore::new_with_registered_type),
-                last_liquidation_index: 0,
+                valid_requests_start: 0,
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
@@ -80,7 +80,7 @@ pub mod margin_account {
                 collateral_balances: self.collateral.amounts(collateral_resources),
                 virtual_balance: self.virtual_balance,
                 requests_len: self.requests.len(),
-                last_liquidation_index: self.last_liquidation_index,
+                valid_requests_start: self.valid_requests_start,
             }
         }
 
@@ -114,7 +114,7 @@ pub mod margin_account {
             }
 
             self.virtual_balance = update.virtual_balance;
-            self.last_liquidation_index = update.last_liquidation_index;
+            self.valid_requests_start = update.valid_requests_start;
 
             for request in update.requests_new {
                 self.requests.push(request);

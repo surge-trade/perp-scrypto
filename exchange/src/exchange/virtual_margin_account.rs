@@ -22,7 +22,7 @@ impl VirtualMarginAccount {
             account_updates: MarginAccountUpdates {
                 position_updates: HashMap::new(),
                 virtual_balance: account_info.virtual_balance,
-                last_liquidation_index: account_info.last_liquidation_index,
+                valid_requests_start: account_info.valid_requests_start,
                 requests_new: vec![],
                 request_updates: HashMap::new(),
             },
@@ -107,8 +107,8 @@ impl VirtualMarginAccount {
     //     self.account_info.requests_len
     // }
 
-    pub fn last_liquidation_index(&self) -> ListIndex {
-        self.account_info.last_liquidation_index
+    pub fn valid_requests_start(&self) -> ListIndex {
+        self.account_info.valid_requests_start
     }
 
     pub fn verify_level_1_auth(&self) {
@@ -200,7 +200,7 @@ impl VirtualMarginAccount {
 
     pub fn process_request(&mut self, index: ListIndex) -> (Request, Instant) {
         assert!(
-            index >= self.last_liquidation_index(),
+            index >= self.valid_requests_start(),
             "{}", ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION
         );
         
@@ -264,8 +264,8 @@ impl VirtualMarginAccount {
         self.account_updates.virtual_balance = virtual_balance;
     }
 
-    pub fn update_last_liquidation_index(&mut self) {
-        self.account_info.last_liquidation_index =  self.account_info.requests_len;
-        self.account_updates.last_liquidation_index = self.account_info.requests_len;
+    pub fn update_valid_requests_start(&mut self) {
+        self.account_info.valid_requests_start = self.account_info.requests_len;
+        self.account_updates.valid_requests_start = self.account_info.requests_len;
     }
 }
