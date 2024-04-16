@@ -50,8 +50,8 @@ async def main():
                 ret.ManifestBuilderValue.U64_VALUE(10000000000), # Expiry seconds
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))), # Margin account
                 ret.ManifestBuilderValue.U16_VALUE(0), # Pair id
-                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.000001')), # Amount
-                ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('76000'))]), # Price limit
+                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('-0.00010')), # Amount
+                ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('56000'))]), # Price limit
                 ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Activate requests
                 ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Cancel requests
                 ret.ManifestBuilderValue.U8_VALUE(1), # Status
