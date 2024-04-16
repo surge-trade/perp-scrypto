@@ -26,8 +26,6 @@ impl ConfigInfoCompressed {
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: i64,
-    /// Flat fee to cover the keeper's expenses
-    pub keeper_fee: Decimal,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
@@ -54,8 +52,6 @@ pub struct ExchangeConfig {
 pub struct ExchangeConfigCompressed {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: u32,
-    /// Flat fee to cover the keeper's expenses
-    pub keeper_fee: DFloat16,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
@@ -82,17 +78,16 @@ impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
             max_price_age_seconds: 60,
-            keeper_fee: dec!(0.01),
             positions_max: 10,
             skew_ratio_cap: dec!(0.1),
             adl_offset: dec!(0.1),
             adl_a: dec!(0.1),
             adl_b: dec!(0.1),
             fee_liquidity: dec!(0.01),
-            fee_share_protocol: dec!(0.1),
+            fee_share_protocol: dec!(0.15),
             fee_share_treasury: dec!(0.1),
             fee_share_referral: dec!(0.1),
-            fee_max: dec!(0.1),
+            fee_max: dec!(0.02),
         }
     }
 }
@@ -100,7 +95,6 @@ impl Default for ExchangeConfig {
 impl ExchangeConfig {
     pub fn validate(&self) {
         assert!(self.max_price_age_seconds > 0, "Invalid max price age");
-        assert!(self.keeper_fee >= dec!(0), "Invalid keeper fee");
         assert!(self.positions_max > 0, "Invalid max positions");
         assert!(self.skew_ratio_cap >= dec!(0), "Invalid skew ratio cap");
         assert!(self.adl_offset >= dec!(0), "Invalid adl offset");
@@ -117,7 +111,6 @@ impl ExchangeConfig {
     pub fn compress(&self) -> ExchangeConfigCompressed {
         ExchangeConfigCompressed {
             max_price_age_seconds: self.max_price_age_seconds as u32,
-            keeper_fee: DFloat16::from(self.keeper_fee),
             positions_max: self.positions_max,
             skew_ratio_cap: DFloat16::from(self.skew_ratio_cap),
             adl_offset: DFloat16::from(self.adl_offset),
@@ -136,7 +129,6 @@ impl ExchangeConfigCompressed {
     pub fn decompress(&self) -> ExchangeConfig {
         ExchangeConfig {
             max_price_age_seconds: self.max_price_age_seconds as i64,
-            keeper_fee: self.keeper_fee.into(),
             positions_max: self.positions_max,
             skew_ratio_cap: self.skew_ratio_cap.into(),
             adl_offset: self.adl_offset.into(),

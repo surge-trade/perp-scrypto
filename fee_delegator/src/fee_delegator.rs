@@ -52,21 +52,18 @@ mod fee_delegator {
                         "description" => format!("Represents the obligation to pay fees for a transaction."), updatable;
                     }
                 ))
-                .mint_roles(mint_roles!{
+                .mint_roles(mint_roles! {
                         minter => rule!(require(global_caller(this))); 
                         minter_updater => rule!(deny_all);
-                    }
-                )
-                .burn_roles(burn_roles!{
+                })
+                .burn_roles(burn_roles! {
                         burner => rule!(require(AUTHORITY_RESOURCE)); 
                         burner_updater => rule!(deny_all);
-                    }
-                )
-                .deposit_roles(deposit_roles!{
+                })
+                .deposit_roles(deposit_roles! {
                     depositor => rule!(deny_all); 
                     depositor_updater => rule!(deny_all);
-                    }
-                )
+                })
                 .create_with_no_initial_supply();
                 
             Self {
