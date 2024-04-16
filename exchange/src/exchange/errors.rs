@@ -50,6 +50,4 @@ pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 
 pub const ERROR_REFERRAL_ALREADY_SET: &str = "Referral already set";
 
-pub const ERROR_EXCHANGE_CONFIG_NOT_LOADED: &str = "Exchange config not loaded";
-pub const ERROR_COLLATERAL_CONFIGS_NOT_LOADED: &str = "Collateral configs not loaded";
 pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";
