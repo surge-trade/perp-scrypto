@@ -60,7 +60,7 @@ mod token_wrapper {
 
             assert!(
                 authority_token.resource_address() == BASE_AUTHORITY_RESOURCE,
-                "{}", ERROR_INVALID_AUTHORITY
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_AUTHORITY, Runtime::bech32_encode_address(authority_token.resource_address()), Runtime::bech32_encode_address(BASE_AUTHORITY_RESOURCE)
             );
 
             let flash_oath = ResourceBuilder::new_fungible(owner_role.clone())
@@ -138,7 +138,7 @@ mod token_wrapper {
 
             assert!(
                 child_vault.wrappable, 
-                "{}", ERROR_WRAPPING_DISABLED
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_WRAPPING_DISABLED, child_vault.wrappable, true
             );
 
             let parent_token = authorize!(self, {
@@ -170,11 +170,11 @@ mod token_wrapper {
         pub fn repay_flash_loan(&mut self, flash_oath: Bucket, mut token: Bucket) -> Bucket {
             assert!(
                 flash_oath.resource_address() == self.flash_oath.address(),
-                "{}", ERROR_INVALID_FLASH_OATH
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FLASH_OATH, Runtime::bech32_encode_address(flash_oath.resource_address()), Runtime::bech32_encode_address(self.flash_oath.address())
             );
             assert!(
                 token.amount() >= flash_oath.amount(),
-                "{}", ERROR_INSUFFICIENT_FLASH_LOAN_PAYMENT
+                "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_INSUFFICIENT_FLASH_LOAN_PAYMENT, token.amount(), flash_oath.amount()
             );
 
             token.take_advanced(flash_oath.amount(), TO_INFINITY).burn();

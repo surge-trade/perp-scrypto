@@ -141,7 +141,7 @@ impl VirtualMarginAccount {
     pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status) {
         assert!(
             status == STATUS_DORMANT || status == STATUS_ACTIVE,
-            "{}", ERROR_INVALID_REQUEST_STATUS
+            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_DORMANT, STATUS_ACTIVE]
         );
 
         let submission = Clock::current_time_rounded_to_seconds();
@@ -191,7 +191,7 @@ impl VirtualMarginAccount {
         let status_phases = self._status_phases(STATUS_CANCELLED);
         assert!(
             status_phases.contains(&keeper_request.status),
-            "{}", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT
+            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
         );
         keeper_request.status = STATUS_CANCELLED;
         keeper_request.submission = current_time;
@@ -201,18 +201,18 @@ impl VirtualMarginAccount {
     pub fn process_request(&mut self, index: ListIndex) -> (Request, Instant) {
         assert!(
             index >= self.valid_requests_start(),
-            "{}", ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION
+            "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_PROCESS_REQUEST_BEFORE_VALID_START, index, self.valid_requests_start()
         );
         
         let current_time = Clock::current_time_rounded_to_seconds();
         let mut keeper_request = self.keeper_request(index);
         assert!(
             keeper_request.status == STATUS_ACTIVE,
-            "{}", ERROR_PROCESS_REQUEST_NOT_ACTIVE
+            "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, STATUS_ACTIVE
         );
         assert!(
             current_time.compare(keeper_request.expiry, TimeComparisonOperator::Lt),
-            "{}", ERROR_PROCESS_REQUEST_EXPIRED
+            "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_PROCESS_REQUEST_EXPIRED, current_time.seconds_since_unix_epoch, keeper_request.expiry.seconds_since_unix_epoch
         );
         let submission = keeper_request.submission;
         let request = Request::decode(&keeper_request.request);

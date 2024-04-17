@@ -12,8 +12,22 @@ pub enum Limit {
 impl Limit {
     pub fn compare(&self, value: Decimal) -> bool {
         match self {
-            Limit::Gte(limit) => value >= *limit,
-            Limit::Lte(limit) => value <= *limit,
+            Limit::Gte(price) => value >= *price,
+            Limit::Lte(price) => value <= *price,
+        }
+    }
+
+    pub fn price(&self) -> Decimal {
+        match self {
+            Limit::Gte(limit) => limit.clone(),
+            Limit::Lte(limit) => limit.clone(),
+        }
+    }
+
+    pub fn op(&self) -> &'static str {
+        match self {
+            Limit::Gte(_) => ">=",
+            Limit::Lte(_) => "<=",
         }
     }
 }
