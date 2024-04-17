@@ -199,8 +199,8 @@ async def main():
 
         print('---------- DEPLOY COMPLETE ----------')
 
-        print('EXCHANGE_PACKAGE:', exchange_package)
-        print('EXCHANGE_COMPONENT:', exchange_component)
+        print(f'EXCHANGE_PACKAGE={exchange_package}')
+        print(f'EXCHANGE_COMPONENT={exchange_component}')
 
         config_data['EXCHANGE_PACKAGE'] = exchange_package
         config_data['EXCHANGE_COMPONENT'] = exchange_component

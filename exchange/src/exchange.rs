@@ -36,7 +36,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1phrmkqky2mam0ucksk2pghdaxcjxezg7e2ygj6v4pwhhxrf46j0ssy",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -56,7 +56,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pkljq0yqrua0vakt7m7pkqyzgysh6xlnqg5lq6dl6srt9w62m253km",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -76,7 +76,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p5tvxal2qm0je20v6a32za5mz6ge8300ezz6799cxzz7wjntje4fv2",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -90,14 +90,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p4q8xhqhk8rfkeltkw0ld8nm2c6rss7t9hmg3klm35t8kgj5j4vgrn",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pk06k3vuyf2uskqghu8rpcgrfhr5pghs2d3yuqewk5yr8g8nr4hx8d",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -117,7 +117,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pha8kmyg80suwjggmnplhuggkrqpth92qhxr88etgx850m2alesevm",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
