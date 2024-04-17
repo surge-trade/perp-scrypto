@@ -1,3 +1,5 @@
+import qrcode
+import io
 import radix_engine_toolkit as ret
 import asyncio
 import datetime
@@ -36,9 +38,16 @@ async def main():
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
+            qr = qrcode.QRCode()
+            qr.add_data(account.as_str())
+            f = io.StringIO()
+            qr.print_ascii(out=f)
+            f.seek(0)
+            print(f.read())
         while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
+
 
         public_key_hash = ret.hash(public_key.value).as_str()[-58:]
         initial_rule = f'{network_config["ed25519_virtual_badge"]}:[{public_key_hash}]'
