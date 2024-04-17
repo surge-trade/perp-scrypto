@@ -138,9 +138,10 @@ mod fee_delegator {
             self.virtual_balance += value;
 
             let fee_oath = self.fee_oath.mint(value);
+            let total_supply = self.fee_oath.total_supply().unwrap();
             assert!(
-                self.fee_oath.total_supply().unwrap() <= self.max_lock, 
-                "{}", MAX_LOCK_EXCEEDED
+                total_supply <= self.max_lock, 
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", MAX_LOCK_EXCEEDED, total_supply, self.max_lock
             );
             
             fee_oath

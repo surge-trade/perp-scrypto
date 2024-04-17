@@ -21,7 +21,7 @@ pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL not positive";
 pub const ERROR_ADL_SKEW_NOT_REDUCED: &str = "Skew ratio not reduced";
 pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 
-pub const ERROR_SWAP_NOT_ENOUGH_DEBT: &str = "Not enough debt to swap";
+pub const ERROR_SWAP_NO_DEBT: &str = "No debt to swap";
 
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
 
@@ -44,7 +44,7 @@ pub const ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT: &str = "Request not active
 
 pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
 pub const ERROR_PROCESS_REQUEST_EXPIRED: &str = "Request expired";
-pub const ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION: &str = "Request before liquidation";
+pub const ERROR_PROCESS_REQUEST_BEFORE_VALID_START: &str = "Request before valid start";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 

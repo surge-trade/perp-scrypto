@@ -36,7 +36,7 @@ mod exchange {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1phxrzlgxkvzpkddr8xm7lxyyfr68ev7n40zwnmcrsk0ah8wmy5a25t",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -56,7 +56,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p420rf2ms0y5lr8m4ps5qjggk3r2nw2jkz2x8fgggn2vw2xxaav5v3",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -76,7 +76,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5vlv28ymprxwguz6a46kdtr2d58v2mwc9fr0nw2el5tpdkm7xpavh",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -90,14 +90,14 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5h2tpageyhtuu4qft7sk7gmmj7nwfhcsc29qvs7cj0caug2wnpgtm",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p42tgsv64mvfasmrp349kt8e3t25cu4he2ktuu0zwehnpdf30tjfj4",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -117,7 +117,7 @@ mod exchange {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5zp72ehqqy20enz7umd04wcxe3zg3lraaucp77dsxy79u3l0w6p6m",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -231,7 +231,7 @@ mod exchange {
         ) -> Global<Exchange> {
             assert!(
                 authority_token.resource_address() == AUTHORITY_RESOURCE,
-                "{}", ERROR_INVALID_AUTHORITY
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_AUTHORITY, Runtime::bech32_encode_address(authority_token.resource_address()), Runtime::bech32_encode_address(AUTHORITY_RESOURCE)
             );
 
             let config: Global<Config> = config.into();
@@ -618,7 +618,7 @@ mod exchange {
                 let current_referrer = self.fee_distributor.get_referrer(account.address());
                 assert!(
                     current_referrer.is_none(),
-                    "{}", ERROR_REFERRAL_ALREADY_SET
+                    "{}, VALUE:{:?}, REQUIRED:None, OP:== |", ERROR_REFERRAL_ALREADY_SET, current_referrer,
                 );
 
                 Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT);
@@ -970,7 +970,7 @@ mod exchange {
             authorize!(self, {
                 assert!(
                     payment.resource_address() == KEEPER_REWARD_RESOURCE, // TODO: Change to protocol fee resource
-                    "{}", ERROR_INVALID_PAYMENT
+                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(KEEPER_REWARD_RESOURCE)
                 );
 
                 payment.take(dec!(1)).burn(); // TODO: Set fee amount
@@ -1035,9 +1035,11 @@ mod exchange {
             pool: &VirtualLiquidityPool,
             skew_delta: Decimal,
         ) {
+            let skew_ratio = self._skew_ratio(pool);
+            let skew_ratio_cap = config.exchange_config().skew_ratio_cap;
             assert!(
-                self._skew_ratio(pool) < config.exchange_config().skew_ratio_cap || skew_delta > dec!(0),
-                "{}", ERROR_SKEW_TOO_HIGH
+                skew_ratio < skew_ratio_cap || skew_delta <= dec!(0),
+                "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_SKEW_TOO_HIGH, skew_ratio, skew_ratio_cap
             );
         }
 
@@ -1055,7 +1057,7 @@ mod exchange {
 
             assert!(
                 account_value > margin,
-                "{}", ERROR_INSUFFICIENT_MARGIN
+                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, account_value, margin
             );
         }
 
@@ -1066,7 +1068,8 @@ mod exchange {
         ) {
             assert!(
                 config.collateral_configs().contains_key(&resource),
-                "{}", ERROR_COLLATERAL_INVALID
+                "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_COLLATERAL_INVALID, Runtime::bech32_encode_address(resource), 
+                config.collateral_configs().keys().map(|r| Runtime::bech32_encode_address(*r)).collect::<Vec<String>>()
             );
         }
 
@@ -1075,9 +1078,11 @@ mod exchange {
             config: &VirtualConfig,
             account: &VirtualMarginAccount,
         ) {
+            let positions_len = account.positions().len();
+            let positions_max = config.exchange_config().positions_max as usize;
             assert!(
-                account.positions().len() <= config.exchange_config().positions_max as usize,
-                "{}", ERROR_POSITIONS_TOO_MANY
+                positions_len <= positions_max,
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_POSITIONS_TOO_MANY, positions_len, positions_max
             );
         }
 
@@ -1088,18 +1093,19 @@ mod exchange {
             oracle: &VirtualOracle,
             fee_oath: Bucket,
         ) {
+            let resource = fee_oath.resource_address();
             assert!(
                 fee_oath.resource_address() == self.fee_oath_resource,
-                "{}", ERROR_INVALID_FEE_OATH
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FEE_OATH, Runtime::bech32_encode_address(resource), Runtime::bech32_encode_address(self.fee_oath_resource)
             );
 
-            let (collateral_value_discounted, margin_collateral) = self._value_collateral(config, account, oracle);
-            let collateral_value_approx = collateral_value_discounted + account.virtual_balance();
             let fee_value = fee_oath.amount();
+            let (collateral_value_discounted, margin_collateral) = self._value_collateral(config, account, oracle);
+            let collateral_value_approx = collateral_value_discounted + account.virtual_balance() - fee_value;
 
             assert!(
-                collateral_value_approx - fee_value > margin_collateral,
-                "{}", ERROR_INSUFFICIENT_MARGIN
+                collateral_value_approx > margin_collateral,
+                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, collateral_value_approx, margin_collateral
             );
 
             account.update_virtual_balance(account.virtual_balance() - fee_value);
@@ -1142,7 +1148,7 @@ mod exchange {
         ) -> Bucket {
             assert!(
                 lp_token.resource_address() == pool.lp_token_manager().address(),
-                "{}", ERROR_INVALID_LP_TOKEN
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(lp_token.resource_address()), Runtime::bech32_encode_address(pool.lp_token_manager().address())
             );
 
             let pool_value = self._pool_value(pool);
@@ -1196,7 +1202,7 @@ mod exchange {
                 if *resource == BASE_RESOURCE {
                     assert!(
                         *amount <= pool.base_tokens_amount(),
-                        "{}", ERROR_REMOVE_COLLATERAL_INSUFFICIENT_POOL_TOKENS
+                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REMOVE_COLLATERAL_INSUFFICIENT_POOL_TOKENS, *amount, pool.base_tokens_amount()
                     );
 
                     let base_token = pool.withdraw(*amount, TO_ZERO);
@@ -1231,7 +1237,7 @@ mod exchange {
             let current_price = oracle.price(pair_id);
             assert!(
                 price_limit.compare(current_price),
-                "{}", ERROR_MARGIN_ORDER_PRICE_LIMIT
+                "{}, VALUE:{}, REQUIRED:{}, OP:{} |", ERROR_MARGIN_ORDER_PRICE_LIMIT, current_price, price_limit.price(), price_limit.op()
             );
 
             self._update_pair(config, pool, oracle, pair_id);
@@ -1285,16 +1291,14 @@ mod exchange {
         ) -> (Bucket, Bucket) {
             assert!(
                 payment_token.resource_address() == BASE_RESOURCE, 
-                "{}", ERROR_INVALID_PAYMENT
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
+            );            
+            assert!(
+                account.virtual_balance() < dec!(0),
+                "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_SWAP_NO_DEBT, account.virtual_balance(), dec!(0)
             );
 
-            let value = payment_token.amount();
-            let virtual_balance = account.virtual_balance();
-            
-            assert!(
-                value <= -virtual_balance,
-                "{}", ERROR_SWAP_NOT_ENOUGH_DEBT
-            );
+            let value = payment_token.amount().min(-account.virtual_balance());
             let price_resource = oracle.price_resource(*resource);
             let amount = value / price_resource;
 
@@ -1323,7 +1327,7 @@ mod exchange {
         ) -> Vec<Bucket> {
             assert!(
                 payment_token.resource_address() == BASE_RESOURCE, 
-                "{}", ERROR_INVALID_PAYMENT
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
             );
 
             let (pnl, margin_positions, fee_protocol, fee_treasury, fee_referral) = self._liquidate_positions(config, pool, account, oracle);
@@ -1333,7 +1337,7 @@ mod exchange {
 
             assert!(
                 account_value < margin,
-                "{}", ERROR_LIQUIDATION_SUFFICIENT_MARGIN
+                "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_LIQUIDATION_SUFFICIENT_MARGIN, account_value, margin
             );
             
             let deposit_token = payment_token.take_advanced(collateral_value, TO_INFINITY);
@@ -1366,16 +1370,17 @@ mod exchange {
             let skew_ratio_0 = self._skew_ratio(pool);
             assert!(
                 skew_ratio_0 > exchange_config.skew_ratio_cap,
-                "{}", ERROR_ADL_SKEW_TOO_LOW
+                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_ADL_SKEW_TOO_LOW, skew_ratio_0, exchange_config.skew_ratio_cap
             );
                 
             let position = account.position(pair_id);
             let price_token = oracle.price(pair_id);
             let amount = position.amount;
 
-            if amount.is_zero() {
-                panic!("{}", ERROR_ADL_NO_POSITION);
-            }
+            assert!(
+                amount != dec!(0),
+                "{}, VALUE:{}, REQUIRED:{}, OP:!= |", ERROR_ADL_NO_POSITION, amount, dec!(0)
+            );
 
             let value = position.amount * price_token;
             let cost = position.cost;
@@ -1386,7 +1391,7 @@ mod exchange {
             let threshold = -(u * u * u) - exchange_config.adl_b * u;
             assert!(
                 pnl_percent > threshold,
-                "{}", ERROR_ADL_PNL_BELOW_THRESHOLD
+                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_ADL_PNL_BELOW_THRESHOLD, pnl_percent, threshold
             );
             
             let amount_close = -amount;
@@ -1400,7 +1405,7 @@ mod exchange {
             let skew_ratio_1 = self._skew_ratio(pool);
             assert!(
                 skew_ratio_1 < skew_ratio_0,
-                "{}", ERROR_ADL_SKEW_NOT_REDUCED
+                "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_ADL_SKEW_NOT_REDUCED, skew_ratio_1, skew_ratio_0
             );
         }
 
@@ -1418,7 +1423,7 @@ mod exchange {
 
             assert!(
                 !pair_config.disabled, 
-                "{}", ERROR_PAIR_DISABLED
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PAIR_DISABLED, pair_config.disabled, true
             );
 
             let price_token = oracle.price(pair_id);
