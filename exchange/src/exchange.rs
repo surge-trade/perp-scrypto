@@ -155,8 +155,8 @@ mod exchange {
             remove_collateral_config => restrict_to: [OWNER];
             update_referral_rebate => restrict_to: [OWNER];
             update_referral_trickle_up => restrict_to: [OWNER];
-            update_max_lock => restrict_to: [OWNER];
-            update_is_contingent => restrict_to: [OWNER];
+            update_max_fee_delegator_lock => restrict_to: [OWNER];
+            update_fee_delegator_is_contingent => restrict_to: [OWNER];
             collect_fee_distributor_balance => restrict_to: [OWNER];
             collect_fee_delegator_balance => restrict_to: [OWNER];
             deposit_fee_delegator => restrict_to: [OWNER];
@@ -357,7 +357,7 @@ mod exchange {
             })
         }
 
-        pub fn update_max_lock(
+        pub fn update_max_fee_delegator_lock(
             &self, 
             max_lock: Decimal,
         ) {
@@ -366,7 +366,7 @@ mod exchange {
             })
         }
 
-        pub fn update_is_contingent(
+        pub fn update_fee_delegator_is_contingent(
             &self, 
             is_contingent: bool,
         ) {
@@ -1038,7 +1038,7 @@ mod exchange {
             let skew_ratio = self._skew_ratio(pool);
             let skew_ratio_cap = config.exchange_config().skew_ratio_cap;
             assert!(
-                skew_ratio < skew_ratio_cap || skew_delta <= dec!(0),
+                skew_ratio < skew_ratio_cap || skew_delta < dec!(0),
                 "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_SKEW_TOO_HIGH, skew_ratio, skew_ratio_cap
             );
         }
