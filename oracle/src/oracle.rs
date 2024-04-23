@@ -3,7 +3,7 @@ use common::PairId;
 
 // THIS IS A MOCK IMPLEMENTATION
 #[blueprint]
-mod oracle {
+mod oracle_mod {
     struct Oracle {
         prices: HashMap<PairId, Decimal>,
     }

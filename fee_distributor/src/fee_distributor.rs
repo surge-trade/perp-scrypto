@@ -21,7 +21,7 @@ impl ReferralAccount {
     ComponentAddress,
     ReferralAccount,
 )]
-mod fee_distributor {
+mod fee_distributor_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
     enable_method_auth!(
