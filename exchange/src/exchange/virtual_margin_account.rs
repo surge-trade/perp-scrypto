@@ -3,7 +3,7 @@ use account::*;
 use common::{PairId, ListIndex};
 use super::errors::*;
 use super::events::*;
-use super::exchange::MarginAccount;
+use super::exchange_mod::MarginAccount;
 use super::requests::*;
 
 pub struct VirtualMarginAccount {
@@ -166,14 +166,13 @@ impl VirtualMarginAccount {
         }
     }
 
-    pub fn try_set_keeper_request_statuses(&mut self, updates: Vec<(ListIndex, Status)>) {
+    pub fn try_set_keeper_requests_status(&mut self, indexes: Vec<ListIndex>, status: Status) -> Vec<ListIndex> {
         let current_time = Clock::current_time_rounded_to_seconds();
-        let indexes: Vec<ListIndex> = updates.iter().map(|(index, _)| *index).collect();
-        let statuses: Vec<Status> = updates.iter().map(|(_, status)| *status).collect();
 
+        let status_phases = self._status_phases(status);
         let keeper_requests = self.keeper_requests(indexes);
-        for ((index, keeper_request), status) in keeper_requests.into_iter().zip(statuses.into_iter()) {
-            let status_phases = self._status_phases(status);
+        let mut updated = vec![];
+        for (index, keeper_request) in keeper_requests.into_iter() {
             if !status_phases.contains(&keeper_request.status) {
                 continue;
             } else {
@@ -181,8 +180,11 @@ impl VirtualMarginAccount {
                 keeper_request.status = status;
                 keeper_request.submission = current_time;
                 self.account_updates.request_updates.insert(index, keeper_request);
+                updated.push(index);
             }
         }
+
+        updated
     }
 
     pub fn cancel_request(&mut self, index: ListIndex) {
@@ -267,5 +269,10 @@ impl VirtualMarginAccount {
     pub fn update_valid_requests_start(&mut self) {
         self.account_info.valid_requests_start = self.account_info.requests_len;
         self.account_updates.valid_requests_start = self.account_info.requests_len;
+
+        Runtime::emit_event(EventValidRequestsStart {
+            account: self.account.address(),
+            valid_requests_start: self.account_info.requests_len,
+        });
     }
 }

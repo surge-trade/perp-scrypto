@@ -16,7 +16,7 @@ pub struct ChildToken {
     ResourceAddress,
     ChildToken,
 )]
-mod token_wrapper {
+mod token_wrapper_mod {
     const BASE_AUTHORITY_RESOURCE: ResourceAddress = _BASE_AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 

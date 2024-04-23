@@ -5,7 +5,7 @@ use common::{_AUTHORITY_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[blueprint]
-mod fee_delegator {
+mod fee_delegator_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
     enable_method_auth! { 

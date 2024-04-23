@@ -42,7 +42,7 @@ pub mod margin_account {
     
     struct MarginAccount {
         collateral: Vaults,
-        positions: HashMap<PairId, AccountPosition>, // TODO: make kvs for efficient token movement
+        positions: HashMap<PairId, AccountPosition>,
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
         valid_requests_start: ListIndex,
@@ -57,7 +57,7 @@ pub mod margin_account {
 
             Self {
                 collateral: Vaults::new(MarginAccountKeyValueStore::new_with_registered_type),
-                positions: HashMap::new(), // TODO: make kvs for efficient token movement
+                positions: HashMap::new(),
                 virtual_balance: dec!(0),
                 requests: List::new(MarginAccountKeyValueStore::new_with_registered_type),
                 valid_requests_start: 0,

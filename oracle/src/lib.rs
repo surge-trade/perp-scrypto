@@ -1,1 +1,1 @@
-pub mod oracle;
+mod oracle;
