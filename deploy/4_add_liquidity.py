@@ -56,7 +56,7 @@ async def main():
             builder, 
             account, 
             ret.Address(base_resource), 
-            ret.Decimal('100'), 
+            ret.Decimal('1000'), 
             'bucket1'
         )
         builder = builder.call_method(
