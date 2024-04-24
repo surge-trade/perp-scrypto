@@ -79,6 +79,7 @@ mod exchange_mod {
             fn get_requests_tail(&self, num: ListIndex) -> Vec<KeeperRequest>;
             fn get_requests_by_indexes(&self, indexes: Vec<ListIndex>) -> HashMap<ListIndex, Option<KeeperRequest>>;
             fn get_requests_len(&self) -> ListIndex;
+            fn get_active_requests(&self) -> HashMap<ListIndex, KeeperRequest>;
 
             // Authority protected methods
             fn update(&self, update: MarginAccountUpdates);
@@ -548,15 +549,8 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
                 account.set_level_1_auth(rule);
                 account.realize();
@@ -570,15 +564,8 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
                 account.set_level_2_auth(rule);
                 account.realize();
@@ -592,15 +579,8 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
                 account.set_level_3_auth(rule);
                 account.realize();
@@ -615,15 +595,8 @@ mod exchange_mod {
             referrer: ComponentAddress,
         ) {
             authorize!(self, {
-                let account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_2_auth();
 
                 let current_referrer = self.fee_distributor.get_referrer(account.address());
@@ -645,15 +618,8 @@ mod exchange_mod {
             account: ComponentAddress, 
         ) -> Bucket {
             authorize!(self, {
-                let account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let account = self._handle_fee_oath(account, &config, fee_oath);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
                 account.verify_level_2_auth();
 
@@ -717,14 +683,7 @@ mod exchange_mod {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
                 let account_component = account;
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
 
                 let result_add_collateral = self._add_collateral(&config, &mut pool, &mut account, tokens);
@@ -748,15 +707,8 @@ mod exchange_mod {
             claims: Vec<(ResourceAddress, Decimal)>,
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_2_auth();
 
@@ -765,6 +717,7 @@ mod exchange_mod {
                     claims,
                 });
                 account.push_request(request, expiry_seconds, STATUS_ACTIVE);
+                self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
             })
@@ -783,15 +736,8 @@ mod exchange_mod {
             status: Status,
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
 
@@ -803,6 +749,7 @@ mod exchange_mod {
                     cancel_requests,
                 });
                 account.push_request(request, expiry_seconds, status);
+                self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
             })
@@ -815,15 +762,8 @@ mod exchange_mod {
             index: ListIndex,
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
                 account.cancel_request(index);
@@ -837,15 +777,8 @@ mod exchange_mod {
             account: ComponentAddress, 
         ) {
             authorize!(self, {
-                let mut account = if let Some(fee_oath) = fee_oath {
-                    let config = VirtualConfig::new(self.config);
-                    let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                    account
-                } else {
-                    VirtualMarginAccount::new(account, vec![])
-                };
+                let config = VirtualConfig::new(self.config);
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
                 account.update_valid_requests_start();
@@ -1195,6 +1128,35 @@ mod exchange_mod {
                 positions_len <= positions_max,
                 "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_POSITIONS_TOO_MANY, positions_len, positions_max
             );
+        }
+
+        fn _assert_active_requests_limit(
+            &self, 
+            config: &VirtualConfig,
+            account: &VirtualMarginAccount,
+        ) {
+            let active_requests_len = account.active_requests_len();
+            let active_requests_max = config.exchange_config().active_requests_max as usize;
+            assert!(
+                active_requests_len <= active_requests_max,
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_ACTIVE_REQUESTS_TOO_MANY, active_requests_len, active_requests_max
+            );
+        }
+
+        fn _handle_fee_oath(
+            &self,
+            account: ComponentAddress,
+            config: &VirtualConfig,
+            fee_oath: Option<Bucket>,
+        ) -> VirtualMarginAccount {
+            if let Some(fee_oath) = fee_oath {
+                let mut account = VirtualMarginAccount::new(account, config.collaterals());
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
+                self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
+                account
+            } else {
+                VirtualMarginAccount::new(account, vec![])
+            }
         }
 
         fn _settle_fee_oath(

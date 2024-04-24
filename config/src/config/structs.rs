@@ -28,6 +28,8 @@ pub struct ExchangeConfig {
     pub max_price_age_seconds: i64,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
+    /// Maximum allowed number of active requests per account
+    pub active_requests_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
     pub skew_ratio_cap: Decimal,
     /// ADL offset calculation parameter
@@ -54,6 +56,8 @@ pub struct ExchangeConfigCompressed {
     pub max_price_age_seconds: u32,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
+    /// Maximum allowed number of active requests per account
+    pub active_requests_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
     pub skew_ratio_cap: DFloat16,
     /// ADL offset calculation parameter
@@ -79,6 +83,7 @@ impl Default for ExchangeConfig {
         Self {
             max_price_age_seconds: 60,
             positions_max: 10,
+            active_requests_max: 30,
             skew_ratio_cap: dec!(0.1),
             adl_offset: dec!(0.1),
             adl_a: dec!(0.1),
@@ -112,6 +117,7 @@ impl ExchangeConfig {
         ExchangeConfigCompressed {
             max_price_age_seconds: self.max_price_age_seconds as u32,
             positions_max: self.positions_max,
+            active_requests_max: self.active_requests_max,
             skew_ratio_cap: DFloat16::from(self.skew_ratio_cap),
             adl_offset: DFloat16::from(self.adl_offset),
             adl_a: DFloat16::from(self.adl_a),
@@ -130,6 +136,7 @@ impl ExchangeConfigCompressed {
         ExchangeConfig {
             max_price_age_seconds: self.max_price_age_seconds as i64,
             positions_max: self.positions_max,
+            active_requests_max: self.active_requests_max,
             skew_ratio_cap: self.skew_ratio_cap.into(),
             adl_offset: self.adl_offset.into(),
             adl_a: self.adl_a.into(),

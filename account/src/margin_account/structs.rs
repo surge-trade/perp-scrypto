@@ -14,6 +14,7 @@ pub struct MarginAccountInfo {
     pub collateral_balances: HashMap<ResourceAddress, Decimal>,
     pub virtual_balance: Decimal,
     pub requests_len: ListIndex,
+    pub active_requests_len: usize,
     pub valid_requests_start: ListIndex,
 }
 
@@ -22,8 +23,10 @@ pub struct MarginAccountUpdates {
     pub position_updates: HashMap<PairId, AccountPosition>,
     pub virtual_balance: Decimal,
     pub valid_requests_start: ListIndex,
-    pub requests_new: Vec<KeeperRequest>,
+    pub request_additions: Vec<KeeperRequest>,
     pub request_updates: HashMap<ListIndex, KeeperRequest>,
+    pub active_request_additions: Vec<ListIndex>,
+    pub active_request_removals: Vec<ListIndex>,
 }
 
 pub type Status = u8;

@@ -32,6 +32,7 @@ pub mod margin_account {
             get_requests_tail => PUBLIC;
             get_requests_by_indexes => PUBLIC;
             get_requests_len => PUBLIC;
+            get_active_requests => PUBLIC;
 
             // Authority protected methods
             update => restrict_to: [authority];
@@ -45,6 +46,7 @@ pub mod margin_account {
         positions: HashMap<PairId, AccountPosition>,
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
+        active_requests: HashSet<ListIndex>,
         valid_requests_start: ListIndex,
     }
 
@@ -60,6 +62,7 @@ pub mod margin_account {
                 positions: HashMap::new(),
                 virtual_balance: dec!(0),
                 requests: List::new(MarginAccountKeyValueStore::new_with_registered_type),
+                active_requests: HashSet::new(),
                 valid_requests_start: 0,
             }
             .instantiate()
@@ -80,6 +83,7 @@ pub mod margin_account {
                 collateral_balances: self.collateral.amounts(collateral_resources),
                 virtual_balance: self.virtual_balance,
                 requests_len: self.requests.len(),
+                active_requests_len: self.active_requests.len(),
                 valid_requests_start: self.valid_requests_start,
             }
         }
@@ -104,6 +108,10 @@ pub mod margin_account {
             self.requests.len()
         }
 
+        pub fn get_active_requests(&self) -> HashMap<ListIndex, KeeperRequest> {
+            self.active_requests.iter().map(|index| (*index, self.get_request(*index).unwrap())).collect()
+        }
+
         pub fn update(&mut self, update: MarginAccountUpdates) {
             for (pair_id, position) in update.position_updates {
                 if position.amount != dec!(0) {
@@ -112,16 +120,20 @@ pub mod margin_account {
                     self.positions.remove(&pair_id);
                 }
             }
-
             self.virtual_balance = update.virtual_balance;
-            self.valid_requests_start = update.valid_requests_start;
-
-            for request in update.requests_new {
+            if update.valid_requests_start > self.valid_requests_start {
+                self.valid_requests_start = update.valid_requests_start;
+                self.active_requests = self.active_requests.iter().filter(|index| **index >= self.valid_requests_start).cloned().collect();
+            }
+            for request in update.request_additions {
                 self.requests.push(request);
             }
-
             for (index, updated_request) in update.request_updates {
                 self.requests.update(index, updated_request);
+            }
+            self.active_requests.extend(update.active_request_additions);
+            for removal in update.active_request_removals {
+                self.active_requests.remove(&removal);
             }
         }
 
