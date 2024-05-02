@@ -1,21 +1,27 @@
+mod errors;
+
 use scrypto::prelude::*;
 use common::PairId;
+use self::errors::*;
+
+#[derive(ScryptoSbor)]
+pub struct Price {
+    pair: String,
+    quote: Decimal,
+    timestamp: Instant,
+}
 
 #[blueprint]
 mod oracle {
     struct Oracle {
         public_key: Bls12381G1PublicKey,
-        counter: PairId,
-        pair_ids: HashMap<String, PairId>,
-        prices: HashMap<PairId, Decimal>,
+        prices: HashMap<PairId, (Decimal, Instant)>,
     }
 
     impl Oracle {
         pub fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle> {    
             Self {
                 public_key,
-                counter: 0,
-                pair_ids: HashMap::new(),
                 prices: HashMap::new()
             }
             .instantiate()  
@@ -23,41 +29,33 @@ mod oracle {
             .globalize()
         }
 
-        pub fn get_pair_id(&mut self, pair_name: String) -> PairId {
-            if let Some(pair_id) = self.pair_ids.get(&pair_name) {
-                *pair_id
-            } else {
-                let pair_id = self.counter;
-                self.pair_ids.insert(pair_name, pair_id);
-                self.counter += 1;
-                pair_id
-            }
-        }
-
-        pub fn push_price(&mut self, pair_id: PairId, price: Decimal) {
-            self.prices.insert(pair_id, price);
-        }
-
-        // pub fn push_prices(&mut self, data: Vec<u8>, signature: Bls12381G2Signature) -> Vec<u8> {
-        //     let hash = CryptoUtils::keccak256_hash(data).to_vec();
-
-            // assert!(
-            //     CryptoUtils::bls12381_v1_verify(hash, self.public_key, signature),
-            //     "Invalid signature."
-            // );
-
-            // for (pair_name, price) in prices.into_iter() {
-            //     let pair_id = self.get_pair_id(pair_name);
-            //     self.prices.insert(pair_id, price);
-            // }
-        // }
-
         pub fn hash(&self, data: Vec<u8>) -> Vec<u8> {
             CryptoUtils::keccak256_hash(data).to_vec()
         }
 
-        pub fn prices(&self, _max_age: Instant) -> HashMap<PairId, Decimal> {
-            self.prices.clone()
+        pub fn push_prices(&mut self, pair_ids: Vec<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
+            let prices: Vec<Price> = scrypto_decode(&data).expect(ERROR_INVALID_DATA);
+
+            let hash = CryptoUtils::keccak256_hash(data).to_vec();
+            assert!(
+                CryptoUtils::bls12381_v1_verify(hash.clone(), self.public_key, signature),
+                "{}", ERROR_INVALID_SIGNATURE
+            );
+
+            self.prices.extend(prices.into_iter().map(|p| (p.pair.to_owned(), (p.quote, p.timestamp))));
+
+            self.prices(pair_ids, max_age)
+        }
+
+        pub fn prices(&self, pair_ids: Vec<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
+            pair_ids.iter().map(|pair_id| {
+                let (quote, timestamp) = self.prices.get(pair_id).expect(ERROR_MISSING_PAIR);
+                assert!(
+                    timestamp.compare(max_age, TimeComparisonOperator::Gt),
+                    "{}", ERROR_PRICE_TOO_OLD
+                );
+                (pair_id.to_owned(), *quote)
+            }).collect()
         }
     }
 }

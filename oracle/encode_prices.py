@@ -1,4 +1,6 @@
 import radix_engine_toolkit as ret
+from Crypto.Hash import keccak
+
 
 def encode_prices(prices) -> bytes:
     elements = [f'{{"kind":"Tuple","fields":[' +
@@ -7,7 +9,7 @@ def encode_prices(prices) -> bytes:
                     f'{{"kind":"I64","value":"{price["timestamp"]}"}}' +
                 f']}}' for price in prices]
     
-    sbor_string = f'{{"kind":"Array","element_kind":"Tuple","elements":[{','.join(elements)}]}}'
+    sbor_string = f'{{"kind":"Array","element_kind":"Tuple","elements":[{",".join(elements)}]}}'
     sbor_programmatic_json = ret.ScryptoSborString.PROGRAMMATIC_JSON(sbor_string)
     sbor_bytes = ret.scrypto_sbor_encode_string_representation(sbor_programmatic_json)
 
@@ -35,6 +37,11 @@ prices= [
 sbor_bytes = encode_prices(prices)
 
 # --- hash & sign bytes ---
+k = keccak.new(digest_bits=256)
+k.update(sbor_bytes)
+expected_hash = k.hexdigest()
 
 # output bytes as hex
-print(sbor_bytes.hex())
+# print(sbor_bytes.hex())
+print(expected_hash)
+
