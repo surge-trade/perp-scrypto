@@ -58,8 +58,8 @@ impl VirtualMarginAccount {
         self.account_info.positions.keys().cloned().collect()
     }
 
-    pub fn position(&self, pair_id: PairId) -> AccountPosition {
-        self.account_info.positions.get(&pair_id).cloned().unwrap_or_default()
+    pub fn position(&self, pair_id: &PairId) -> AccountPosition {
+        self.account_info.positions.get(pair_id).cloned().unwrap_or_default()
     }
 
     // pub fn position_amount(&self, pair_id: PairId) -> Decimal {
@@ -249,14 +249,14 @@ impl VirtualMarginAccount {
         self.account.withdraw_collateral_batch(claims, withdraw_strategy)
     }
 
-    pub fn update_position(&mut self, pair_id: PairId, position: AccountPosition) {
-        self.account_info.positions.insert(pair_id, position.clone());
-        self.account_updates.position_updates.insert(pair_id, position);
+    pub fn update_position(&mut self, pair_id: &PairId, position: AccountPosition) {
+        self.account_info.positions.insert(pair_id.clone(), position.clone());
+        self.account_updates.position_updates.insert(pair_id.clone(), position);
     }
 
-    pub fn remove_position(&mut self, pair_id: PairId) {
-        self.account_info.positions.remove(&pair_id);
-        self.account_updates.position_updates.insert(pair_id, AccountPosition::default());
+    pub fn remove_position(&mut self, pair_id: &PairId) {
+        self.account_info.positions.remove(pair_id);
+        self.account_updates.position_updates.insert(pair_id.clone(), AccountPosition::default());
     }
 
     pub fn update_virtual_balance(&mut self, virtual_balance: Decimal) {

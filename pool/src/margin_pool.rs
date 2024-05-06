@@ -101,7 +101,7 @@ pub mod margin_pool {
         }
 
         pub fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PoolPosition>> {
-            pair_ids.into_iter().map(|k| (k, self.positions.get(&k).map(|v| v.clone()))).collect()
+            pair_ids.into_iter().map(|k| (k.to_owned(), self.positions.get(&k).map(|v| v.clone()))).collect()
         }
 
         pub fn update(&mut self, update: MarginPoolUpdates) {

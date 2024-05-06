@@ -791,7 +791,7 @@ mod exchange {
                 
                 let mut pair_ids = account.position_ids();
                 if let Request::MarginOrder(request) = &request {
-                    pair_ids.insert(request.pair_id);
+                    pair_ids.insert(request.pair_id.clone());
                 }
                 config.load_pair_configs(pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
@@ -891,14 +891,14 @@ mod exchange {
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
 
                 let mut pair_ids = account.position_ids();
-                pair_ids.insert(pair_id);
+                pair_ids.insert(pair_id.clone());
                 config.load_pair_configs(pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
 
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
 
-                self._auto_deleverage(&config, &mut pool, &mut account, &oracle, pair_id);
+                self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
 
                 account.realize();
                 pool.realize();
@@ -914,14 +914,14 @@ mod exchange {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
 
-                let pair_ids = HashSet::from([pair_id]);
+                let pair_ids = HashSet::from([pair_id.clone()]);
                 config.load_pair_configs(pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
 
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
 
-                let rewarded = self._update_pair(&config, &mut pool, &oracle, pair_id);
+                let rewarded = self._update_pair(&config, &mut pool, &oracle, &pair_id);
 
                 pool.realize();
 
@@ -1169,7 +1169,7 @@ mod exchange {
             oracle: &VirtualOracle,
             request: RequestMarginOrder,
         ) {
-            let pair_id = request.pair_id;
+            let pair_id = &request.pair_id;
             let amount = request.amount;
             let price_limit = request.price_limit;
 
@@ -1183,7 +1183,7 @@ mod exchange {
             self._settle_funding(pool, account, pair_id);
                 
             let (amount_close, amount_open) = {
-                let position_amount = account.positions().get(&pair_id).map_or(dec!(0), |p| p.amount);
+                let position_amount = account.positions().get(pair_id).map_or(dec!(0), |p| p.amount);
                 if position_amount.is_positive() && amount.is_negative() {
                     let amount_close = amount.max(-position_amount);
                     let amount_open = amount - amount_close;
@@ -1301,7 +1301,7 @@ mod exchange {
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
-            pair_id: PairId, 
+            pair_id: &PairId, 
         ) {
             let exchange_config = config.exchange_config();
 
@@ -1355,7 +1355,7 @@ mod exchange {
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
-            pair_id: PairId, 
+            pair_id: &PairId, 
             amount: Decimal, 
         ) {
             let exchange_config = config.exchange_config();
@@ -1406,7 +1406,7 @@ mod exchange {
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
-            pair_id: PairId, 
+            pair_id: &PairId, 
             amount: Decimal, 
         ) {
             let exchange_config = config.exchange_config();
@@ -1450,7 +1450,7 @@ mod exchange {
             config: &VirtualConfig,
             pool: &mut VirtualLiquidityPool,
             oracle: &VirtualOracle,
-            pair_id: PairId,
+            pair_id: &PairId,
         ) -> bool {
             let pair_config = config.pair_config(pair_id);
             let price_token = oracle.price(pair_id);
@@ -1531,7 +1531,7 @@ mod exchange {
             &self, 
             pool: &mut VirtualLiquidityPool,
             oracle: &VirtualOracle,
-            pair_id: PairId,
+            pair_id: &PairId,
         ) {
             let price_token = oracle.price(pair_id);
 
@@ -1565,7 +1565,7 @@ mod exchange {
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
-            for (&pair_id, position) in account.positions().iter() {
+            for (pair_id, position) in account.positions().iter() {
                 let pair_config = config.pair_config(pair_id);
                 let price_token = oracle.price(pair_id);
                 let amount = position.amount;
@@ -1607,7 +1607,7 @@ mod exchange {
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
             let mut total_fee_referral = dec!(0);
-            for (&pair_id, position) in account.positions().clone().iter() {
+            for (pair_id, position) in account.positions().clone().iter() {
                 let pair_config = config.pair_config(pair_id);
                 let price_token = oracle.price(pair_id);
                 let amount = position.amount;
@@ -1701,11 +1701,11 @@ mod exchange {
             &self,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
-            pair_id: PairId,
+            pair_id: &PairId,
         ) {
             let pool_position = pool.position(pair_id);
 
-            let funding = if let Some(position) = account.positions().get(&pair_id) {
+            let funding = if let Some(position) = account.positions().get(pair_id) {
                 if position.amount.is_positive() {
                     position.amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
@@ -1733,7 +1733,7 @@ mod exchange {
             &self,
             pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
-            pair_id: PairId,
+            pair_id: &PairId,
         ) {
             let pool_position = pool.position(pair_id);
             let mut position = account.position(pair_id);

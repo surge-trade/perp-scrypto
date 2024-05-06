@@ -45,8 +45,8 @@ impl VirtualConfig {
         self.exchange_config.as_ref().expect(ERROR_EXCHANGE_CONFIG_NOT_LOADED)
     }
 
-    pub fn pair_config(&self, pair_id: PairId) -> &PairConfig {
-        match self.pair_configs.as_ref().expect(ERROR_PAIR_CONFIGS_NOT_LOADED).get(&pair_id) {
+    pub fn pair_config(&self, pair_id: &PairId) -> &PairConfig {
+        match self.pair_configs.as_ref().expect(ERROR_PAIR_CONFIGS_NOT_LOADED).get(pair_id) {
             Some(ref config) => config,
             None => panic!("{}", ERROR_MISSING_PAIR_CONFIG),
         }
@@ -61,6 +61,6 @@ impl VirtualConfig {
     }
 
     pub fn collateral_feeds(&self) -> HashMap<ResourceAddress, PairId> {
-        self.config_info.collaterals.iter().map(|(resource, config)| (*resource, config.pair_id)).collect()
+        self.config_info.collaterals.iter().map(|(resource, config)| (*resource, config.pair_id.clone())).collect()
     }
 }

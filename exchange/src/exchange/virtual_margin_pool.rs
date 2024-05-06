@@ -30,7 +30,7 @@ impl VirtualLiquidityPool {
     pub fn realize(self) {
         let current_time = Clock::current_time_rounded_to_seconds();
         let updates: Vec<(PairId, PoolPosition)> = self.pool_updates.position_updates.iter()
-            .map(|(pair_id, position)| (*pair_id, position.clone())).collect();
+            .map(|(pair_id, position)| (pair_id.clone(), position.clone())).collect();
         if !updates.is_empty() {
             let event_pair_updates = EventPairUpdates {
                 time: current_time,
@@ -42,8 +42,8 @@ impl VirtualLiquidityPool {
         self.pool.update(self.pool_updates);
     }
 
-    pub fn position(&self, pair_id: PairId) -> PoolPosition {
-        if let Some(Some(position)) = self.pool_info.positions.get(&pair_id) {
+    pub fn position(&self, pair_id: &PairId) -> PoolPosition {
+        if let Some(Some(position)) = self.pool_info.positions.get(pair_id) {
             position.clone()
         } else {
             PoolPosition {
@@ -103,9 +103,9 @@ impl VirtualLiquidityPool {
         token.burn();
     }
 
-    pub fn update_position(&mut self, pair_id: PairId, position: PoolPosition) {
-        self.pool_info.positions.insert(pair_id, Some(position.clone()));
-        self.pool_updates.position_updates.insert(pair_id, position);
+    pub fn update_position(&mut self, pair_id: &PairId, position: PoolPosition) {
+        self.pool_info.positions.insert(pair_id.clone(), Some(position.clone()));
+        self.pool_updates.position_updates.insert(pair_id.clone(), position);
     }
 
     pub fn update_virtual_balance(&mut self, virtual_balance: Decimal) {
