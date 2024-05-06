@@ -26,10 +26,10 @@ impl ConfigInfoCompressed {
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: i64,
-    /// Flat fee to cover the keeper's expenses
-    pub keeper_fee: Decimal,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
+    /// Maximum allowed number of active requests per account
+    pub active_requests_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
     pub skew_ratio_cap: Decimal,
     /// ADL offset calculation parameter
@@ -40,6 +40,10 @@ pub struct ExchangeConfig {
     pub adl_b: Decimal,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: Decimal,
+    /// Share of fees that go to the protocol
+    pub fee_share_protocol: Decimal,
+    /// Share of fees that go to the treasury
+    pub fee_share_treasury: Decimal,
     /// Share of fees that go to the referrer
     pub fee_share_referral: Decimal,
     /// Maximum fee that can be charged
@@ -50,10 +54,10 @@ pub struct ExchangeConfig {
 pub struct ExchangeConfigCompressed {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: u32,
-    /// Flat fee to cover the keeper's expenses
-    pub keeper_fee: DFloat16,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
+    /// Maximum allowed number of active requests per account
+    pub active_requests_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
     pub skew_ratio_cap: DFloat16,
     /// ADL offset calculation parameter
@@ -64,6 +68,10 @@ pub struct ExchangeConfigCompressed {
     pub adl_b: DFloat16,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: DFloat16,
+    /// Share of fees that go to the protocol
+    pub fee_share_protocol: DFloat16,
+    /// Share of fees that go to the treasury
+    pub fee_share_treasury: DFloat16,
     /// Share of fees that go to the referrer
     pub fee_share_referral: DFloat16,
     /// Maximum fee that can be charged
@@ -74,15 +82,17 @@ impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
             max_price_age_seconds: 60,
-            keeper_fee: dec!(0.01),
             positions_max: 10,
+            active_requests_max: 30,
             skew_ratio_cap: dec!(0.1),
             adl_offset: dec!(0.1),
             adl_a: dec!(0.1),
             adl_b: dec!(0.1),
             fee_liquidity: dec!(0.01),
+            fee_share_protocol: dec!(0.15),
+            fee_share_treasury: dec!(0.1),
             fee_share_referral: dec!(0.1),
-            fee_max: dec!(0.1),
+            fee_max: dec!(0.02),
         }
     }
 }
@@ -90,26 +100,31 @@ impl Default for ExchangeConfig {
 impl ExchangeConfig {
     pub fn validate(&self) {
         assert!(self.max_price_age_seconds > 0, "Invalid max price age");
-        assert!(self.keeper_fee >= dec!(0), "Invalid keeper fee");
         assert!(self.positions_max > 0, "Invalid max positions");
         assert!(self.skew_ratio_cap >= dec!(0), "Invalid skew ratio cap");
         assert!(self.adl_offset >= dec!(0), "Invalid adl offset");
         assert!(self.adl_a >= dec!(0), "Invalid adl a");
         assert!(self.adl_b >= dec!(0), "Invalid adl b");
         assert!(self.fee_liquidity >= dec!(0), "Invalid liquidity fee");
+        assert!(self.fee_share_protocol >= dec!(0), "Invalid protocol fee");
+        assert!(self.fee_share_treasury >= dec!(0), "Invalid treasury fee");
+        assert!(self.fee_share_referral >= dec!(0), "Invalid referral fee");
+        assert!(self.fee_share_protocol + self.fee_share_treasury + self.fee_share_referral <= dec!(1), "Invalid fee share");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
     }
 
     pub fn compress(&self) -> ExchangeConfigCompressed {
         ExchangeConfigCompressed {
             max_price_age_seconds: self.max_price_age_seconds as u32,
-            keeper_fee: DFloat16::from(self.keeper_fee),
             positions_max: self.positions_max,
+            active_requests_max: self.active_requests_max,
             skew_ratio_cap: DFloat16::from(self.skew_ratio_cap),
             adl_offset: DFloat16::from(self.adl_offset),
             adl_a: DFloat16::from(self.adl_a),
             adl_b: DFloat16::from(self.adl_b),
             fee_liquidity: DFloat16::from(self.fee_liquidity),
+            fee_share_protocol: DFloat16::from(self.fee_share_protocol),
+            fee_share_treasury: DFloat16::from(self.fee_share_treasury),
             fee_share_referral: DFloat16::from(self.fee_share_referral),
             fee_max: DFloat16::from(self.fee_max),
         }
@@ -120,13 +135,15 @@ impl ExchangeConfigCompressed {
     pub fn decompress(&self) -> ExchangeConfig {
         ExchangeConfig {
             max_price_age_seconds: self.max_price_age_seconds as i64,
-            keeper_fee: self.keeper_fee.into(),
             positions_max: self.positions_max,
+            active_requests_max: self.active_requests_max,
             skew_ratio_cap: self.skew_ratio_cap.into(),
             adl_offset: self.adl_offset.into(),
             adl_a: self.adl_a.into(),
             adl_b: self.adl_b.into(),
             fee_liquidity: self.fee_liquidity.into(),
+            fee_share_protocol: self.fee_share_protocol.into(),
+            fee_share_treasury: self.fee_share_treasury.into(),
             fee_share_referral: self.fee_share_referral.into(),
             fee_max: self.fee_max.into(),
         }

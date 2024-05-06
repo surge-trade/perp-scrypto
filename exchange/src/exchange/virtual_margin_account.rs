@@ -3,7 +3,7 @@ use account::*;
 use common::{PairId, ListIndex};
 use super::errors::*;
 use super::events::*;
-use super::exchange::MarginAccount;
+use super::exchange_mod::MarginAccount;
 use super::requests::*;
 
 pub struct VirtualMarginAccount {
@@ -22,16 +22,18 @@ impl VirtualMarginAccount {
             account_updates: MarginAccountUpdates {
                 position_updates: HashMap::new(),
                 virtual_balance: account_info.virtual_balance,
-                last_liquidation_index: account_info.last_liquidation_index,
-                requests_new: vec![],
+                valid_requests_start: account_info.valid_requests_start,
+                request_additions: vec![],
                 request_updates: HashMap::new(),
+                active_request_additions: vec![],
+                active_request_removals: vec![],
             },
             account_info,
         }
     }
 
     pub fn realize(self) {
-        let requests: Vec<(ListIndex, KeeperRequest)> = self.account_updates.requests_new.iter()
+        let requests: Vec<(ListIndex, KeeperRequest)> = self.account_updates.request_additions.iter()
             .enumerate().map(|(i, request)| (i as ListIndex + self.account_info.requests_len, request.clone()))
             .chain(self.account_updates.request_updates.iter().map(|(index, request)| (*index, request.clone())))
             .collect();
@@ -91,6 +93,10 @@ impl VirtualMarginAccount {
         requests
     }
 
+    pub fn active_requests_len(&self) -> usize {
+        self.account_info.active_requests_len
+    }
+
     // pub fn collateral_balances(&self) -> &HashMap<ResourceAddress, Decimal> {
     //     &self.account_info.collateral_balances
     // }
@@ -107,8 +113,8 @@ impl VirtualMarginAccount {
     //     self.account_info.requests_len
     // }
 
-    pub fn last_liquidation_index(&self) -> ListIndex {
-        self.account_info.last_liquidation_index
+    pub fn valid_requests_start(&self) -> ListIndex {
+        self.account_info.valid_requests_start
     }
 
     pub fn verify_level_1_auth(&self) {
@@ -141,7 +147,7 @@ impl VirtualMarginAccount {
     pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status) {
         assert!(
             status == STATUS_DORMANT || status == STATUS_ACTIVE,
-            "{}", ERROR_INVALID_REQUEST_STATUS
+            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_DORMANT, STATUS_ACTIVE]
         );
 
         let submission = Clock::current_time_rounded_to_seconds();
@@ -153,36 +159,37 @@ impl VirtualMarginAccount {
             expiry,
             status,
         };
+        self._add_active_request(self.account_info.requests_len);
 
-        self.account_updates.requests_new.push(keeper_request);
+        self.account_updates.request_additions.push(keeper_request);
     }
 
-    fn _status_phases(&self, status: Status) -> Vec<Status> {
-        match status {
-            STATUS_ACTIVE => vec![STATUS_DORMANT],
-            STATUS_EXECUTED => vec![STATUS_ACTIVE],
-            STATUS_CANCELLED => vec![STATUS_ACTIVE, STATUS_DORMANT],
-            _ => panic!("{}", ERROR_INVALID_REQUEST_STATUS),
-        }
-    }
-
-    pub fn try_set_keeper_request_statuses(&mut self, updates: Vec<(ListIndex, Status)>) {
+    pub fn try_set_keeper_requests_status(&mut self, indexes: Vec<ListIndex>, status: Status) -> Vec<ListIndex> {
         let current_time = Clock::current_time_rounded_to_seconds();
-        let indexes: Vec<ListIndex> = updates.iter().map(|(index, _)| *index).collect();
-        let statuses: Vec<Status> = updates.iter().map(|(_, status)| *status).collect();
 
+        let status_phases = self._status_phases(status);
         let keeper_requests = self.keeper_requests(indexes);
-        for ((index, keeper_request), status) in keeper_requests.into_iter().zip(statuses.into_iter()) {
-            let status_phases = self._status_phases(status);
+        let mut updated = vec![];
+        for (index, keeper_request) in keeper_requests.into_iter() {
             if !status_phases.contains(&keeper_request.status) {
                 continue;
             } else {
                 let mut keeper_request = keeper_request;
+                if status == STATUS_ACTIVE || status == STATUS_DORMANT {
+                    if keeper_request.status != STATUS_ACTIVE && keeper_request.status != STATUS_DORMANT {
+                        self._add_active_request(index);
+                    }
+                } else if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
+                    self._remove_active_request(index);
+                }
                 keeper_request.status = status;
                 keeper_request.submission = current_time;
                 self.account_updates.request_updates.insert(index, keeper_request);
+                updated.push(index);
             }
         }
+
+        updated
     }
 
     pub fn cancel_request(&mut self, index: ListIndex) {
@@ -191,8 +198,11 @@ impl VirtualMarginAccount {
         let status_phases = self._status_phases(STATUS_CANCELLED);
         assert!(
             status_phases.contains(&keeper_request.status),
-            "{}", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT
+            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
         );
+        if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
+            self._remove_active_request(index);
+        }
         keeper_request.status = STATUS_CANCELLED;
         keeper_request.submission = current_time;
         self.account_updates.request_updates.insert(index, keeper_request);
@@ -200,23 +210,24 @@ impl VirtualMarginAccount {
 
     pub fn process_request(&mut self, index: ListIndex) -> (Request, Instant) {
         assert!(
-            index >= self.last_liquidation_index(),
-            "{}", ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION
+            index >= self.valid_requests_start(),
+            "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_PROCESS_REQUEST_BEFORE_VALID_START, index, self.valid_requests_start()
         );
         
         let current_time = Clock::current_time_rounded_to_seconds();
         let mut keeper_request = self.keeper_request(index);
         assert!(
             keeper_request.status == STATUS_ACTIVE,
-            "{}", ERROR_PROCESS_REQUEST_NOT_ACTIVE
+            "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, STATUS_ACTIVE
         );
         assert!(
             current_time.compare(keeper_request.expiry, TimeComparisonOperator::Lt),
-            "{}", ERROR_PROCESS_REQUEST_EXPIRED
+            "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_PROCESS_REQUEST_EXPIRED, current_time.seconds_since_unix_epoch, keeper_request.expiry.seconds_since_unix_epoch
         );
         let submission = keeper_request.submission;
         let request = Request::decode(&keeper_request.request);
 
+        self._remove_active_request(index);
         keeper_request.status = STATUS_EXECUTED;
         keeper_request.submission = current_time;
         self.account_updates.request_updates.insert(index, keeper_request);
@@ -264,8 +275,32 @@ impl VirtualMarginAccount {
         self.account_updates.virtual_balance = virtual_balance;
     }
 
-    pub fn update_last_liquidation_index(&mut self) {
-        self.account_info.last_liquidation_index =  self.account_info.requests_len;
-        self.account_updates.last_liquidation_index = self.account_info.requests_len;
+    pub fn update_valid_requests_start(&mut self) {
+        self.account_info.valid_requests_start = self.account_info.requests_len;
+        self.account_updates.valid_requests_start = self.account_info.requests_len;
+
+        Runtime::emit_event(EventValidRequestsStart {
+            account: self.account.address(),
+            valid_requests_start: self.account_info.requests_len,
+        });
+    }
+
+    fn _add_active_request(&mut self, index: ListIndex) {
+        self.account_info.active_requests_len += 1;
+        self.account_updates.active_request_additions.push(index);
+    }
+
+    fn _remove_active_request(&mut self, index: ListIndex) {
+        self.account_info.active_requests_len -= 1;
+        self.account_updates.active_request_removals.push(index);
+    }
+
+    fn _status_phases(&self, status: Status) -> Vec<Status> {
+        match status {
+            STATUS_ACTIVE => vec![STATUS_DORMANT],
+            STATUS_EXECUTED => vec![STATUS_ACTIVE],
+            STATUS_CANCELLED => vec![STATUS_ACTIVE, STATUS_DORMANT],
+            _ => panic!("{}", ERROR_INVALID_REQUEST_STATUS),
+        }
     }
 }

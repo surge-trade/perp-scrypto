@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use common::{ListIndex, List, _AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO};
+use common::{ListIndex, List, _BASE_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO, TO_INFINITY};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -16,8 +16,8 @@ pub struct ChildToken {
     ResourceAddress,
     ChildToken,
 )]
-mod token_wrapper {
-    const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
+mod token_wrapper_mod {
+    const BASE_AUTHORITY_RESOURCE: ResourceAddress = _BASE_AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 
     enable_method_auth!(
@@ -34,6 +34,8 @@ mod token_wrapper {
             
             wrap => restrict_to: [user];
             unwrap => restrict_to: [user];
+            flash_loan => restrict_to: [user];
+            repay_flash_loan => restrict_to: [user];
         }
     );
 
@@ -49,25 +51,54 @@ mod token_wrapper {
         authority_token: FungibleVault,
         child_list: List<ResourceAddress>,
         child_vaults: KeyValueStore<ResourceAddress, ChildToken>,
+        flash_oath: ResourceManager,
     }
 
     impl TokenWrapper {
         pub fn new(owner_role: OwnerRole, authority_token: Bucket) -> Global<TokenWrapper> {
+            let (component_reservation, this) = Runtime::allocate_component_address(TokenWrapper::blueprint_id());
+
             assert!(
-                authority_token.resource_address() == AUTHORITY_RESOURCE,
-                "{}", ERROR_INVALID_AUTHORITY
+                authority_token.resource_address() == BASE_AUTHORITY_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_AUTHORITY, Runtime::bech32_encode_address(authority_token.resource_address()), Runtime::bech32_encode_address(BASE_AUTHORITY_RESOURCE)
             );
+
+            let flash_oath = ResourceBuilder::new_fungible(owner_role.clone())
+                .metadata(metadata!(
+                    init {
+                        "package" => GlobalAddress::from(Runtime::package_address()), locked;
+                        "component" => GlobalAddress::from(this), locked;
+                        "name" => format!("Flash Oath"), updatable;
+                        "symbol" => format!("FLASH"), updatable;
+                        "description" => format!("Represents the obligation to repay a flash loan."), updatable;
+                    }
+                ))
+                .mint_roles(mint_roles! {
+                        minter => rule!(require(global_caller(this))); 
+                        minter_updater => rule!(deny_all);
+                })
+                .burn_roles(burn_roles! {
+                        burner => rule!(require(global_caller(this))); 
+                        burner_updater => rule!(deny_all);
+                })
+                .deposit_roles(deposit_roles! {
+                    depositor => rule!(deny_all); 
+                    depositor_updater => rule!(deny_all);
+                })
+                .create_with_no_initial_supply();
 
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 child_list: List::new(TokenWrapperKeyValueStore::new_with_registered_type),
                 child_vaults: KeyValueStore::new_with_registered_type(),
+                flash_oath,
             }
             .instantiate()  
             .prepare_to_globalize(owner_role)
             .roles(roles!  {
                 user => rule!(allow_all);
             })
+            .with_address(component_reservation)
             .globalize()
         }
 
@@ -107,7 +138,7 @@ mod token_wrapper {
 
             assert!(
                 child_vault.wrappable, 
-                "{}", ERROR_WRAPPING_DISABLED
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_WRAPPING_DISABLED, child_vault.wrappable, true
             );
 
             let parent_token = authorize!(self, {
@@ -125,6 +156,31 @@ mod token_wrapper {
             parent_token.burn();
 
             child_token
+        }
+
+        pub fn flash_loan(&mut self, amount: Decimal) -> (Bucket, Bucket) {
+            let flash_oath = self.flash_oath.mint(amount);
+            let token = authorize!(self, {
+                ResourceManager::from_address(BASE_RESOURCE).mint(amount)
+            });
+
+            (token, flash_oath)
+        }
+
+        pub fn repay_flash_loan(&mut self, flash_oath: Bucket, mut token: Bucket) -> Bucket {
+            assert!(
+                flash_oath.resource_address() == self.flash_oath.address(),
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FLASH_OATH, Runtime::bech32_encode_address(flash_oath.resource_address()), Runtime::bech32_encode_address(self.flash_oath.address())
+            );
+            assert!(
+                token.amount() >= flash_oath.amount(),
+                "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_INSUFFICIENT_FLASH_LOAN_PAYMENT, token.amount(), flash_oath.amount()
+            );
+
+            token.take_advanced(flash_oath.amount(), TO_INFINITY).burn();
+            flash_oath.burn();
+
+            token
         }
     }
 }

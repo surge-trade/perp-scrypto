@@ -2,37 +2,23 @@ use scrypto::prelude::*;
 use config::*;
 use common::PairId;
 use super::errors::*;
-use super::exchange::Config;
+use super::exchange_mod::Config;
 
 pub struct VirtualConfig {
     config: Global<Config>,
-    config_info: ConfigInfoCompressed,
-    exchange_config: Option<ExchangeConfig>,
-    collateral_configs: Option<HashMap<ResourceAddress, CollateralConfig>>,
+    config_info: ConfigInfo,
     pair_configs: Option<HashMap<PairId, PairConfig>>,
 }
 
 impl VirtualConfig {
     pub fn new(config: Global<Config>) -> Self {
-        let config_info = config.get_info();
+        let config_info = config.get_info().decompress();
 
         Self {
             config,
             config_info,
-            exchange_config: None,
-            collateral_configs: None,
             pair_configs: None,
         }
-    }
-
-    pub fn load_exchange_config(&mut self) {
-        self.exchange_config = Some(self.config_info.exchange.decompress());
-    }
-
-    pub fn load_collateral_configs(&mut self) {
-        let collateral_configs = self.config_info.collaterals.iter()
-            .map(|(k, v)| (*k, v.decompress())).collect();
-        self.collateral_configs = Some(collateral_configs);
     }
 
     pub fn load_pair_configs(&mut self, pair_ids: HashSet<PairId>) {
@@ -42,7 +28,7 @@ impl VirtualConfig {
     }
 
     pub fn exchange_config(&self) -> &ExchangeConfig {
-        self.exchange_config.as_ref().expect(ERROR_EXCHANGE_CONFIG_NOT_LOADED)
+        &self.config_info.exchange
     }
 
     pub fn pair_config(&self, pair_id: &PairId) -> &PairConfig {
@@ -53,7 +39,7 @@ impl VirtualConfig {
     }
 
     pub fn collateral_configs(&self) -> &HashMap<ResourceAddress, CollateralConfig> {
-        self.collateral_configs.as_ref().expect(ERROR_COLLATERAL_CONFIGS_NOT_LOADED)
+        &self.config_info.collaterals
     }
 
     pub fn collaterals(&self) -> Vec<ResourceAddress> {

@@ -13,7 +13,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, create_base, create_keeper_reward
+from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority, create_base, create_keeper_reward
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
@@ -69,7 +69,7 @@ async def main():
         clean('account')
         clean('config')
         clean('pool')
-        clean('referrals')
+        clean('fee_distributor')
         clean('fee_delegator')
         clean('exchange')
 
@@ -92,6 +92,9 @@ async def main():
         while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
+
+        state_version = await gateway.get_state_version()
+        print('STATE_VERSION:', state_version)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -129,7 +132,17 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = create_base(builder, owner_role, authority_resource)
+        builder = mint_base_authority(builder)
+        builder = deposit_all(builder, account)
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        base_authority_resource = addresses[0]
+        print('BASE_AUTHORITY_RESOURCE:', base_authority_resource)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = create_base(builder, owner_role, base_authority_resource)
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
@@ -148,6 +161,7 @@ async def main():
         envs = [
             ('NETWORK_ID', network_config['network_id']),
             ('AUTHORITY_RESOURCE', authority_resource),
+            ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
             ('BASE_RESOURCE', base_resource),
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
         ]
@@ -171,12 +185,12 @@ async def main():
         builder = lock_fee(builder, account, 100)
         builder = builder.account_withdraw(
             account,
-            ret.Address(authority_resource),
-            ret.Decimal('0.000000000000000001')
+            ret.Address(base_authority_resource),
+            ret.Decimal('1')
         )
         builder = builder.take_from_worktop(
-            ret.Address(authority_resource),
-            ret.Decimal('0.000000000000000001'),
+            ret.Address(base_authority_resource),
+            ret.Decimal('1'),
             ret.ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
@@ -294,7 +308,7 @@ async def main():
         oracle_component = addresses[0]
         print('ORACLE_COMPONENT:', oracle_component)
 
-        code, definition = build('referrals', envs, network_config['network_name'])
+        code, definition = build('fee_distributor', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -305,23 +319,23 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
-        referrals_package = addresses[0]
-        envs.append(('REFERRALS_PACKAGE', referrals_package))
-        print('REFERRALS_PACKAGE:', referrals_package)
+        fee_distributor_package = addresses[0]
+        envs.append(('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package))
+        print('FEE_DISTRIBUTOR_PACKAGE:', fee_distributor_package)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_package)),
-            'Referrals',
+            ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_package)),
+            'FeeDistributor',
             'new',
             [manifest_owner_role]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
-        referrals_component = addresses[0]
-        print('REFERRALS_COMPONENT:', referrals_component)
+        fee_distributor_component = addresses[0]
+        print('FEE_DISTRIBUTOR_COMPONENT:', fee_distributor_component)
 
         code, definition = build('fee_delegator', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
@@ -372,11 +386,11 @@ async def main():
         builder = builder.account_withdraw(
             account,
             ret.Address(authority_resource),
-            ret.Decimal('0.999999999999999999')
+            ret.Decimal('1')
         )            
         builder = builder.take_from_worktop(
             ret.Address(authority_resource),
-            ret.Decimal('0.999999999999999999'),
+            ret.Decimal('1'),
             ret.ManifestBuilderBucket("authority")
         )
         builder = builder.call_function(
@@ -389,7 +403,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referrals_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
             ]
         )
@@ -401,31 +415,35 @@ async def main():
 
         print('---------- DEPLOY COMPLETE ----------')
 
-        print('OWNER_RESOURCE:', owner_resource)
-        print('AUTHORITY_RESOURCE:', authority_resource)
-        print('BASE_RESOURCE:', base_resource)
-        print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
+        print(f'STATE_VERSION={state_version}')
 
-        print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
-        print('CONFIG_PACKAGE:', config_package)
-        print('ACCOUNT_PACKAGE:', account_package)
-        print('POOL_PACKAGE:', pool_package)
-        print('ORACLE_PACKAGE:', oracle_package)
-        print('REFERRALS_PACKAGE:', referrals_package)
-        print('FEE_DELEGATOR_PACKAGE:', fee_delegator_package)
-        print('EXCHANGE_PACKAGE:', exchange_package)
+        print(f'OWNER_RESOURCE={owner_resource}')
+        print(f'AUTHORITY_RESOURCE={authority_resource}')
+        print(f'BASE_AUTHORITY_RESOURCE={base_authority_resource}')
+        print(f'BASE_RESOURCE={base_resource}')
+        print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
 
-        print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
-        print('CONFIG_COMPONENT:', config_component)
-        print('POOL_COMPONENT:', pool_component)
-        print('ORACLE_COMPONENT:', oracle_component)
-        print('REFERRALS_COMPONENT:', referrals_component)
-        print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
-        print('EXCHANGE_COMPONENT:', exchange_component)
+        print(f'TOKEN_WRAPPER_PACKAGE={token_wrapper_package}')
+        print(f'CONFIG_PACKAGE={config_package}')
+        print(f'ACCOUNT_PACKAGE={account_package}')
+        print(f'POOL_PACKAGE={pool_package}')
+        print(f'ORACLE_PACKAGE={oracle_package}')
+        print(f'FEE_DISTRIBUTOR_PACKAGE={fee_distributor_package}')
+        print(f'FEE_DELEGATOR_PACKAGE={fee_delegator_package}')
+        print(f'EXCHANGE_PACKAGE={exchange_package}')
+
+        print(f'TOKEN_WRAPPER_COMPONENT={token_wrapper_component}')
+        print(f'CONFIG_COMPONENT={config_component}')
+        print(f'POOL_COMPONENT={pool_component}')
+        print(f'ORACLE_COMPONENT={oracle_component}')
+        print(f'FEE_DISTRIBUTOR_COMPONENT={fee_distributor_component}')
+        print(f'FEE_DELEGATOR_COMPONENT={fee_delegator_component}')
+        print(f'EXCHANGE_COMPONENT={exchange_component}')
 
         config_data = {
             'OWNER_RESOURCE': owner_resource,
             'AUTHORITY_RESOURCE': authority_resource,
+            'BASE_AUTHORITY_RESOURCE': base_authority_resource,
             'BASE_RESOURCE': base_resource,
             'KEEPER_REWARD_RESOURCE': keeper_reward_resource,
             'TOKEN_WRAPPER_PACKAGE': token_wrapper_package,
@@ -433,14 +451,14 @@ async def main():
             'ACCOUNT_PACKAGE': account_package,
             'POOL_PACKAGE': pool_package,
             'ORACLE_PACKAGE': oracle_package,
-            'REFERRALS_PACKAGE': referrals_package,
+            'FEE_DISTRIBUTOR_PACKAGE': fee_distributor_package,
             'FEE_DELEGATOR_PACKAGE': fee_delegator_package,
             'EXCHANGE_PACKAGE': exchange_package,
             'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
             'CONFIG_COMPONENT': config_component,
             'POOL_COMPONENT': pool_component,
             'ORACLE_COMPONENT': oracle_component,
-            'REFERRALS_COMPONENT': referrals_component,
+            'FEE_DISTRIBUTOR_COMPONENT': fee_distributor_component,
             'FEE_DELEGATOR_COMPONENT': fee_delegator_component,
             'EXCHANGE_COMPONENT': exchange_component
         }

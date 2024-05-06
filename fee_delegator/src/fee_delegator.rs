@@ -5,7 +5,7 @@ use common::{_AUTHORITY_RESOURCE, TO_ZERO};
 use self::errors::*;
 
 #[blueprint]
-mod fee_delegator {
+mod fee_delegator_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
     enable_method_auth! { 
@@ -52,21 +52,18 @@ mod fee_delegator {
                         "description" => format!("Represents the obligation to pay fees for a transaction."), updatable;
                     }
                 ))
-                .mint_roles(mint_roles!{
+                .mint_roles(mint_roles! {
                         minter => rule!(require(global_caller(this))); 
                         minter_updater => rule!(deny_all);
-                    }
-                )
-                .burn_roles(burn_roles!{
+                })
+                .burn_roles(burn_roles! {
                         burner => rule!(require(AUTHORITY_RESOURCE)); 
                         burner_updater => rule!(deny_all);
-                    }
-                )
-                .deposit_roles(deposit_roles!{
+                })
+                .deposit_roles(deposit_roles! {
                     depositor => rule!(deny_all); 
                     depositor_updater => rule!(deny_all);
-                    }
-                )
+                })
                 .create_with_no_initial_supply();
                 
             Self {
@@ -141,9 +138,10 @@ mod fee_delegator {
             self.virtual_balance += value;
 
             let fee_oath = self.fee_oath.mint(value);
+            let total_supply = self.fee_oath.total_supply().unwrap();
             assert!(
-                self.fee_oath.total_supply().unwrap() <= self.max_lock, 
-                "{}", MAX_LOCK_EXCEEDED
+                total_supply <= self.max_lock, 
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", MAX_LOCK_EXCEEDED, total_supply, self.max_lock
             );
             
             fee_oath

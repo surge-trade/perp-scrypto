@@ -1,5 +1,5 @@
 [package]
-name = "referrals"
+name = "fee_distributor"
 version = "1.0.0"
 edition = "2021"
 resolver = "2"
@@ -15,7 +15,7 @@ radix-engine = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1
 scrypto-unit = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
 scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
 radix-engine-interface = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
-referrals = { path = ".", features = ["test"] }
+fee_distributor = { path = ".", features = ["test"] }
 
 [profile.release]
 opt-level = 'z'        # Optimize for size.

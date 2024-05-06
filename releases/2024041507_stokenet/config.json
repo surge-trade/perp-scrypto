@@ -1,0 +1,22 @@
+{
+    "OWNER_RESOURCE": "resource_tdx_2_1tkay7tzjhg6mq5huh3nu30aev3pt7tl24dq8e9ujcws5a4fwlh2nzr",
+    "AUTHORITY_RESOURCE": "resource_tdx_2_1th33zs73w6ztn9tl4fk0tgtw9xav54us479zggkss8gmj2w0t5gxkd",
+    "BASE_AUTHORITY_RESOURCE": "resource_tdx_2_1t49nnx5pc04p2nwf4husn8g0c2jxju46xckc2av8k3ry7hmsgy8rn6",
+    "BASE_RESOURCE": "resource_tdx_2_1tkzehzvry4n69jx98sj5rd7zt2evj7su6ml2tvcccau74yxcan79qc",
+    "KEEPER_REWARD_RESOURCE": "resource_tdx_2_1t4f0yuj6fl2e6d3celuq9gsaxw5t80maka77c36x6yurs3wzxsgnt0",
+    "TOKEN_WRAPPER_PACKAGE": "package_tdx_2_1pk65u8p2g3qde8tdzc4pfykssdmde2taf9wvtwrcd9wrx3j3dfu5f8",
+    "CONFIG_PACKAGE": "package_tdx_2_1pk475g9y8gn7l4qd4rp93ywrmzyu9rwtfrd4jmd4ud4qc28708vrtr",
+    "ACCOUNT_PACKAGE": "package_tdx_2_1phdymw29xcg3wf9sws29w5875sr0jhfen66vr4g8qvadvcy0jr53xr",
+    "POOL_PACKAGE": "package_tdx_2_1pha2490wxujetdpy0929d3689hgwv469s6936mjml9ypu6an44m4pv",
+    "ORACLE_PACKAGE": "package_tdx_2_1p4auuyyu903k5rk5p875s3vk2gh2fln4vtjzlaw9wgkemvfahpr3y7",
+    "FEE_DISTRIBUTOR_PACKAGE": "package_tdx_2_1phj5qjfpc5vw08rrxg3s4ke8lkewy9nq9n7luddy94cshxyr5d9p3l",
+    "FEE_DELEGATOR_PACKAGE": "package_tdx_2_1pkksw5k00mslulh5epu6etlqtxkmhtr4r7cad507p0hm48w005mgm8",
+    "EXCHANGE_PACKAGE": "package_tdx_2_1pkkcw88kxd46gtaklkheraggzzt6hwn07zqnakg8yqx2yek9qkz225",
+    "TOKEN_WRAPPER_COMPONENT": "component_tdx_2_1cpghykczv90h9k2g6ya3n8j5mfekdz2x53yxr2vljvmgwlhuaujshf",
+    "CONFIG_COMPONENT": "component_tdx_2_1czvgjh9ekzccjphtwmh72d7rv0r77wslq0jzg9en9pryr3d6g47wjs",
+    "POOL_COMPONENT": "component_tdx_2_1cz7h3ppax70kcmm7tu7qn996kjgqdv387758p4n2z4sdus3sgc8xkj",
+    "ORACLE_COMPONENT": "component_tdx_2_1crmlcre3lmrsy4aqyvx0t4grtzk5jvqg9z8ddx3rmcem7g8v3jyjpp",
+    "FEE_DISTRIBUTOR_COMPONENT": "component_tdx_2_1cpscrvtdr30pzd9yjsqsh3rehga65md484kfw4ex9zcks9nt0777pk",
+    "FEE_DELEGATOR_COMPONENT": "component_tdx_2_1cq5xtnzwcq8ut4sfwyq65k4f2ma75m47yq4ku0hpuejfpq8t3k65zc",
+    "EXCHANGE_COMPONENT": "component_tdx_2_1crazlu8zu46e3t36alp9kqvgpw375nukpj8n6zmw40w5fwu7epvdls"
+}

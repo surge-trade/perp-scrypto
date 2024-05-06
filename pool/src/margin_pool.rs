@@ -9,7 +9,7 @@ pub use self::structs::*;
     PairId,
     PoolPosition,
 )]
-pub mod margin_pool {
+pub mod margin_pool_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
 

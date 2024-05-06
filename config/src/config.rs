@@ -10,7 +10,7 @@ pub use self::structs::*;
     ListIndex,
     PairConfigCompressed,
 )]
-mod exchange_config {
+mod config_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
     enable_method_auth! { 
@@ -36,7 +36,7 @@ mod exchange_config {
     struct Config {
         pub exchange: ExchangeConfigCompressed,
         pub pairs: HashList<PairId, PairConfigCompressed>,
-        pub collaterals: HashMap<ResourceAddress, CollateralConfigCompressed>, // TODO: HashList?
+        pub collaterals: HashMap<ResourceAddress, CollateralConfigCompressed>,
     }
 
     impl Config {

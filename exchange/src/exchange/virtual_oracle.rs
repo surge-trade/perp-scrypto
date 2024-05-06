@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 use common::PairId;
 use super::errors::*;
-use super::exchange::Oracle;
+use super::exchange_mod::Oracle;
 
 pub struct VirtualOracle {
     prices: HashMap<PairId, Decimal>,

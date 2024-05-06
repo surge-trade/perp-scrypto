@@ -14,16 +14,19 @@ pub struct MarginAccountInfo {
     pub collateral_balances: HashMap<ResourceAddress, Decimal>,
     pub virtual_balance: Decimal,
     pub requests_len: ListIndex,
-    pub last_liquidation_index: ListIndex,
+    pub active_requests_len: usize,
+    pub valid_requests_start: ListIndex,
 }
 
 #[derive(ScryptoSbor)]
 pub struct MarginAccountUpdates {
     pub position_updates: HashMap<PairId, AccountPosition>,
     pub virtual_balance: Decimal,
-    pub last_liquidation_index: ListIndex,
-    pub requests_new: Vec<KeeperRequest>,
+    pub valid_requests_start: ListIndex,
+    pub request_additions: Vec<KeeperRequest>,
     pub request_updates: HashMap<ListIndex, KeeperRequest>,
+    pub active_request_additions: Vec<ListIndex>,
+    pub active_request_removals: Vec<ListIndex>,
 }
 
 pub type Status = u8;

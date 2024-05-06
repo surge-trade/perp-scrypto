@@ -2,7 +2,7 @@ use scrypto::prelude::*;
 use pool::*;
 use common::PairId;
 use super::events::*;
-use super::exchange::MarginPool;
+use super::exchange_mod::MarginPool;
 
 pub struct VirtualLiquidityPool {
     pool: Global<MarginPool>,
@@ -28,12 +28,10 @@ impl VirtualLiquidityPool {
     }
 
     pub fn realize(self) {
-        let current_time = Clock::current_time_rounded_to_seconds();
         let updates: Vec<(PairId, PoolPosition)> = self.pool_updates.position_updates.iter()
             .map(|(pair_id, position)| (pair_id.clone(), position.clone())).collect();
         if !updates.is_empty() {
             let event_pair_updates = EventPairUpdates {
-                time: current_time,
                 updates,
             };
             Runtime::emit_event(event_pair_updates);

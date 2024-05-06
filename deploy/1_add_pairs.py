@@ -1,3 +1,5 @@
+import qrcode
+import io
 import radix_engine_toolkit as ret
 import asyncio
 import datetime
@@ -36,9 +38,16 @@ async def main():
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
+            qr = qrcode.QRCode()
+            qr.add_data(account.as_str())
+            f = io.StringIO()
+            qr.print_ascii(out=f)
+            f.seek(0)
+            print(f.read())
         while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
+
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -57,15 +66,15 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(120), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.008')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
                 ])
             ])]
         )
@@ -74,20 +83,20 @@ async def main():
             'update_pair_configs',
             [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(1),  # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.U16_VALUE(0),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(120), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.008')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
                 ])
             ])]
         )
@@ -96,20 +105,20 @@ async def main():
             'update_pair_configs',
             [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(2),  # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.U16_VALUE(0),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(120), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.008')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0001'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
                 ])
             ])]
         )

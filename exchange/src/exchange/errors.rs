@@ -21,9 +21,10 @@ pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL not positive";
 pub const ERROR_ADL_SKEW_NOT_REDUCED: &str = "Skew ratio not reduced";
 pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 
-pub const ERROR_SWAP_NOT_ENOUGH_DEBT: &str = "Not enough debt to swap";
+pub const ERROR_SWAP_NO_DEBT: &str = "No debt to swap";
 
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
+pub const ERROR_ACTIVE_REQUESTS_TOO_MANY: &str = "Too many active requests";
 
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
@@ -44,12 +45,10 @@ pub const ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT: &str = "Request not active
 
 pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
 pub const ERROR_PROCESS_REQUEST_EXPIRED: &str = "Request expired";
-pub const ERROR_PROCESS_REQUEST_BEFORE_LIQUIDATION: &str = "Request before liquidation";
+pub const ERROR_PROCESS_REQUEST_BEFORE_VALID_START: &str = "Request before valid start";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 
 pub const ERROR_REFERRAL_ALREADY_SET: &str = "Referral already set";
 
-pub const ERROR_EXCHANGE_CONFIG_NOT_LOADED: &str = "Exchange config not loaded";
-pub const ERROR_COLLATERAL_CONFIGS_NOT_LOADED: &str = "Collateral configs not loaded";
 pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";

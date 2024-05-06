@@ -12,7 +12,7 @@ pub struct Price {
 }
 
 #[blueprint]
-mod oracle {
+mod oracle_mod {
     struct Oracle {
         public_key: Bls12381G1PublicKey,
         prices: HashMap<PairId, (Decimal, Instant)>,

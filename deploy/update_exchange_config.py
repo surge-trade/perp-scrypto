@@ -53,13 +53,15 @@ async def main():
             [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.I64_VALUE(60), # max_price_age_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # keeper_fee
                     ret.ManifestBuilderValue.U16_VALUE(10), # positions_max
+                    ret.ManifestBuilderValue.U16_VALUE(10), # active_requests_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # skew_ratio_cap
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_offset
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_a
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_b
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_liquidity
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_share_protocol
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_share_treasury
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_referral
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_max
                 ])
