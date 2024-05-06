@@ -76,8 +76,8 @@ mod config_mod {
             self.pairs.get(&pair_id).map(|v| v.clone())
         }
 
-        pub fn get_pair_configs(&self, pair_ids: HashSet<u16>) -> HashMap<PairId, Option<PairConfigCompressed>> {
-            pair_ids.into_iter().map(|k| (k, self.pairs.get(&k).map(|v| v.clone()))).collect()
+        pub fn get_pair_configs(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>> {
+            pair_ids.into_iter().map(|k| (k.to_owned(), self.pairs.get(&k).map(|v| v.clone()))).collect()
         }
 
         pub fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfigCompressed> {
@@ -92,7 +92,7 @@ mod config_mod {
         pub fn update_pair_configs(&mut self, configs: Vec<PairConfig>) {
             for config in configs.into_iter() {
                 config.validate();
-                self.pairs.insert(config.pair_id, config.compress());
+                self.pairs.insert(config.pair_id.to_owned(), config.compress());
             }
         }
 

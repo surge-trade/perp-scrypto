@@ -232,7 +232,7 @@ impl PairConfig {
 
     pub fn compress(&self) -> PairConfigCompressed {
         PairConfigCompressed {
-            pair_id: self.pair_id,
+            pair_id: self.pair_id.to_owned(),
             disabled: self.disabled,
             update_price_delta_ratio: DFloat16::from(self.update_price_delta_ratio),
             update_period_seconds: self.update_period_seconds as u16,
@@ -253,7 +253,7 @@ impl PairConfig {
 impl PairConfigCompressed {
     pub fn decompress(&self) -> PairConfig {
         PairConfig {
-            pair_id: self.pair_id,
+            pair_id: self.pair_id.to_owned(),
             disabled: self.disabled,
             update_price_delta_ratio: self.update_price_delta_ratio.into(),
             update_period_seconds: self.update_period_seconds as i64,
@@ -299,7 +299,7 @@ impl CollateralConfig {
 
     pub fn compress(&self) -> CollateralConfigCompressed {
         CollateralConfigCompressed {
-            pair_id: self.pair_id,
+            pair_id: self.pair_id.to_owned(),
             discount: DFloat16::from(self.discount),
             margin: DFloat16::from(self.margin),
         }
@@ -309,7 +309,7 @@ impl CollateralConfig {
 impl CollateralConfigCompressed {
     pub fn decompress(&self) -> CollateralConfig {
         CollateralConfig {
-            pair_id: self.pair_id,
+            pair_id: self.pair_id.to_owned(),
             discount: self.discount.into(),
             margin: self.margin.into(),
         }
