@@ -47,7 +47,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1p49xh62rhgf70sgzxkk49mt0qwgh7xv8jzyfq95lsmpk6cjuuh6qn3",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -67,7 +67,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phws4mu2zf55lrc6f97pvzuep2xlm6smm8qg0wtwkaleqhputlmm77",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -88,7 +88,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phqem8zu63g2qumxdfs2wv8d03wlkv9fdmxkrv8894vke7ycmrzc7j",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -102,14 +102,14 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p55xs8da7g0zxxdzjkywt0nagvs6c3qv4qga6s5w9w4gfkvtk2vczg",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Getter methods
             fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5qk3fmq7ep35ny5540m0rgwlsnk3x7upvj3s9r0jx76gv9tdl0csp",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -129,7 +129,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pk7cu6n9tuvt48j3ucdx45kxuq2rqfr4x0csyejj24fxv3tcfphund",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -1391,7 +1391,7 @@ mod exchange_mod {
             self._assert_pool_integrity(config, pool, skew_1 - skew_0);
 
             ResultMarginOrder {
-                pair_id,
+                pair_id: pair_id.clone(),
                 price_limit,
                 amount_close,
                 amount_open,
@@ -1879,8 +1879,8 @@ mod exchange_mod {
                 total_fee_protocol += fee_protocol;
                 total_fee_treasury += fee_treasury;
                 total_fee_referral += fee_referral;
-                position_amounts.push((pair_id, position.amount));
-                prices.push((pair_id, price));
+                position_amounts.push((pair_id.clone(), position.amount));
+                prices.push((pair_id.clone(), price));
 
                 pool.update_position(pair_id, pool_position);
                 account.remove_position(pair_id);
