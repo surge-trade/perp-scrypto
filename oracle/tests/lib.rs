@@ -11,7 +11,7 @@ struct Price {
 }
 
 #[test]
-fn test() {
+fn test_example() {
     let mut test_runner = TestRunnerBuilder::new().without_trace().build();
 
     // Create accounts
@@ -73,7 +73,7 @@ fn test() {
 }
 
 #[test]
-fn test_example() {
+fn test_api() {
     let mut test_runner = TestRunnerBuilder::new().build();
 
     let oracle_public_key = "b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640";
