@@ -640,17 +640,10 @@ mod exchange_mod {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-                let result_add_liquidity = self._add_liquidity(&config, &mut pool, payment);
+                let lp_token = self._add_liquidity(&config, &mut pool, payment);
                 pool.realize();
 
-                Runtime::emit_event(EventAddLiquidity {
-                    amount: result_add_liquidity.amount,
-                    lp_amount: result_add_liquidity.lp_amount,
-                    lp_price: result_add_liquidity.lp_price,
-                    fee_liquidity: result_add_liquidity.fee_liquidity,
-                });
-
-                result_add_liquidity.lp_token
+                lp_token
             })
         }
 
@@ -661,17 +654,10 @@ mod exchange_mod {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-                let result_remove_liquidity = self._remove_liquidity(&config, &mut pool, lp_token);
+                let token = self._remove_liquidity(&config, &mut pool, lp_token);
                 pool.realize();
 
-                Runtime::emit_event(EventRemoveLiquidity {
-                    amount: result_remove_liquidity.amount,
-                    lp_amount: result_remove_liquidity.lp_amount,
-                    lp_price: result_remove_liquidity.lp_price,
-                    fee_liquidity: result_remove_liquidity.fee_liquidity,
-                });
-
-                result_remove_liquidity.token
+                token
             })
         }
 
@@ -683,19 +669,13 @@ mod exchange_mod {
         ) {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
-                let account_component = account;
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
 
-                let result_add_collateral = self._add_collateral(&config, &mut pool, &mut account, tokens);
+                self._add_collateral(&config, &mut pool, &mut account, tokens);
 
                 pool.realize();
                 account.realize();
-
-                Runtime::emit_event(EventAddCollateral {
-                    account: account_component,
-                    amounts: result_add_collateral.amounts,
-                });
             })
         }
 
@@ -799,7 +779,6 @@ mod exchange_mod {
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
-                let account_component = account;
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
                 let (request, submission) = account.process_request(index);
                 
@@ -819,51 +798,19 @@ mod exchange_mod {
                 
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
-                let result = match request {
+                match request {
                     Request::RemoveCollateral(request) => {
-                        let result = self._remove_collateral(&config, &mut pool, &mut account, &oracle, request);
-                        ResultProcessRequest::RemoveCollateral(result)
+                        self._remove_collateral(&config, &mut pool, &mut account, &oracle, request);
                     },
                     Request::MarginOrder(request) => {
-                        let result = self._margin_order(&config, &mut pool, &mut account, &oracle, request);
-                        ResultProcessRequest::MarginOrder(result)
+                        self._margin_order(&config, &mut pool, &mut account, &oracle, request);
                     },
                 };
 
                 account.realize();
                 pool.realize();
 
-                let fee_keeper = dec!(100); // TODO: Set fee amount
                 let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(100); // TODO: Set reward amount
-
-                match result {
-                    ResultProcessRequest::RemoveCollateral(result) => {
-                        Runtime::emit_event(EventRemoveCollateral {
-                            account: account_component,
-                            target_account: result.target_account,
-                            amounts: result.amounts,
-                            fee_keeper,
-                        });
-                    },
-                    ResultProcessRequest::MarginOrder(result) => {
-                        Runtime::emit_event(EventMarginOrder {
-                            account: account_component,
-                            pair_id: result.pair_id,
-                            price_limit: result.price_limit,
-                            amount_close: result.amount_close,
-                            amount_open: result.amount_open,
-                            activated_requests: result.activated_requests,
-                            cancelled_requests: result.cancelled_requests,
-                            fee_pool: result.fee_pool,
-                            fee_protocol: result.fee_protocol,
-                            fee_treasury: result.fee_treasury,
-                            fee_referral: result.fee_referral,
-                            fee_keeper,
-                            price: result.price,
-                        });
-                    },
-                }
-
                 reward
             })
         }
@@ -877,7 +824,6 @@ mod exchange_mod {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
                 self._assert_valid_collateral(&config, resource);
-                let account_component = account;
                 let collaterals = vec![resource];
                 let mut account = VirtualMarginAccount::new(account, collaterals);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
@@ -886,19 +832,13 @@ mod exchange_mod {
                 let collateral_feeds = HashMap::from([(resource, config.collateral_feeds().get(&resource).unwrap().clone())]);
                 let oracle = VirtualOracle::new(self.oracle, collateral_feeds, HashSet::new(), max_age, None);
 
-                let result_swap_debt = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
+                let (token, remainder) = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
     
                 account.realize();
                 pool.realize();
 
-                Runtime::emit_event(EventSwapDebt {
-                    account: account_component,
-                    resource,
-                    amount: result_swap_debt.amount,
-                    price: result_swap_debt.price,
-                });
     
-                (result_swap_debt.token, result_swap_debt.remainder)
+                (token, remainder)
             })
         }
 
@@ -1202,7 +1142,7 @@ mod exchange_mod {
             config: &VirtualConfig,
             pool: &mut VirtualLiquidityPool,
             payment: Bucket,
-        ) -> ResultAddLiquidity {
+        ) -> Bucket {
             assert!(
                 payment.resource_address() == BASE_RESOURCE,
                 "{}", ERROR_INVALID_PAYMENT
@@ -1224,13 +1164,14 @@ mod exchange_mod {
             pool.deposit(payment);
             let lp_token = pool.mint_lp(lp_amount);
 
-            ResultAddLiquidity {
-                lp_token,
+            Runtime::emit_event(EventAddLiquidity {
                 amount: value,
                 lp_amount,
                 lp_price,
                 fee_liquidity: fee,
-            }
+            });
+
+            lp_token
         }
 
         fn _remove_liquidity(
@@ -1238,7 +1179,7 @@ mod exchange_mod {
             config: &VirtualConfig,
             pool: &mut VirtualLiquidityPool,
             lp_token: Bucket,
-        ) -> ResultRemoveLiquidity {
+        ) -> Bucket {
             assert!(
                 lp_token.resource_address() == pool.lp_token_manager().address(),
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(lp_token.resource_address()), Runtime::bech32_encode_address(pool.lp_token_manager().address())
@@ -1258,13 +1199,14 @@ mod exchange_mod {
             
             self._assert_pool_integrity(config, pool, dec!(0));
 
-            ResultRemoveLiquidity {
-                token,
+            Runtime::emit_event(EventRemoveLiquidity {
                 amount,
                 lp_amount,
                 lp_price,
                 fee_liquidity: fee,
-            }
+            });
+
+            token
         }
 
         fn _add_collateral(
@@ -1273,7 +1215,7 @@ mod exchange_mod {
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             mut tokens: Vec<Bucket>,
-        ) -> ResultAddCollateral {
+        ) {
             if let Some(index) = tokens.iter().position(|token| token.resource_address() == BASE_RESOURCE) {
                 let base_token = tokens.remove(index);
                 let value = base_token.amount();
@@ -1287,9 +1229,10 @@ mod exchange_mod {
 
             account.deposit_collateral_batch(tokens);
 
-            ResultAddCollateral {
+            Runtime::emit_event(EventAddCollateral {
+                account: account.address(),
                 amounts,
-            }
+            });
         }
         
         fn _remove_collateral(
@@ -1299,8 +1242,8 @@ mod exchange_mod {
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
             request: RequestRemoveCollateral,
-        ) -> ResultRemoveCollateral {
-            let target_account = request.target_account;
+        ) {
+            let target_account_component = request.target_account;
             let mut claims = request.claims.clone();
 
             let mut tokens = Vec::new();
@@ -1322,15 +1265,17 @@ mod exchange_mod {
             });
             tokens.append(&mut account.withdraw_collateral_batch(claims, TO_ZERO));
             
-            let mut target_account = Global::<Account>::try_from(target_account).expect(ERROR_INVALID_ACCOUNT);
+            let mut target_account = Global::<Account>::try_from(target_account_component).expect(ERROR_INVALID_ACCOUNT);
             target_account.try_deposit_batch_or_abort(tokens, Some(ResourceOrNonFungible::Resource(AUTHORITY_RESOURCE)));
             
             self._assert_account_integrity(config, pool, account, oracle);
 
-            ResultRemoveCollateral {
-                target_account: target_account.address(),
+            Runtime::emit_event(EventRemoveCollateral {
+                account: account.address(),
+                target_account: target_account_component,
                 amounts: request.claims,
-            }
+                fee_keeper: dec!(0), // TODO
+            });
         }
 
         fn _margin_order(
@@ -1340,7 +1285,7 @@ mod exchange_mod {
             account: &mut VirtualMarginAccount,
             oracle: &VirtualOracle,
             request: RequestMarginOrder,
-        ) -> ResultMarginOrder {
+        ) {
             let pair_id = &request.pair_id;
             let amount = request.amount;
             let price_limit = request.price_limit;
@@ -1401,19 +1346,21 @@ mod exchange_mod {
             self._assert_account_integrity(config, pool, account, oracle);
             self._assert_pool_integrity(config, pool, skew_1 - skew_0);
 
-            ResultMarginOrder {
+            Runtime::emit_event(EventMarginOrder {
+                account: account.address(),
                 pair_id: pair_id.clone(),
                 price_limit,
                 amount_close,
                 amount_open,
                 activated_requests,
                 cancelled_requests,
-                price,
                 fee_pool,
                 fee_protocol,
                 fee_treasury,
                 fee_referral,
-            }
+                fee_keeper: dec!(0), // TODO
+                price,
+            });
         }
 
         fn _swap_debt(
@@ -1423,7 +1370,7 @@ mod exchange_mod {
             oracle: &VirtualOracle,
             resource: &ResourceAddress, 
             mut payment_token: Bucket, 
-        ) -> ResultSwapDebt {
+        ) -> (Bucket, Bucket) {
             assert!(
                 payment_token.resource_address() == BASE_RESOURCE, 
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
@@ -1449,12 +1396,14 @@ mod exchange_mod {
             self._settle_account(pool, account, value);
             let token = account.withdraw_collateral_batch(vec![(*resource, amount)], TO_ZERO).pop().unwrap();
 
-            ResultSwapDebt {
-                token,
-                remainder: payment_token,
+            Runtime::emit_event(EventSwapDebt {
+                account: account.address(),
+                resource: *resource,
                 amount,
                 price: price_resource,
-            }
+            });
+
+            (token, payment_token)
         }
 
         fn _liquidate(

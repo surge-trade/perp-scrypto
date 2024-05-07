@@ -1,50 +1,5 @@
 use scrypto::prelude::*;
 use common::*;
-use super::requests::Limit;
-
-pub struct ResultAddLiquidity {
-    pub lp_token: Bucket,
-    pub amount: Decimal,
-    pub lp_amount: Decimal,
-    pub lp_price: Decimal,
-    pub fee_liquidity: Decimal,
-}
-
-pub struct ResultRemoveLiquidity {
-    pub token: Bucket,
-    pub amount: Decimal,
-    pub lp_amount: Decimal,
-    pub lp_price: Decimal,
-    pub fee_liquidity: Decimal,
-}
-
-pub struct ResultAddCollateral {
-    pub amounts: Vec<(ResourceAddress, Decimal)>,
-}
-
-pub struct ResultRemoveCollateral {
-    pub target_account: ComponentAddress,
-    pub amounts: Vec<(ResourceAddress, Decimal)>,
-}
-
-pub enum ResultProcessRequest {
-    RemoveCollateral(ResultRemoveCollateral),
-    MarginOrder(ResultMarginOrder),
-}
-
-pub struct ResultMarginOrder {
-    pub pair_id: PairId,
-    pub price_limit: Limit,
-    pub amount_close: Decimal,
-    pub amount_open: Decimal,
-    pub activated_requests: Vec<ListIndex>,
-    pub cancelled_requests: Vec<ListIndex>,
-    pub fee_pool: Decimal,
-    pub fee_protocol: Decimal,
-    pub fee_treasury: Decimal,
-    pub fee_referral: Decimal,
-    pub price: Decimal,
-}
 
 pub struct ResultOpenPosition {
     pub fee_pool: Decimal,
@@ -58,13 +13,6 @@ pub struct ResultClosePosition {
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-}
-
-pub struct ResultSwapDebt {
-    pub token: Bucket,
-    pub remainder: Bucket,
-    pub amount: Decimal,
-    pub price: Decimal,
 }
 
 pub struct ResultLiquidate {
