@@ -33,7 +33,7 @@ mod oracle_mod {
             CryptoUtils::keccak256_hash(data).to_vec()
         }
 
-        pub fn push_prices(&mut self, pair_ids: Vec<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
+        pub fn push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
             let prices: Vec<Price> = scrypto_decode(&data).expect(ERROR_INVALID_DATA);
 
             let hash = CryptoUtils::keccak256_hash(data).to_vec();
@@ -44,10 +44,10 @@ mod oracle_mod {
 
             self.prices.extend(prices.into_iter().map(|p| (p.pair.to_owned(), (p.quote, p.timestamp))));
 
-            self.prices(pair_ids, max_age)
+            self.get_prices(pair_ids, max_age)
         }
 
-        pub fn prices(&self, pair_ids: Vec<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
+        pub fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
             pair_ids.iter().map(|pair_id| {
                 let (quote, timestamp) = self.prices.get(pair_id).expect(ERROR_MISSING_PAIR);
                 assert!(

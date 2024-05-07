@@ -8,6 +8,7 @@ resolver = "2"
 [dependencies]
 sbor = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
 scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
+hex = "0.4.3"
 common = { path = "../common" }
 account = { path = "../account" }
 config = { path = "../config" }

@@ -104,8 +104,9 @@ mod exchange_mod {
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
-            // Getter methods
-            fn prices(&self, max_age: Instant) -> HashMap<PairId, Decimal>;
+            // Public methods
+            fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
+            fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
@@ -793,6 +794,8 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             index: ListIndex,
+            update_data: String,
+            update_signature: String,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -805,7 +808,7 @@ mod exchange_mod {
                     pair_ids.insert(request.pair_id.clone());
                 }
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
                 let max_age = if max_age.compare(submission, TimeComparisonOperator::Gt) {
@@ -814,7 +817,7 @@ mod exchange_mod {
                     submission
                 };
                 
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
                 let result = match request {
                     Request::RemoveCollateral(request) => {
@@ -875,11 +878,13 @@ mod exchange_mod {
                 let config = VirtualConfig::new(self.config);
                 self._assert_valid_collateral(&config, resource);
                 let account_component = account;
-                let mut account = VirtualMarginAccount::new(account, vec![resource]);
+                let collaterals = vec![resource];
+                let mut account = VirtualMarginAccount::new(account, collaterals);
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-
+                
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
+                let collateral_feeds = HashMap::from([(resource, config.collateral_feeds().get(&resource).unwrap().clone())]);
+                let oracle = VirtualOracle::new(self.oracle, collateral_feeds, HashSet::new(), max_age, None);
 
                 let result_swap_debt = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
     
@@ -901,6 +906,8 @@ mod exchange_mod {
             &self,
             account: ComponentAddress,
             payment: Bucket,
+            update_data: String,
+            update_signature: String,
         ) -> (Vec<Bucket>, Bucket) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -909,10 +916,10 @@ mod exchange_mod {
 
                 let pair_ids = account.position_ids();
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
                 let result_liquidate = self._liquidate(&config, &mut pool, &mut account, &oracle, payment);
 
@@ -945,6 +952,8 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             pair_id: PairId, 
+            update_data: String,
+            update_signature: String,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -954,10 +963,10 @@ mod exchange_mod {
                 let mut pair_ids = account.position_ids();
                 pair_ids.insert(pair_id.clone());
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
                 let result_auto_deleverage = self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
 
@@ -988,16 +997,18 @@ mod exchange_mod {
         pub fn update_pair(
             &self, 
             pair_id: PairId,
+            update_data: String,
+            update_signature: String,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
 
                 let pair_ids = HashSet::from([pair_id.clone()]);
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids);
+                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), max_age);
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
                 let rewarded = self._update_pair(&config, &mut pool, &oracle, &pair_id);
 
@@ -1152,7 +1163,7 @@ mod exchange_mod {
         ) -> VirtualMarginAccount {
             if let Some(fee_oath) = fee_oath {
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), Instant::new(0));
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
                 self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
                 account
             } else {
