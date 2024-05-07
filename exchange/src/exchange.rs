@@ -851,7 +851,6 @@ mod exchange_mod {
         ) -> (Vec<Bucket>, Bucket) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
-                let account_component = account;
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
 
                 let pair_ids = account.position_ids();
@@ -861,30 +860,13 @@ mod exchange_mod {
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
-                let result_liquidate = self._liquidate(&config, &mut pool, &mut account, &oracle, payment);
+                let tokens = self._liquidate(&config, &mut pool, &mut account, &oracle, payment);
 
                 account.realize();
                 pool.realize();
 
-                let fee_keeper = dec!(100); // TODO: Set fee amount
                 let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(1000); // TODO: Set reward amount
-
-                Runtime::emit_event(EventLiquidate {
-                    account: account_component,
-                    position_amounts: result_liquidate.position_amounts,
-                    collateral_amounts: result_liquidate.collateral_amounts,
-                    collateral_value: result_liquidate.collateral_value,
-                    margin: result_liquidate.margin,
-                    fee_pool: result_liquidate.fee_pool,
-                    fee_protocol: result_liquidate.fee_protocol,
-                    fee_treasury: result_liquidate.fee_treasury,
-                    fee_referral: result_liquidate.fee_referral,
-                    fee_keeper,
-                    position_prices: result_liquidate.position_prices,
-                    collateral_prices: result_liquidate.collateral_prices,
-                });
-
-                (result_liquidate.tokens, reward)
+                (tokens, reward)
             })
         }
 
@@ -1413,7 +1395,7 @@ mod exchange_mod {
             account: &mut VirtualMarginAccount,
             oracle: &VirtualOracle,
             mut payment_token: Bucket,
-        ) -> ResultLiquidate {
+        ) -> Vec<Bucket> {
             assert!(
                 payment_token.resource_address() == BASE_RESOURCE, 
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
@@ -1442,8 +1424,8 @@ mod exchange_mod {
 
             account.update_valid_requests_start();
 
-            ResultLiquidate {
-                tokens,
+            Runtime::emit_event(EventLiquidate {
+                account: account.address(),
                 position_amounts: result_positions.position_amounts,
                 collateral_amounts: result_collateral.collateral_amounts,
                 collateral_value: result_collateral.collateral_value,
@@ -1452,9 +1434,12 @@ mod exchange_mod {
                 fee_protocol: result_positions.fee_protocol,
                 fee_treasury: result_positions.fee_treasury,
                 fee_referral: result_positions.fee_referral,
+                fee_keeper: dec!(0), // TODO
                 position_prices: result_positions.position_prices,
                 collateral_prices: result_collateral.collateral_prices,
-            }
+            });
+
+            tokens
         }
 
         fn _auto_deleverage(

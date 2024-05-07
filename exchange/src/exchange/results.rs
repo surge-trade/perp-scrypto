@@ -15,20 +15,6 @@ pub struct ResultClosePosition {
     pub fee_referral: Decimal,
 }
 
-pub struct ResultLiquidate {
-    pub tokens: Vec<Bucket>,
-    pub position_amounts: Vec<(PairId, Decimal)>,
-    pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
-    pub collateral_value: Decimal,
-    pub margin: Decimal,
-    pub fee_pool: Decimal,
-    pub fee_protocol: Decimal,
-    pub fee_treasury: Decimal,
-    pub fee_referral: Decimal,
-    pub position_prices: Vec<(PairId, Decimal)>,
-    pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
-}
-
 pub struct ResultLiquidatePositions {
     pub pnl: Decimal,
     pub margin_positions: Decimal,
