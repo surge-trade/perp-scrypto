@@ -879,7 +879,6 @@ mod exchange_mod {
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
-                let account_component = account;
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
 
                 let mut pair_ids = account.position_ids();
@@ -890,28 +889,12 @@ mod exchange_mod {
                 let max_age = self._max_age(&config);
                 let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
 
-                let result_auto_deleverage = self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
+                self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
 
                 account.realize();
                 pool.realize();
 
-                let fee_keeper = dec!(100); // TODO: Set fee amount
                 let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(200); // TODO: Set reward amount
-
-                Runtime::emit_event(EventAutoDeleverage {
-                    account: account_component,
-                    pair_id,
-                    amount: result_auto_deleverage.amount,
-                    pnl_percent: result_auto_deleverage.pnl_percent,
-                    threshold: result_auto_deleverage.threshold,
-                    fee_pool: result_auto_deleverage.fee_pool,
-                    fee_protocol: result_auto_deleverage.fee_protocol,
-                    fee_treasury: result_auto_deleverage.fee_treasury,
-                    fee_referral: result_auto_deleverage.fee_referral,
-                    fee_keeper,
-                    price: result_auto_deleverage.price,
-                });
-
                 reward
             })
         }
@@ -1449,7 +1432,7 @@ mod exchange_mod {
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
             pair_id: &PairId, 
-        ) -> ResultAutoDeleverage {
+        ) {
             let exchange_config = config.exchange_config();
 
             self._update_pair(config, pool, oracle, pair_id);
@@ -1496,7 +1479,9 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_ADL_SKEW_NOT_REDUCED, skew_ratio_1, skew_ratio_0
             );
 
-            ResultAutoDeleverage {
+            Runtime::emit_event(EventAutoDeleverage {
+                account: account.address(),
+                pair_id: pair_id.clone(),
                 amount: amount_close,
                 pnl_percent,
                 threshold,
@@ -1504,8 +1489,9 @@ mod exchange_mod {
                 fee_protocol: result_close.fee_protocol,
                 fee_treasury: result_close.fee_treasury,
                 fee_referral: result_close.fee_referral,
+                fee_keeper: dec!(0), // TODO
                 price,
-            }
+            });
         }
 
         fn _open_position(

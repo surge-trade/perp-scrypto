@@ -32,14 +32,3 @@ pub struct ResultLiquidateCollateral {
     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
     pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
 }
-
-pub struct ResultAutoDeleverage {
-    pub amount: Decimal,
-    pub pnl_percent: Decimal,
-    pub threshold: Decimal,
-    pub fee_pool: Decimal,
-    pub fee_protocol: Decimal,
-    pub fee_treasury: Decimal,
-    pub fee_referral: Decimal,
-    pub price: Decimal,
-}
