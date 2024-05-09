@@ -49,7 +49,7 @@ async def main():
                 ret.ManifestBuilderValue.ENUM_VALUE(0, []), # Fee oath
                 ret.ManifestBuilderValue.U64_VALUE(10000000000), # Expiry seconds
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))), # Margin account
-                ret.ManifestBuilderValue.U16_VALUE(0), # Pair id
+                ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # Pair id
                 ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('-0.00010')), # Amount
                 ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('56000'))]), # Price limit
                 ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Activate requests

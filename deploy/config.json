@@ -18,5 +18,6 @@
     "ORACLE_COMPONENT": "component_tdx_2_1cqhry2qz5a45kt9fh57mkkrdhaeqv64vxdm66selckkd95an8us44g",
     "FEE_DISTRIBUTOR_COMPONENT": "component_tdx_2_1cz68t6kk2speasug9zsvssae3plagw86tmv6lvvd4f2gcn23e9z73c",
     "FEE_DELEGATOR_COMPONENT": "component_tdx_2_1cry40zwgwvuaj7ce6n5juvnffdvy50tsvahtn9sduhezt9nl05l534",
-    "EXCHANGE_COMPONENT": "component_tdx_2_1cz9uhfqa360p83c660l5esv7aew4md47ahcvt47vdqja4xwletsk94"
+    "EXCHANGE_COMPONENT": "component_tdx_2_1cz9uhfqa360p83c660l5esv7aew4md47ahcvt47vdqja4xwletsk94",
+    "ACCOUNT_COMPONENT": "component_tdx_2_1crzh0szt64lwmn3zylad59gc6pau5hkku3u2zaeynmlre3ahuyx42v"
 }
