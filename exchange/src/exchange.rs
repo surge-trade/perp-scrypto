@@ -810,7 +810,7 @@ mod exchange_mod {
                 account.realize();
                 pool.realize();
 
-                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(100); // TODO: Set reward amount
+                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(config.exchange_config().reward_keeper);
                 reward
             })
         }
@@ -865,7 +865,7 @@ mod exchange_mod {
                 account.realize();
                 pool.realize();
 
-                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(1000); // TODO: Set reward amount
+                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(config.exchange_config().reward_keeper);
                 (tokens, reward)
             })
         }
@@ -894,7 +894,7 @@ mod exchange_mod {
                 account.realize();
                 pool.realize();
 
-                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(200); // TODO: Set reward amount
+                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(config.exchange_config().reward_keeper);
                 reward
             })
         }
@@ -1239,7 +1239,6 @@ mod exchange_mod {
                 account: account.address(),
                 target_account: target_account_component,
                 amounts: request.claims,
-                fee_keeper: dec!(0), // TODO
             });
         }
 
@@ -1323,7 +1322,6 @@ mod exchange_mod {
                 fee_protocol,
                 fee_treasury,
                 fee_referral,
-                fee_keeper: dec!(0), // TODO
                 price,
             });
         }
@@ -1417,7 +1415,6 @@ mod exchange_mod {
                 fee_protocol: result_positions.fee_protocol,
                 fee_treasury: result_positions.fee_treasury,
                 fee_referral: result_positions.fee_referral,
-                fee_keeper: dec!(0), // TODO
                 position_prices: result_positions.position_prices,
                 collateral_prices: result_collateral.collateral_prices,
             });
@@ -1489,7 +1486,6 @@ mod exchange_mod {
                 fee_protocol: result_close.fee_protocol,
                 fee_treasury: result_close.fee_treasury,
                 fee_referral: result_close.fee_referral,
-                fee_keeper: dec!(0), // TODO
                 price,
             });
         }

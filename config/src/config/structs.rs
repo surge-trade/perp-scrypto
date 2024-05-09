@@ -40,14 +40,16 @@ pub struct ExchangeConfig {
     pub adl_b: Decimal,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: Decimal,
-    /// Share of fees that go to the protocol
+    /// Share of fees that goes to the protocol
     pub fee_share_protocol: Decimal,
-    /// Share of fees that go to the treasury
+    /// Share of fees that goes to the treasury
     pub fee_share_treasury: Decimal,
-    /// Share of fees that go to the referrer
+    /// Share of fees that goes to the referrer
     pub fee_share_referral: Decimal,
-    /// Maximum fee that can be charged
+    /// Maximum fee rate that can be charged
     pub fee_max: Decimal,
+    /// Keeper reward amount
+    pub reward_keeper: Decimal,
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -68,14 +70,16 @@ pub struct ExchangeConfigCompressed {
     pub adl_b: DFloat16,
     /// Fee for adding and removing liquidity
     pub fee_liquidity: DFloat16,
-    /// Share of fees that go to the protocol
+    /// Share of fees that goes to the protocol
     pub fee_share_protocol: DFloat16,
-    /// Share of fees that go to the treasury
+    /// Share of fees that goes to the treasury
     pub fee_share_treasury: DFloat16,
-    /// Share of fees that go to the referrer
+    /// Share of fees that goes to the referrer
     pub fee_share_referral: DFloat16,
-    /// Maximum fee that can be charged
+    /// Maximum fee rate that can be charged
     pub fee_max: DFloat16,
+    /// Keeper reward amount
+    pub keeper_reward: DFloat16,
 }
 
 impl Default for ExchangeConfig {
@@ -93,6 +97,7 @@ impl Default for ExchangeConfig {
             fee_share_treasury: dec!(0.1),
             fee_share_referral: dec!(0.1),
             fee_max: dec!(0.02),
+            reward_keeper: dec!(1),
         }
     }
 }
@@ -111,6 +116,7 @@ impl ExchangeConfig {
         assert!(self.fee_share_referral >= dec!(0), "Invalid referral fee");
         assert!(self.fee_share_protocol + self.fee_share_treasury + self.fee_share_referral <= dec!(1), "Invalid fee share");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
+        assert!(self.reward_keeper >= dec!(0), "Invalid keeper reward");
     }
 
     pub fn compress(&self) -> ExchangeConfigCompressed {
@@ -127,6 +133,7 @@ impl ExchangeConfig {
             fee_share_treasury: DFloat16::from(self.fee_share_treasury),
             fee_share_referral: DFloat16::from(self.fee_share_referral),
             fee_max: DFloat16::from(self.fee_max),
+            keeper_reward: DFloat16::from(self.reward_keeper),
         }
     }
 }
@@ -146,6 +153,7 @@ impl ExchangeConfigCompressed {
             fee_share_treasury: self.fee_share_treasury.into(),
             fee_share_referral: self.fee_share_referral.into(),
             fee_max: self.fee_max.into(),
+            reward_keeper: self.keeper_reward.into(),
         }
     }
 }

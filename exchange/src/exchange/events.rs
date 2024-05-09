@@ -81,7 +81,6 @@ pub struct EventRemoveCollateral {
     pub account: ComponentAddress,
     pub target_account: ComponentAddress,
     pub amounts: Vec<(ResourceAddress, Decimal)>,
-    pub fee_keeper: Decimal,
 }
 
 #[derive(ScryptoSbor, ScryptoEvent)]
@@ -97,7 +96,6 @@ pub struct EventMarginOrder {
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-    pub fee_keeper: Decimal,
     pub price: Decimal,
 }
 
@@ -120,7 +118,6 @@ pub struct EventLiquidate { // TODO: add fund info?
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-    pub fee_keeper: Decimal,
     pub position_prices: Vec<(PairId, Decimal)>,
     pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
 }
@@ -136,6 +133,5 @@ pub struct EventAutoDeleverage {
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-    pub fee_keeper: Decimal,
     pub price: Decimal,
 }
