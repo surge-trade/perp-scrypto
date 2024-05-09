@@ -61,7 +61,7 @@ async def main():
             'update_pair_configs',
             [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(0),  # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.STRING_VALUE('BTC/USD'),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(120), # update_period_seconds
@@ -83,7 +83,7 @@ async def main():
             'update_pair_configs',
             [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(0),  # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.STRING_VALUE('ETH/USD'),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(120), # update_period_seconds
@@ -105,7 +105,7 @@ async def main():
             'update_pair_configs',
             [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.U16_VALUE(0),  # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.STRING_VALUE("XRD/USD"),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(120), # update_period_seconds
