@@ -166,6 +166,37 @@ async def main():
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
         ]
 
+        oracle_key = 'b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640'
+        oracle_key_array = [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)]
+        code, definition = build('oracle', envs, network_config['network_name'])
+        payload, intent = await gateway.build_publish_transaction(
+            account,
+            code,
+            definition,
+            owner_role,
+            public_key,
+            private_key,
+        )
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        oracle_package = addresses[0]
+        envs.append(('ORACLE_PACKAGE', oracle_package))
+        print('ORACLE_PACKAGE:', oracle_package)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.call_function(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
+            'Oracle',
+            'new',
+            [manifest_owner_role, ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, oracle_key_array)]
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        oracle_component = addresses[0]
+        print('ORACLE_COMPONENT:', oracle_component)
+
         code, definition = build('token_wrapper', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
@@ -278,35 +309,6 @@ async def main():
         pool_component, lp_resource = addresses[0], addresses[1]
         print('POOL_COMPONENT:', pool_component)
         print('LP_RESOURCE:', lp_resource)
-
-        code, definition = build('oracle', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        oracle_package = addresses[0]
-        envs.append(('ORACLE_PACKAGE', oracle_package))
-        print('ORACLE_PACKAGE:', oracle_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
-            'Oracle',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        oracle_component = addresses[0]
-        print('ORACLE_COMPONENT:', oracle_component)
 
         code, definition = build('fee_distributor', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
