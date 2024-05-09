@@ -774,8 +774,8 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             index: ListIndex,
-            update_data: String,
-            update_signature: String,
+            update_data: Vec<u8>,
+            update_signature: Bls12381G2Signature,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -846,8 +846,8 @@ mod exchange_mod {
             &self,
             account: ComponentAddress,
             payment: Bucket,
-            update_data: String,
-            update_signature: String,
+            update_data: Vec<u8>,
+            update_signature: Bls12381G2Signature,
         ) -> (Vec<Bucket>, Bucket) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -874,8 +874,8 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             pair_id: PairId, 
-            update_data: String,
-            update_signature: String,
+            update_data: Vec<u8>,
+            update_signature: Bls12381G2Signature,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -902,8 +902,8 @@ mod exchange_mod {
         pub fn update_pair(
             &self, 
             pair_id: PairId,
-            update_data: String,
-            update_signature: String,
+            update_data: Vec<u8>,
+            update_signature: Bls12381G2Signature,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);

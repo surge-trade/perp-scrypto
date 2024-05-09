@@ -52,6 +52,3 @@ pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 pub const ERROR_REFERRAL_ALREADY_SET: &str = "Referral already set";
 
 pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";
-
-pub const ERROR_HEX_DECODE: &str = "Invalid hex data";
-pub const ERROR_INVALID_SIGNATURE: &str = "Invalid signature";
