@@ -97,12 +97,12 @@ impl VirtualMarginAccount {
         self.account_info.active_requests_len
     }
 
-    // pub fn collateral_balances(&self) -> &HashMap<ResourceAddress, Decimal> {
-    //     &self.account_info.collateral_balances
-    // }
-
     pub fn collateral_amount(&self, resource: &ResourceAddress) -> Decimal {
         self.account_info.collateral_balances.get(resource).copied().unwrap_or_default()
+    }
+
+    pub fn collateral_amounts(&self) -> &HashMap<ResourceAddress, Decimal> {
+        &self.account_info.collateral_balances
     }
 
     pub fn virtual_balance(&self) -> Decimal {

@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 use common::{PairId, ListIndex};
 
-#[derive(ScryptoSbor, Clone, Default)]
+#[derive(ScryptoSbor, Clone, Debug, Default)]
 pub struct AccountPosition {
     pub amount: Decimal,
     pub cost: Decimal,

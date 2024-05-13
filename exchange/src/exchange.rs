@@ -1,7 +1,7 @@
 mod errors;
 mod events;
 mod requests;
-mod results;
+mod structs;
 mod virtual_config;
 mod virtual_margin_pool;
 mod virtual_margin_account;
@@ -15,7 +15,7 @@ use config::*;
 use self::errors::*;
 use self::events::*;
 use self::requests::*;
-use self::results::*;
+use self::structs::*;
 use self::virtual_config::*;
 use self::virtual_margin_pool::*;
 use self::virtual_margin_account::*;
@@ -176,6 +176,9 @@ mod exchange_mod {
             withdraw_fee_delegator => restrict_to: [OWNER];
 
             // Get methods
+            get_account_details => PUBLIC;
+            get_pool_details => PUBLIC;
+            get_pair_details => PUBLIC;
             get_exchange_config => PUBLIC;
             get_pairs_len => PUBLIC;
             get_pair_config => PUBLIC;
@@ -441,6 +444,40 @@ mod exchange_mod {
         }
 
         // --- GET METHODS ---
+
+        pub fn get_account_details(
+            &self, 
+            account: ComponentAddress,
+        ) -> AccountDetails {
+            let mut config = VirtualConfig::new(self.config);
+            let account = VirtualMarginAccount::new(account, config.collaterals());
+            let pair_ids = account.position_ids();
+            config.load_pair_configs(pair_ids.clone());
+            let pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+
+            self._account_details(&config, &pool, &account)
+        }
+
+        pub fn get_pool_details(
+            &self,
+        ) -> PoolDetails {
+            let config = VirtualConfig::new(self.config);
+            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+
+            self._pool_details(&config, &pool)
+        }
+
+        pub fn get_pair_details(
+            &self, 
+            pairs: Vec<(PairId, Decimal)>,
+        ) -> Vec<PairDetails> {
+            let config = VirtualConfig::new(self.config);
+            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+
+            pairs.into_iter().map(|(pair_id, price)| {
+                self._pair_details(&config, &pool, &pair_id, price)
+            }).collect()
+        }
 
         pub fn get_exchange_config(
             &self
@@ -843,7 +880,6 @@ mod exchange_mod {
     
                 account.realize();
                 pool.realize();
-
     
                 (token, remainder)
             })
@@ -1018,10 +1054,10 @@ mod exchange_mod {
             account: &VirtualMarginAccount,
             oracle: &VirtualOracle,
         ) {
-            let (pnl, margin_positions) = self._value_positions(config, pool, account, oracle);
-            let (collateral_value_discounted, margin_collateral) = self._value_collateral(config, account, oracle);
-            let account_value = pnl + collateral_value_discounted + account.virtual_balance();
-            let margin = margin_positions + margin_collateral;
+            let result_value_positions = self._value_positions(config, pool, account, oracle);
+            let result_value_collateral = self._value_collateral(config, account, oracle);
+            let account_value = result_value_positions.pnl + result_value_collateral.collateral_value_discounted + account.virtual_balance();
+            let margin = result_value_positions.margin_positions + result_value_collateral.margin_collateral;
 
             assert!(
                 account_value > margin,
@@ -1067,6 +1103,206 @@ mod exchange_mod {
             );
         }
 
+        fn _account_details(
+            &self,
+            config: &VirtualConfig,
+            pool: &VirtualLiquidityPool,
+            account: &VirtualMarginAccount,
+        ) -> AccountDetails {
+            let position_details: Vec<PositionDetails> = account.positions().iter().map(|(pair_id, position)| {
+                let pair_config = config.pair_config(pair_id);
+                let pool_position = pool.position(pair_id);
+
+                let funding = if position.amount.is_positive() {
+                    position.amount * (pool_position.funding_long_index - position.funding_index)
+                } else {
+                    position.amount * (pool_position.funding_short_index - position.funding_index)            
+                };
+                let margin_initial = position.amount.checked_abs().expect(ERROR_ARITHMETIC) * pair_config.margin_initial;
+                let margin_maintenance = position.amount.checked_abs().expect(ERROR_ARITHMETIC) * pair_config.margin_maintenance;
+
+                PositionDetails {
+                    pair_id: pair_id.clone(),
+                    amount: position.amount,
+                    cost: position.cost,
+                    funding,
+                    margin_initial,
+                    margin_maintenance,
+                }
+            }).collect();
+
+            let collateral_details: Vec<CollateralDetails> = account.collateral_amounts().iter().map(|(&resource, &amount)| {
+                let collateral_config = config.collateral_configs().get(&resource).unwrap();
+
+                let amount_discounted = amount * collateral_config.discount;
+                let margin = amount * collateral_config.margin;
+
+                CollateralDetails {
+                    resource,
+                    amount,
+                    amount_discounted,
+                    margin,
+                }
+            }).collect();
+
+            AccountDetails {
+                virtual_balance: account.virtual_balance(),
+                positions: position_details,
+                collaterals: collateral_details,
+            }
+        }
+
+        fn _pool_details(
+            &self,
+            config: &VirtualConfig,
+            pool: &VirtualLiquidityPool,
+        ) -> PoolDetails {
+            let lp_supply = pool.lp_token_manager().total_supply().unwrap();
+            let pool_value = self._pool_value(pool).max(dec!(1));
+            let lp_price = if lp_supply.is_zero() {
+                dec!(1)
+            } else {
+                pool_value / lp_supply
+            };
+
+            PoolDetails {
+                base_tokens_amount: pool.base_tokens_amount(),
+                virtual_balance: pool.virtual_balance(),
+                unrealized_pool_funding: pool.unrealized_pool_funding(),
+                pnl_snap: pool.pnl_snap(),
+                skew_ratio: self._skew_ratio(pool),
+                skew_ratio_cap: config.exchange_config().skew_ratio_cap,
+                lp_supply,
+                lp_price,
+            }
+        }
+
+        fn _pair_details(
+            &self,
+            config: &VirtualConfig,
+            pool: &VirtualLiquidityPool,
+            pair_id: &PairId,
+            price: Decimal,
+        ) -> PairDetails {
+            // let pair_config = config.pair_config(pair_id);
+            // let price = oracle.price(pair_id);
+
+            // let mut pool_position = pool.position(pair_id);
+            // let oi_long = pool_position.oi_long;
+            // let oi_short = pool_position.oi_short;
+
+            // let skew = (oi_long - oi_short) * price;
+            // let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
+            // let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
+            // pool_position.skew_abs_snap = skew_abs;
+            // pool.update_skew_abs_snap(pool.skew_abs_snap() + skew_abs_snap_delta);
+
+            // let pnl = skew - pool_position.cost;
+            // let pnl_snap_delta = pnl - pool_position.pnl_snap;
+            // pool_position.pnl_snap = pnl;
+            // pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
+            
+            // let current_time = Clock::current_time_rounded_to_seconds();
+            // let period_seconds = current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch;
+            // let period = Decimal::from(period_seconds);
+            
+            // if !period.is_zero() {
+            //     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+            //     pool_position.funding_2_rate += funding_2_rate_delta;
+
+            //     if !oi_long.is_zero() && !oi_short.is_zero() {
+            //         let funding_1_rate = skew * pair_config.funding_1;
+            //         let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
+            //         let funding_rate = funding_1_rate + funding_2_rate;
+
+            //         let (funding_long_index, funding_short_index, funding_share) = if funding_rate.is_positive() {
+            //             let funding_long = funding_rate * period;
+            //             let funding_long_index = funding_long / oi_long;
+        
+            //             let funding_share = funding_long * pair_config.funding_share;
+            //             let funding_short_index = -(funding_long - funding_share) / oi_short;
+        
+            //             (funding_long_index, funding_short_index, funding_share)
+            //         } else {
+            //             let funding_short = -funding_rate * period * price;
+            //             let funding_short_index = funding_short / oi_short;
+        
+            //             let funding_share = funding_short * pair_config.funding_share;
+            //             let funding_long_index = -(funding_short - funding_share) / oi_long;
+        
+            //             (funding_long_index, funding_short_index, funding_share)
+            //         };
+
+            //         let funding_pool_0_rate = (oi_long + oi_short) * price * pair_config.funding_pool_0;
+            //         let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
+            //         let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
+
+            //         let funding_pool = funding_pool_rate * period;
+            //         let funding_pool_index = funding_pool / (oi_long + oi_short);
+            //         pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding_pool + funding_share);
+
+            //         pool_position.funding_long_index += funding_long_index + funding_pool_index;
+            //         pool_position.funding_short_index += funding_short_index + funding_pool_index;
+            //     }
+            // }
+
+            // let price_delta_ratio = (price - pool_position.last_price).checked_abs().expect(ERROR_ARITHMETIC) / pool_position.last_price;
+            // pool_position.last_price = price;
+            // pool_position.last_update = current_time;
+
+            // pool.update_position(pair_id, pool_position);
+
+            // if period_seconds >= pair_config.update_period_seconds || price_delta_ratio >= pair_config.update_price_delta_ratio {
+            //     true
+            // } else {
+            //     false
+            // }
+
+            let pair_config = config.pair_config(pair_id);
+            let pool_position = pool.position(pair_id);
+            let oi_long = pool_position.oi_long;
+            let oi_short = pool_position.oi_short;
+            let skew = (oi_long - oi_short) * price;
+
+            let funding_1_rate = skew * pair_config.funding_1;
+            let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
+            let funding_rate = funding_1_rate + funding_2_rate;
+            
+            let (funding_long_index, funding_short_index, funding_share) = if !oi_long.is_zero() && !oi_short.is_zero() {
+                if funding_rate.is_positive() {
+                    let funding_long = funding_rate;
+                    let funding_long_index = funding_long / oi_long;
+    
+                    let funding_share = funding_long * pair_config.funding_share;
+                    let funding_short_index = -(funding_long - funding_share) / oi_short;
+    
+                    (funding_long_index, funding_short_index, funding_share)
+                } else {
+                    let funding_short = -funding_rate;
+                    let funding_short_index = funding_short / oi_short;
+    
+                    let funding_share = funding_short * pair_config.funding_share;
+                    let funding_long_index = -(funding_short - funding_share) / oi_long;
+    
+                    (funding_long_index, funding_short_index, funding_share)
+                }
+            } else {
+                (dec!(0), dec!(0), dec!(0))
+            };
+
+            PairDetails {
+                pair_id: pair_id.clone(),
+                oi_long,
+                oi_short,
+                funding_1: funding_1_rate,
+                funding_2: funding_2_rate,
+                funding_long: funding_long_index,
+                funding_short: funding_short_index,
+                funding_share,
+                pair_config: pair_config.clone(),
+            }
+        }
+
         fn _handle_fee_oath(
             &self,
             account: ComponentAddress,
@@ -1097,12 +1333,12 @@ mod exchange_mod {
             );
 
             let fee_value = fee_oath.amount();
-            let (collateral_value_discounted, margin_collateral) = self._value_collateral(config, account, oracle);
-            let collateral_value_approx = collateral_value_discounted + account.virtual_balance() - fee_value;
+            let result_value_collateral = self._value_collateral(config, account, oracle);
+            let collateral_value_approx = result_value_collateral.collateral_value_discounted + account.virtual_balance() - fee_value;
 
             assert!(
-                collateral_value_approx > margin_collateral,
-                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, collateral_value_approx, margin_collateral
+                collateral_value_approx > result_value_collateral.margin_collateral,
+                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, collateral_value_approx, result_value_collateral.margin_collateral
             );
 
             account.update_virtual_balance(account.virtual_balance() - fee_value);
@@ -1389,10 +1625,10 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
             );
 
-            let result_positions = self._liquidate_positions(config, pool, account, oracle); //(pnl, margin_positions, fee_protocol, fee_treasury, fee_referral)
-            let result_collateral = self._liquidate_collateral(config, account, oracle); // (collateral_value, margin_collateral, mut collateral_tokens)
+            let result_positions = self._liquidate_positions(config, pool, account, oracle); 
+            let result_collateral = self._liquidate_collateral(config, account, oracle); 
             
-            let account_value = result_positions.pnl + result_collateral.collateral_value + account.virtual_balance();
+            let account_value = result_positions.pnl + result_collateral.collateral_value_discounted + account.virtual_balance();
             let margin = result_positions.margin_positions + result_collateral.margin_collateral;
 
             assert!(
@@ -1401,7 +1637,7 @@ mod exchange_mod {
             );
             
             let mut tokens = account.withdraw_collateral_batch(result_collateral.collateral_amounts.clone(), TO_ZERO);
-            let deposit_token = payment_token.take_advanced(result_collateral.collateral_value, TO_INFINITY);
+            let deposit_token = payment_token.take_advanced(result_collateral.collateral_value_discounted, TO_INFINITY);
             tokens.push(payment_token);
             let value = deposit_token.amount();
             pool.deposit(deposit_token);
@@ -1417,6 +1653,7 @@ mod exchange_mod {
                 position_amounts: result_positions.position_amounts,
                 collateral_amounts: result_collateral.collateral_amounts,
                 collateral_value: result_collateral.collateral_value,
+                collateral_value_discounted: result_collateral.collateral_value_discounted,
                 margin,
                 fee_pool: result_positions.fee_pool,
                 fee_protocol: result_positions.fee_protocol,
@@ -1658,7 +1895,7 @@ mod exchange_mod {
         
                         (funding_long_index, funding_short_index, funding_share)
                     } else {
-                        let funding_short = -funding_rate * period * price;
+                        let funding_short = -funding_rate * period;
                         let funding_short_index = funding_short / oi_short;
         
                         let funding_share = funding_short * pair_config.funding_share;
@@ -1725,7 +1962,7 @@ mod exchange_mod {
             pool: &VirtualLiquidityPool,
             account: &VirtualMarginAccount, 
             oracle: &VirtualOracle,
-        ) -> (Decimal, Decimal) {
+        ) -> ResultValuePositions {
             let exchange_config = config.exchange_config();
             let pool_value = self._pool_value(pool);
             
@@ -1757,7 +1994,10 @@ mod exchange_mod {
                 total_margin += margin;
             }
 
-            (total_pnl, total_margin)
+            ResultValuePositions {
+                pnl: total_pnl,
+                margin_positions: total_margin,
+            }        
         }
 
         fn _liquidate_positions(
@@ -1772,6 +2012,7 @@ mod exchange_mod {
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
+            let mut total_funding = dec!(0);
             let mut total_fee_pool = dec!(0);
             let mut total_fee_protocol = dec!(0);
             let mut total_fee_treasury = dec!(0);
@@ -1803,6 +2044,7 @@ mod exchange_mod {
 
                 let pnl = value - cost - fee - funding;
                 let margin = value_abs * pair_config.margin_maintenance;
+                total_funding += funding;
                 let fee_protocol = fee * exchange_config.fee_share_protocol;
                 let fee_treasury = fee * exchange_config.fee_share_treasury;
                 let fee_referral = fee * exchange_config.fee_share_referral;
@@ -1819,6 +2061,7 @@ mod exchange_mod {
                 pool.update_position(pair_id, pool_position);
                 account.remove_position(pair_id);
             }
+            pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() - total_funding);
 
             ResultLiquidatePositions {
                 pnl: total_pnl,
@@ -1837,19 +2080,28 @@ mod exchange_mod {
             config: &VirtualConfig,
             account: &VirtualMarginAccount, 
             oracle: &VirtualOracle,
-        ) -> (Decimal, Decimal) {
+        ) -> ResultValueCollateral {
             let mut total_value_discounted = dec!(0);
             let mut total_margin = dec!(0);
-            for (resource, collateral_config) in config.collateral_configs().iter() {
-                let price_resource = oracle.price_resource(*resource);
-                let amount = account.collateral_amount(resource);
+            let mut collateral_amounts = vec![];
+            let mut prices = vec![];
+            for (&resource, &amount) in account.collateral_amounts().iter() {
+                let collateral_config = config.collateral_configs().get(&resource).unwrap();
+                let price_resource = oracle.price_resource(resource);
                 let value = amount * price_resource;
                 let value_discounted = value * collateral_config.discount;
                 let margin = value * collateral_config.margin;
+
                 total_value_discounted += value_discounted;
                 total_margin += margin;
+                collateral_amounts.push((resource, amount));
+                prices.push((resource, price_resource));
             }
-            (total_value_discounted, total_margin)
+
+            ResultValueCollateral {
+                collateral_value_discounted: total_value_discounted,
+                margin_collateral: total_margin,
+            }
         }
 
         fn _liquidate_collateral(
@@ -1857,26 +2109,29 @@ mod exchange_mod {
             config: &VirtualConfig,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
-        ) -> ResultLiquidateCollateral {            
+        ) -> ResultLiquidateCollateral {           
+            let mut total_value = dec!(0); 
             let mut total_value_discounted = dec!(0);
             let mut total_margin = dec!(0);
             let mut collateral_amounts = vec![];
             let mut prices = vec![];
-            for (resource, collateral_config) in config.collateral_configs().iter() {
-                let price_resource = oracle.price_resource(*resource);
-                let amount = account.collateral_amount(resource);
+            for (&resource, &amount) in account.collateral_amounts().iter() {
+                let collateral_config = config.collateral_configs().get(&resource).unwrap();
+                let price_resource = oracle.price_resource(resource);
                 let value = amount * price_resource;
                 let value_discounted = value * collateral_config.discount;
                 let margin = value * collateral_config.margin;
 
+                total_value += value;
                 total_value_discounted += value_discounted;
                 total_margin += margin;
-                collateral_amounts.push((*resource, amount));
-                prices.push((*resource, price_resource));
+                collateral_amounts.push((resource, amount));
+                prices.push((resource, price_resource));
             }
 
             ResultLiquidateCollateral {
-                collateral_value: total_value_discounted,
+                collateral_value: total_value,
+                collateral_value_discounted: total_value_discounted,
                 margin_collateral: total_margin,
                 collateral_amounts,
                 collateral_prices: prices,

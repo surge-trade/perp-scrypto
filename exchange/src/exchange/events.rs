@@ -108,11 +108,12 @@ pub struct EventSwapDebt {
 }
 
 #[derive(ScryptoSbor, ScryptoEvent)]
-pub struct EventLiquidate { // TODO: add fund info?
+pub struct EventLiquidate { // TODO: add funding and cost info?
     pub account: ComponentAddress,
     pub position_amounts: Vec<(PairId, Decimal)>,
     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
     pub collateral_value: Decimal,
+    pub collateral_value_discounted: Decimal,
     pub margin: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
