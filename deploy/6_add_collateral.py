@@ -66,6 +66,11 @@ async def main():
         )
         builder = deposit_all(builder, account)
 
+        # OSS
+        # manifest: ret.TransactionManifest = builder.build(network_config['network_id'])
+        # print(manifest.instructions().as_str())
+
+
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
