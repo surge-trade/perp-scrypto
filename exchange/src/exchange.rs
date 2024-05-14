@@ -570,22 +570,22 @@ mod exchange_mod {
             referrer: Option<ComponentAddress>,
             reservation: Option<GlobalAddressReservation>,
         ) -> Global<MarginAccount> {
-            let account = authorize!(self, {
-                Blueprint::<MarginAccount>::new(initial_rule, reservation)
-            });
+            authorize!(self, {
+                let account = Blueprint::<MarginAccount>::new(initial_rule, reservation);
+            
+                if let Some(referrer) = referrer {
+                    Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT);
+                    self.fee_distributor.set_referrer(account.address(), Some(referrer));
+                } else {
+                    self.fee_distributor.set_referrer(account.address(), None);
+                }
 
-            if let Some(referrer) = referrer {
-                Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT);
-                self.fee_distributor.set_referrer(account.address(), Some(referrer));
-            } else {
-                self.fee_distributor.set_referrer(account.address(), None);
-            }
+                Runtime::emit_event(EventAccountCreation {
+                    account: account.address(),
+                });
 
-            Runtime::emit_event(EventAccountCreation {
-                account: account.address(),
-            });
-
-            account
+                account
+            })
         }
 
         pub fn set_level_1_auth(
