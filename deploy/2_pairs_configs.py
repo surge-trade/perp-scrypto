@@ -75,13 +75,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
-                ])
-            ])]
-        )
-        builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'update_pair_configs',
-            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
+                ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('ETH/USD'),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
@@ -97,13 +91,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
-                ])
-            ])]
-        )
-        builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'update_pair_configs',
-            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
+                ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE("XRD/USD"),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
@@ -124,6 +112,7 @@ async def main():
         )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        print('Transaction id:', intent)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
         print('Transaction status:', status)

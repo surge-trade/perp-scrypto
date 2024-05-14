@@ -32,9 +32,9 @@ async def main():
             config_data = json.load(config_file)
         print('Config loaded:', config_data)
 
-        base_resource = config_data['BASE_RESOURCE']
-        exchange_component = config_data['EXCHANGE_COMPONENT']
-        account_component = config_data['ACCOUNT_COMPONENT']
+        owner_resource = config_data['OWNER_RESOURCE']
+        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
+        xrd = network_config['xrd']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -49,29 +49,21 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
-
         builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 200)
-        builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('100'), 'bucket1')
-        builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'add_collateral',
-            [
-                ret.ManifestBuilderValue.ENUM_VALUE(0, []),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.BUCKET_VALUE, [
-                    ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))
-                ]),
-            ]
+        builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
         )
-        builder = deposit_all(builder, account)
-
-        # OSS
-        # manifest: ret.TransactionManifest = builder.build(network_config['network_id'])
-        # print(manifest.instructions().as_str())
-
+        builder = builder.call_method(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
+            'add_child',
+            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xrd)))]
+        )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        print('Transaction id:', intent)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
         print('Transaction status:', status)

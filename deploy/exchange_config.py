@@ -1,5 +1,3 @@
-import qrcode
-import io
 import radix_engine_toolkit as ret
 import asyncio
 import datetime
@@ -13,7 +11,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
+from tools.manifests import lock_fee, deposit_all
 
 async def main():
     path = dirname(realpath(__file__))
@@ -33,18 +31,11 @@ async def main():
         print('Config loaded:', config_data)
 
         owner_resource = config_data['OWNER_RESOURCE']
-        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        xrd = network_config['xrd']
+        exchange_component = config_data['EXCHANGE_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
-            qr = qrcode.QRCode()
-            qr.add_data(account.as_str())
-            f = io.StringIO()
-            qr.print_ascii(out=f)
-            f.seek(0)
-            print(f.read())
         while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
@@ -57,12 +48,29 @@ async def main():
             ret.Decimal('1')
         )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
-            'add_child',
-            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xrd)))]
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            'update_exchange_config',
+            [
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.I64_VALUE(5), # max_price_age_seconds
+                    ret.ManifestBuilderValue.U16_VALUE(10), # positions_max
+                    ret.ManifestBuilderValue.U16_VALUE(10), # active_requests_max
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # skew_ratio_cap
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_offset
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_a
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_b
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_liquidity
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_share_protocol
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_share_treasury
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_referral
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_max
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # reward_keeper
+                ])
+            ]
         )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        print('Transaction id:', intent)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
         print('Transaction status:', status)

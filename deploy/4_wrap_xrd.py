@@ -1,3 +1,5 @@
+import qrcode
+import io
 import radix_engine_toolkit as ret
 import asyncio
 import datetime
@@ -11,7 +13,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all
+from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 
 async def main():
     path = dirname(realpath(__file__))
@@ -30,25 +32,37 @@ async def main():
             config_data = json.load(config_file)
         print('Config loaded:', config_data)
 
-        exchange_component = config_data['EXCHANGE_COMPONENT']
-        account_component = config_data['ACCOUNT_COMPONENT']
+        owner_resource = config_data['OWNER_RESOURCE']
+        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
+        xrd = network_config['xrd']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
+            qr = qrcode.QRCode()
+            qr.add_data(account.as_str())
+            f = io.StringIO()
+            qr.print_ascii(out=f)
+            f.seek(0)
+            print(f.read())
         while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
+        builder = withdraw_to_bucket(
+            builder, 
+            account, 
+            ret.Address(xrd), 
+            ret.Decimal('1000'), 
+            'bucket1'
+        )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'process_request',
-            [
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
-                ret.ManifestBuilderValue.U64_VALUE(0),
-            ]
+            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
+            'wrap',
+            [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
         )
         builder = deposit_all(builder, account)
 

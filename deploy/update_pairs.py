@@ -42,33 +42,22 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = builder.account_create_proof_of_amount(
-            account,
-            ret.Address(owner_resource),
-            ret.Decimal('1')
-        )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'update_exchange_config',
+            'update_pairs',
             [
-                ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.I64_VALUE(60), # max_price_age_seconds
-                    ret.ManifestBuilderValue.U16_VALUE(10), # positions_max
-                    ret.ManifestBuilderValue.U16_VALUE(10), # active_requests_max
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # skew_ratio_cap
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_offset
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_a
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_b
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_liquidity
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_share_protocol
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_share_treasury
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_referral
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_max
-                ])
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.STRING_VALUE, [
+                    ret.ManifestBuilderValue.STRING_VALUE('BTC/USD'),
+                    ret.ManifestBuilderValue.STRING_VALUE('ETH/USD'),
+                    ret.ManifestBuilderValue.STRING_VALUE('XRD/USD'),
+                ]),
+                ret.ManifestBuilderValue.ENUM_VALUE(0, [])
             ]
         )
+        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        print('Transaction id:', intent)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
         print('Transaction status:', status)

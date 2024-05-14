@@ -85,7 +85,7 @@ pub struct ExchangeConfigCompressed {
 impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
-            max_price_age_seconds: 60,
+            max_price_age_seconds: 5,
             positions_max: 10,
             active_requests_max: 30,
             skew_ratio_cap: dec!(0.1),
