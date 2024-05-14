@@ -212,7 +212,7 @@ mod exchange_mod {
             swap_debt => restrict_to: [keeper];
             liquidate => restrict_to: [keeper];
             auto_deleverage => restrict_to: [keeper];
-            update_pair => restrict_to: [keeper];
+            update_pairs => restrict_to: [keeper];
             swap_protocol_fee => restrict_to: [keeper];
         }
     }
@@ -818,8 +818,7 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             index: ListIndex,
-            update_data: Vec<u8>,
-            update_signature: Bls12381G2Signature,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -840,7 +839,7 @@ mod exchange_mod {
                     submission
                 };
                 
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                 match request {
                     Request::RemoveCollateral(request) => {
@@ -864,6 +863,7 @@ mod exchange_mod {
             account: ComponentAddress, 
             resource: ResourceAddress, 
             payment: Bucket, 
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> (Bucket, Bucket) {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
@@ -874,7 +874,7 @@ mod exchange_mod {
                 
                 let max_age = self._max_age(&config);
                 let collateral_feeds = HashMap::from([(resource, config.collateral_feeds().get(&resource).unwrap().clone())]);
-                let oracle = VirtualOracle::new(self.oracle, collateral_feeds, HashSet::new(), max_age, None);
+                let oracle = VirtualOracle::new(self.oracle, collateral_feeds, HashSet::new(), max_age, price_updates);
 
                 let (token, remainder) = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
     
@@ -889,8 +889,7 @@ mod exchange_mod {
             &self,
             account: ComponentAddress,
             payment: Bucket,
-            update_data: Vec<u8>,
-            update_signature: Bls12381G2Signature,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> (Vec<Bucket>, Bucket) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -901,7 +900,7 @@ mod exchange_mod {
                 let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                 let tokens = self._liquidate(&config, &mut pool, &mut account, &oracle, payment);
 
@@ -917,8 +916,7 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             pair_id: PairId, 
-            update_data: Vec<u8>,
-            update_signature: Bls12381G2Signature,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
@@ -930,7 +928,7 @@ mod exchange_mod {
                 let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                 self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
 
@@ -942,31 +940,31 @@ mod exchange_mod {
             })
         }
 
-        pub fn update_pair(
+        pub fn update_pairs(
             &self, 
-            pair_id: PairId,
-            update_data: Vec<u8>,
-            update_signature: Bls12381G2Signature,
-        ) -> Bucket {
+            pair_ids: Vec<PairId>,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
+        ) -> (Bucket, Vec<bool>) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
-
-                let pair_ids = HashSet::from([pair_id.clone()]);
+                
+                let pair_ids: HashSet<PairId> = pair_ids.into_iter().collect();
                 config.load_pair_configs(pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, Some((update_data, update_signature)));
+                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids.clone(), max_age, price_updates);
 
-                let rewarded = self._update_pair(&config, &mut pool, &oracle, &pair_id);
+                let rewarded: Vec<bool> = pair_ids.iter().map(|pair_id| {
+                    self._update_pair(&config, &mut pool, &oracle, pair_id)
+                }).collect();
 
                 pool.realize();
 
-                if rewarded {
-                    ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(1)
-                } else {
-                    Bucket::new(KEEPER_REWARD_RESOURCE)
-                }
+                let rewards_count = rewarded.iter().filter(|r| **r).count();
+                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(rewards_count);
+                
+                (reward, rewarded)
             })
         }
 
@@ -1184,80 +1182,6 @@ mod exchange_mod {
             pair_id: &PairId,
             price: Decimal,
         ) -> PairDetails {
-            // let pair_config = config.pair_config(pair_id);
-            // let price = oracle.price(pair_id);
-
-            // let mut pool_position = pool.position(pair_id);
-            // let oi_long = pool_position.oi_long;
-            // let oi_short = pool_position.oi_short;
-
-            // let skew = (oi_long - oi_short) * price;
-            // let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
-            // let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
-            // pool_position.skew_abs_snap = skew_abs;
-            // pool.update_skew_abs_snap(pool.skew_abs_snap() + skew_abs_snap_delta);
-
-            // let pnl = skew - pool_position.cost;
-            // let pnl_snap_delta = pnl - pool_position.pnl_snap;
-            // pool_position.pnl_snap = pnl;
-            // pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
-            
-            // let current_time = Clock::current_time_rounded_to_seconds();
-            // let period_seconds = current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch;
-            // let period = Decimal::from(period_seconds);
-            
-            // if !period.is_zero() {
-            //     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-            //     pool_position.funding_2_rate += funding_2_rate_delta;
-
-            //     if !oi_long.is_zero() && !oi_short.is_zero() {
-            //         let funding_1_rate = skew * pair_config.funding_1;
-            //         let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
-            //         let funding_rate = funding_1_rate + funding_2_rate;
-
-            //         let (funding_long_index, funding_short_index, funding_share) = if funding_rate.is_positive() {
-            //             let funding_long = funding_rate * period;
-            //             let funding_long_index = funding_long / oi_long;
-        
-            //             let funding_share = funding_long * pair_config.funding_share;
-            //             let funding_short_index = -(funding_long - funding_share) / oi_short;
-        
-            //             (funding_long_index, funding_short_index, funding_share)
-            //         } else {
-            //             let funding_short = -funding_rate * period * price;
-            //             let funding_short_index = funding_short / oi_short;
-        
-            //             let funding_share = funding_short * pair_config.funding_share;
-            //             let funding_long_index = -(funding_short - funding_share) / oi_long;
-        
-            //             (funding_long_index, funding_short_index, funding_share)
-            //         };
-
-            //         let funding_pool_0_rate = (oi_long + oi_short) * price * pair_config.funding_pool_0;
-            //         let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
-            //         let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
-
-            //         let funding_pool = funding_pool_rate * period;
-            //         let funding_pool_index = funding_pool / (oi_long + oi_short);
-            //         pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding_pool + funding_share);
-
-            //         pool_position.funding_long_index += funding_long_index + funding_pool_index;
-            //         pool_position.funding_short_index += funding_short_index + funding_pool_index;
-            //     }
-            // }
-
-            // let price_delta_ratio = (price - pool_position.last_price).checked_abs().expect(ERROR_ARITHMETIC) / pool_position.last_price;
-            // pool_position.last_price = price;
-            // pool_position.last_update = current_time;
-
-            // pool.update_position(pair_id, pool_position);
-
-            // if period_seconds >= pair_config.update_period_seconds || price_delta_ratio >= pair_config.update_price_delta_ratio {
-            //     true
-            // } else {
-            //     false
-            // }
-
             let pair_config = config.pair_config(pair_id);
             let pool_position = pool.position(pair_id);
             let oi_long = pool_position.oi_long;
