@@ -27,6 +27,7 @@ class Gateway:
                 'network_id': data['network_id'],
                 'network_name': data['network_name'],
                 'xrd': data['well_known_addresses']['xrd'],
+                'faucet': data['well_known_addresses']['faucet'],
                 'ed25519_virtual_badge': data['well_known_addresses']['ed25519_signature_virtual_badge'],
                 'secp256k1_virtual_badge': data['well_known_addresses']['secp256k1_signature_virtual_badge'],
             }

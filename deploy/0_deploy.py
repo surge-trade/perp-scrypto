@@ -80,18 +80,35 @@ async def main():
             account_details = new_account(network_config['network_id'])
         private_key, public_key, account = account_details
 
+        print('ACCOUNT:', account.as_str())
         balance = await gateway.get_xrd_balance(account)
-        if balance < 1000:
-            print('FUND ACCOUNT:', account.as_str())
-            qr = qrcode.QRCode()
-            qr.add_data(account.as_str())
-            f = io.StringIO()
-            qr.print_ascii(out=f)
-            f.seek(0)
-            print(f.read())
-        while balance < 1000:
-            await asyncio.sleep(5)
-            balance = await gateway.get_xrd_balance(account)
+        if balance < 10000:
+            builder = ret.ManifestBuilder()
+            builder = builder.call_method(
+                ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
+                'lock_fee',
+                [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100'))]
+            )
+            builder = builder.call_method(
+                ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
+                'free',
+                []
+            )
+            builder = deposit_all(builder, account)
+
+            payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+            await gateway.submit_transaction(payload)
+
+        #     print('FUND ACCOUNT:', account.as_str())
+        #     qr = qrcode.QRCode()
+        #     qr.add_data(account.as_str())
+        #     f = io.StringIO()
+        #     qr.print_ascii(out=f)
+        #     f.seek(0)
+        #     print(f.read())
+        # while balance < 10000:
+        #     await asyncio.sleep(5)
+        #     balance = await gateway.get_xrd_balance(account)
 
         state_version = await gateway.get_state_version()
         print('STATE_VERSION:', state_version)
