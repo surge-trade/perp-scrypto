@@ -110,7 +110,7 @@ mod exchange_mod {
             fn get_referral(&self, hash: Hash) -> Option<Referral>;
 
             // Authority protected methods
-            fn generate_referrals(&self, tokens: Vec<Bucket>, referrer: ComponentAddress, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>)>);
+            fn create_referrals(&self, tokens: Vec<Bucket>, referrer: ComponentAddress, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>);
             fn claim_referral(&self, hash: Hash) -> (ComponentAddress, Vec<Bucket>);
         }
     }
@@ -217,6 +217,7 @@ mod exchange_mod {
             get_protocol_balance => PUBLIC;
 
             // User methods
+            create_referrals => restrict_to: [user];
             create_account => restrict_to: [user];
             set_level_1_auth => restrict_to: [user];
             set_level_2_auth => restrict_to: [user];
@@ -601,6 +602,17 @@ mod exchange_mod {
         }
 
         // --- USER METHODS ---
+
+        pub fn create_referrals(
+            &self, 
+            tokens: Vec<Bucket>, 
+            referrer: ComponentAddress, 
+            referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>,
+        ) {
+            authorize!(self, {
+                self.referral_generator.create_referrals(tokens, referrer, referrals);
+            })
+        }
 
         pub fn create_account(
             &self, 

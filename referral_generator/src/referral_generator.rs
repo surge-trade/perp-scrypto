@@ -8,7 +8,8 @@ use self::errors::*;
 pub struct Referral {
     referrer: ComponentAddress,
     claims: Vec<(ResourceAddress, Decimal)>,
-    claimed: bool,
+    count: u64,
+    initial_count: u64,
 }
 
 #[blueprint]
@@ -28,7 +29,7 @@ mod referral_generator_mod {
         methods {
             get_referral => PUBLIC;
 
-            generate_referrals => restrict_to: [authority];
+            create_referrals => restrict_to: [authority];
             claim_referral => restrict_to: [authority];
         }
     );
@@ -56,7 +57,7 @@ mod referral_generator_mod {
             self.referrals.get(&hash).map(|entry| entry.clone())
         }
         
-        pub fn generate_referrals(&mut self, tokens: Vec<Bucket>, referrer: ComponentAddress, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>)>) {
+        pub fn create_referrals(&mut self, tokens: Vec<Bucket>, referrer: ComponentAddress, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>) {
             let mut amounts: HashMap<ResourceAddress, Decimal> = HashMap::new();
             for bucket in tokens.iter() {
                 let amount = amounts.entry(bucket.resource_address()).or_insert(Decimal::zero());
@@ -64,10 +65,10 @@ mod referral_generator_mod {
             }
 
             let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
-            for (_, claims) in referrals.iter() {
+            for (_, claims, count) in referrals.iter() {
                 for &(resource_address, amount) in claims {
                     let total_claim = total_claims.entry(resource_address).or_insert(Decimal::zero());
-                    *total_claim += amount;
+                    *total_claim += amount * Decimal::from(*count);
                 }
             }
 
@@ -79,7 +80,7 @@ mod referral_generator_mod {
                 );
             }
 
-            for (hash, claims) in referrals {
+            for (hash, claims, count) in referrals {
                 assert!(
                     self.referrals.get(&hash).is_none(),
                     "{}", ERROR_ALREADY_REFERRAL_EXISTS
@@ -87,7 +88,8 @@ mod referral_generator_mod {
                 self.referrals.insert(hash, Referral {
                     referrer,
                     claims,
-                    claimed: false,
+                    count,
+                    initial_count: count,
                 });
             }
 
@@ -98,11 +100,11 @@ mod referral_generator_mod {
             let mut referral = self.referrals.get_mut(&hash).expect(ERROR_REFERRAL_NOT_FOUND);
 
             assert!(
-                !referral.claimed,
+                referral.count > 0,
                 "{}", ERROR_REFERRAL_ALREADY_CLAIMED
             );
 
-            referral.claimed = true;
+            referral.count -= 1;
             let tokens = self.vaults.take_advanced_batch(referral.claims.clone(), TO_ZERO);
 
             (referral.referrer, tokens)
