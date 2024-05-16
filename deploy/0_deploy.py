@@ -332,7 +332,7 @@ async def main():
         print('POOL_COMPONENT:', pool_component)
         print('LP_RESOURCE:', lp_resource)
 
-        code, definition = build('referrer_generator', envs, network_config['network_name'])
+        code, definition = build('referral_generator', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,

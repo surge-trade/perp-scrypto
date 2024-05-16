@@ -61,6 +61,7 @@ async def main():
             CALL_METHOD
                 Address("{exchange_component}")
                 "create_account"
+                Enum<0u8>()
                 Enum<2u8>(
                     Enum<0u8>(
                         Enum<0u8>(
@@ -70,6 +71,7 @@ async def main():
                         )
                     )
                 )
+                Array<Bucket>()
                 Enum<0u8>()
                 Enum<0u8>()
             ;
