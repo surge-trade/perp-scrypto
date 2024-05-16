@@ -18,6 +18,8 @@ fn main() {
         env::var("CONFIG_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ACCOUNT_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("POOL_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
+        env::var("REFERRAL_GENERATOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
+        env::var("REGISTRY_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("FEE_DISTRIBUTOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("FEE_DELEGATOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),

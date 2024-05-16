@@ -117,18 +117,30 @@ impl VirtualMarginAccount {
         self.account_info.valid_requests_start
     }
 
+    pub fn get_level_1_auth(&self) -> AccessRule {
+        self.account.get_role("level_1").expect(ERROR_MISSING_AUTH)
+    }
+
+    pub fn get_level_2_auth(&self) -> AccessRule {
+        self.account.get_role("level_2").expect(ERROR_MISSING_AUTH)
+    }
+
+    pub fn get_level_3_auth(&self) -> AccessRule {
+        self.account.get_role("level_3").expect(ERROR_MISSING_AUTH)
+    }
+
     pub fn verify_level_1_auth(&self) {
-        let rule = self.account.get_role("level_1").expect(ERROR_MISSING_AUTH);
+        let rule = self.get_level_1_auth();
         Runtime::assert_access_rule(rule);
     }
 
     pub fn verify_level_2_auth(&self) {
-        let rule = self.account.get_role("level_2").expect(ERROR_MISSING_AUTH);
+        let rule = self.get_level_2_auth();
         Runtime::assert_access_rule(rule);
     }
 
     pub fn verify_level_3_auth(&self) {
-        let rule = self.account.get_role("level_3").expect(ERROR_MISSING_AUTH);
+        let rule = self.get_level_3_auth();
         Runtime::assert_access_rule(rule);
     }
 

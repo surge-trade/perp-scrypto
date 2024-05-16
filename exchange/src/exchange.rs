@@ -10,8 +10,10 @@ mod virtual_oracle;
 use scrypto::prelude::*;
 use common::{PairId, ListIndex, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _KEEPER_REWARD_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
-use pool::*;
 use config::*;
+use pool::*;
+use referral_generator::*;
+use registry::*;
 use self::errors::*;
 use self::events::*;
 use self::requests::*;
@@ -47,7 +49,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1p5cm24kguusc9urzy7r7tsg0y9s5w3w9flaqd6thjqggjdkzlqx4xx",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -67,7 +69,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phpeq5slsk28jp7990y8vvlnfg3m423j0ekf9c2jnqfw8ftmmmngck",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -88,7 +90,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pk5d6pjk0h3qfywemaj6cscv6d2s89zp6c2a4x2dy4txy40hdlea2l",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -102,7 +104,28 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phs5vc7klrtw4rs7km7t5n30pmlcnl8yelgd38ssdn6dqx6tf477hj",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        ReferralGenerator {
+            // Getter methods
+            fn get_referral(&self, hash: Hash) -> Option<Referral>;
+
+            // Authority protected methods
+            fn generate_referrals(&self, tokens: Vec<Bucket>, referrer: ComponentAddress, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>)>);
+            fn claim_referral(&self, hash: Hash) -> (ComponentAddress, Vec<Bucket>);
+        }
+    }
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        Registry {
+            // Getter methods
+            fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
+        
+            // Authority protected methods
+            fn register_permissions(&self, access_rule: AccessRule, permissions: Permissions);
+        }
+    }
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -110,7 +133,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phcg2n8ezctzcxfx0tflddjmrhgx2l6rudqd620hcrqr66xhqfv6ye",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -130,7 +153,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5n9rvzvjg20dys203ncdf60707gux69mf6l6z4ygnm3xc6f688ewv",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -176,6 +199,7 @@ mod exchange_mod {
             withdraw_fee_delegator => restrict_to: [OWNER];
 
             // Get methods
+            get_permissions => PUBLIC;
             get_account_details => PUBLIC;
             get_pool_details => PUBLIC;
             get_pair_details => PUBLIC;
@@ -197,7 +221,6 @@ mod exchange_mod {
             set_level_1_auth => restrict_to: [user];
             set_level_2_auth => restrict_to: [user];
             set_level_3_auth => restrict_to: [user];
-            set_referrer => restrict_to: [user];
             collect_referral_rewards => restrict_to: [user];
             add_liquidity => restrict_to: [user];
             remove_liquidity => restrict_to: [user];
@@ -229,6 +252,8 @@ mod exchange_mod {
         authority_token: FungibleVault,
         config: Global<Config>,
         pool: Global<MarginPool>,
+        referral_generator: Global<ReferralGenerator>,
+        registry: Global<Registry>,
         oracle: Global<Oracle>,
         fee_distributor: Global<FeeDistributor>,
         fee_delegator: Global<FeeDelegator>,
@@ -241,6 +266,8 @@ mod exchange_mod {
             authority_token: Bucket,
             config: ComponentAddress,
             pool: ComponentAddress,
+            referral_generator: ComponentAddress,
+            registry: ComponentAddress,
             oracle: ComponentAddress,
             fee_distributor: ComponentAddress,
             fee_delegator: ComponentAddress,
@@ -252,6 +279,8 @@ mod exchange_mod {
 
             let config: Global<Config> = config.into();
             let pool: Global<MarginPool> = pool.into();
+            let referral_generator: Global<ReferralGenerator> = referral_generator.into();
+            let registry: Global<Registry> = registry.into();
             let oracle: Global<Oracle> = oracle.into();
             let fee_distributor: Global<FeeDistributor> = fee_distributor.into();
             let fee_delegator: Global<FeeDelegator> = fee_delegator.into();
@@ -261,6 +290,8 @@ mod exchange_mod {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
                 config,
                 pool,
+                referral_generator,
+                registry,
                 oracle,
                 fee_distributor,
                 fee_delegator,
@@ -445,6 +476,13 @@ mod exchange_mod {
 
         // --- GET METHODS ---
 
+        pub fn get_permissions(
+            &self, 
+            access_rule: AccessRule,
+        ) -> Permissions {
+            self.registry.get_permissions(access_rule)
+        }
+
         pub fn get_account_details(
             &self, 
             account: ComponentAddress,
@@ -566,25 +604,54 @@ mod exchange_mod {
 
         pub fn create_account(
             &self, 
+            fee_oath: Option<Bucket>,
             initial_rule: AccessRule,
-            referrer: Option<ComponentAddress>,
+            mut tokens: Vec<Bucket>,
+            referral_code: Option<String>,
             reservation: Option<GlobalAddressReservation>,
         ) -> Global<MarginAccount> {
             authorize!(self, {
-                let account = Blueprint::<MarginAccount>::new(initial_rule, reservation);
+                let account_global = Blueprint::<MarginAccount>::new(initial_rule.clone(), reservation);
+                let account_component = account_global.address();
+
+                let mut permissions = self.registry.get_permissions(initial_rule.clone());
+                permissions.level_1.insert(account_component);
+                permissions.level_2.insert(account_component);
+                permissions.level_3.insert(account_component);
+                self.registry.register_permissions(initial_rule, permissions);
             
-                if let Some(referrer) = referrer {
+                let mut referral_tokens = if let Some(referral_code) = referral_code {
+                    let referral_code_hash = CryptoUtils::keccak256_hash(referral_code.into_bytes());
+                    let (referrer, tokens) = self.referral_generator.claim_referral(referral_code_hash);
                     Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT);
-                    self.fee_distributor.set_referrer(account.address(), Some(referrer));
+                    self.fee_distributor.set_referrer(account_component, Some(referrer));
+
+                    tokens
                 } else {
-                    self.fee_distributor.set_referrer(account.address(), None);
+                    self.fee_distributor.set_referrer(account_component, None);
+                    vec![]
+                };
+                tokens.append(&mut referral_tokens);
+
+                let config = VirtualConfig::new(self.config);
+                let mut account = VirtualMarginAccount::new(account_component, config.collaterals());
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+
+                self._add_collateral(&config, &mut pool, &mut account, tokens);
+
+                if let Some(fee_oath) = fee_oath {
+                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
+                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
                 }
 
+                pool.realize();
+                account.realize();
+
                 Runtime::emit_event(EventAccountCreation {
-                    account: account.address(),
+                    account: account_component,
                 });
 
-                account
+                account_global
             })
         }
 
@@ -598,7 +665,18 @@ mod exchange_mod {
                 let config = VirtualConfig::new(self.config);
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
-                account.set_level_1_auth(rule);
+
+                let old_rule = account.get_level_1_auth();
+                let mut permissions = self.registry.get_permissions(old_rule.clone());
+                permissions.level_1.remove(&account.address());
+                self.registry.register_permissions(old_rule, permissions);
+
+                account.set_level_1_auth(rule.clone());
+
+                let mut permissions = self.registry.get_permissions(rule.clone());
+                permissions.level_1.insert(account.address());
+                self.registry.register_permissions(rule, permissions);
+
                 account.realize();
             })
         }
@@ -613,7 +691,18 @@ mod exchange_mod {
                 let config = VirtualConfig::new(self.config);
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
-                account.set_level_2_auth(rule);
+
+                let old_rule = account.get_level_2_auth();
+                let mut permissions = self.registry.get_permissions(old_rule.clone());
+                permissions.level_2.remove(&account.address());
+                self.registry.register_permissions(old_rule, permissions);
+
+                account.set_level_2_auth(rule.clone());
+
+                let mut permissions = self.registry.get_permissions(rule.clone());
+                permissions.level_2.insert(account.address());
+                self.registry.register_permissions(rule, permissions);
+
                 account.realize();
             })
         }
@@ -628,30 +717,17 @@ mod exchange_mod {
                 let config = VirtualConfig::new(self.config);
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
-                account.set_level_3_auth(rule);
-                account.realize();
-            })
-        }
 
-        pub fn set_referrer(
-            &self, 
-            fee_oath: Option<Bucket>,
-            account: ComponentAddress, 
-            referrer: ComponentAddress,
-        ) {
-            authorize!(self, {
-                let config = VirtualConfig::new(self.config);
-                let account = self._handle_fee_oath(account, &config, fee_oath);
-                account.verify_level_2_auth();
+                let old_rule = account.get_level_3_auth();
+                let mut permissions = self.registry.get_permissions(old_rule.clone());
+                permissions.level_3.remove(&account.address());
+                self.registry.register_permissions(old_rule, permissions);
 
-                let current_referrer = self.fee_distributor.get_referrer(account.address());
-                assert!(
-                    current_referrer.is_none(),
-                    "{}, VALUE:{:?}, REQUIRED:None, OP:== |", ERROR_REFERRAL_ALREADY_SET, current_referrer,
-                );
+                account.set_level_3_auth(rule.clone());
 
-                Global::<MarginAccount>::try_from(referrer).expect(ERROR_INVALID_ACCOUNT);
-                self.fee_distributor.set_referrer(account.address(), Some(referrer));
+                let mut permissions = self.registry.get_permissions(rule.clone());
+                permissions.level_3.insert(account.address());
+                self.registry.register_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -713,10 +789,15 @@ mod exchange_mod {
         ) {
             authorize!(self, {
                 let config = VirtualConfig::new(self.config);
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+                let mut account = VirtualMarginAccount::new(account, config.collaterals());
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
 
                 self._add_collateral(&config, &mut pool, &mut account, tokens);
+
+                if let Some(fee_oath) = fee_oath {
+                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
+                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
+                }
 
                 pool.realize();
                 account.realize();
