@@ -94,14 +94,14 @@ pub mod margin_account {
 
         pub fn get_requests(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)> {
             let start = start.unwrap_or(0);
-            let end = (start + n).max(self.requests.len());
+            let end = (start + n).min(self.requests.len());
             (start..end).zip(self.requests.range(start, end).into_iter()).collect()
         }
 
         pub fn get_requests_tail(&self, n: ListIndex, end: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)> {
             let len = self.requests.len();
-            let end = end.map(|end| (end + 1).max(len)).unwrap_or(len);
-            let start = end - n.max(end);
+            let end = end.map(|end| (end + 1).min(len)).unwrap_or(len);
+            let start = end - n.min(end);
             (start..end).rev().zip(self.requests.range(start, end).into_iter().rev()).collect()
         }
 
