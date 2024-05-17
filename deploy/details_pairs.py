@@ -67,11 +67,23 @@ async def main():
         '''
 
         result = await gateway.preview_transaction(manifest)
-        print(result)
+        print(result['receipt']['output'][1]['programmatic_json'])
         # result = result['receipt']['output'][1]['programmatic_json']['fields']
 
-        # pairs = []
-        # for 
+        pairs = []
+        for pair in result['receipt']['output'][1]['programmatic_json']['elements']:
+            pair = pair['fields']
+            pairs.append({
+                'pair_id': pair[0]['value'],
+                'oi_long': pair[1]['value'],
+                'oi_short': pair[2]['value'],
+                'funding_1': pair[3]['value'],
+                'funding_2': pair[4]['value'],
+                'funding_long': pair[5]['value'],
+                'funding_short': pair[6]['value'],
+                'funding_share': pair[7]['value'],
+                'pair_config': pair[8]['value'],
+            })
 
         # base_tokens_amount = result[0]['value']
         # virtual_balance = result[1]['value']
