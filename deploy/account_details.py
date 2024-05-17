@@ -64,7 +64,62 @@ async def main():
         '''
 
         result = await gateway.preview_transaction(manifest)
-        print(result)
+        result = result['receipt']['output'][1]['programmatic_json']['fields']
+
+        virtual_balance = result[0]['value']
+
+        positions = result[1]['elements']
+        for elem in positions:
+            elem = elem['fields']
+            positions.append({
+                'pair_id': elem[0]['value'],
+                'amount': elem[1]['value'],
+                'margin_initial': elem[2]['value'],
+                'margin_maintenance': elem[3]['value'],
+                'cost': elem[4]['value'],
+                'funding': elem[5]['value'],
+            })
+
+        collaterals = []
+        for elem in result[2]['elements']:
+            elem = elem['fields']
+            collaterals.append({
+                'resource': elem[0]['value'],
+                'amount': elem[1]['value'],
+                'amount_discounted': elem[2]['value'],
+                'margin': elem[3]['value'],
+            })
+
+        valid_requests_start = result[3]['value']
+
+        active_requests = []
+        for elem in result[4]['elements']:
+            elem = elem['fields']
+            active_requests.append({
+                'index': elem[0]['value'],
+                'request': elem[1]['value'],
+                'submission': elem[2]['value'],
+                'expiry': elem[3]['value'],
+                'status': elem[4]['value'],
+            })
+
+        requests_history = []
+        for elem in result[5]['elements']:
+            elem = elem['fields']
+            requests_history.append({
+                'index': elem[0]['value'],
+                'request': elem[1]['value'],
+                'submission': elem[2]['value'],
+                'expiry': elem[3]['value'],
+                'status': elem[4]['value'],
+            })
+
+        print('Virtual Balance:', virtual_balance)
+        print('Positions:', positions)
+        print('Collaterals:', collaterals)
+        print('Valid Requests Start:', valid_requests_start)
+        print('Active Requests:', active_requests)
+        print('Requests History:', requests_history)
 
 if __name__ == '__main__':
     asyncio.run(main())
