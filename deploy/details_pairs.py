@@ -67,8 +67,6 @@ async def main():
         '''
 
         result = await gateway.preview_transaction(manifest)
-        print(result['receipt']['output'][1]['programmatic_json'])
-        # result = result['receipt']['output'][1]['programmatic_json']['fields']
 
         pairs = []
         for pair in result['receipt']['output'][1]['programmatic_json']['elements']:
@@ -82,26 +80,10 @@ async def main():
                 'funding_long': pair[5]['value'],
                 'funding_short': pair[6]['value'],
                 'funding_share': pair[7]['value'],
-                'pair_config': pair[8]['value'],
+                'pair_config': pair[8],
             })
 
-        # base_tokens_amount = result[0]['value']
-        # virtual_balance = result[1]['value']
-        # unrealized_pool_funding = result[2]['value']
-        # pnl_snap = result[3]['value']
-        # skew_ratio = result[4]['value']
-        # skew_ratio_cap = result[5]['value']
-        # lp_supply = result[6]['value']
-        # lp_price = result[7]['value']
-
-        # print('Base Tokens Amount:', base_tokens_amount)
-        # print('Virtual Balance:', virtual_balance)
-        # print('Unrealized Pool Funding:', unrealized_pool_funding)
-        # print('PnL Snap:', pnl_snap)
-        # print('Skew Ratio:', skew_ratio)
-        # print('Skew Ratio Cap:', skew_ratio_cap)
-        # print('LP Supply:', lp_supply)
-        # print('LP Price:', lp_price)
+        print(pairs)
 
 if __name__ == '__main__':
     asyncio.run(main())
