@@ -1,4 +1,5 @@
 use scrypto::prelude::*;
+use std::cmp::Reverse;
 use account::*;
 use common::{PairId, ListIndex};
 use super::errors::*;
@@ -90,6 +91,17 @@ impl VirtualMarginAccount {
         let requests_fetched: HashMap<ListIndex, KeeperRequest> = self.account.get_requests_by_indexes(indexes)
             .into_iter().map(|(index, request)| (index, request.expect(ERROR_MISSING_REQUEST))).collect();
         requests.extend(requests_fetched);
+        requests
+    }
+
+    pub fn requests_tail(&self, n: ListIndex, end: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)> {
+        self.account.get_requests_tail(n, end)
+    }
+
+    pub fn active_requests(&self) -> Vec<(ListIndex, KeeperRequest)> {
+        let mut requests = self.account.get_active_requests().into_iter()
+            .collect::<Vec<_>>();
+        requests.sort_by_key(|(index, _)| Reverse(*index));
         requests
     }
 

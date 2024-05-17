@@ -1,6 +1,8 @@
 use scrypto::prelude::*;
+use super::requests::*;
 use common::*;
 use config::*;
+use account::*;
 
 #[derive(ScryptoSbor, Clone)]
 pub struct PositionDetails {
@@ -21,10 +23,22 @@ pub struct CollateralDetails {
 }
 
 #[derive(ScryptoSbor, Clone)]
+pub struct RequestDetails {
+    pub index: ListIndex,
+    pub request: Request,
+    pub submission: Instant,
+    pub expiry: Instant,
+    pub status: Status,
+}
+
+#[derive(ScryptoSbor, Clone)]
 pub struct AccountDetails {
     pub virtual_balance: Decimal,
     pub positions: Vec<PositionDetails>,
     pub collaterals: Vec<CollateralDetails>,
+    pub valid_requests_start: ListIndex,
+    pub active_requests: Vec<RequestDetails>,
+    pub requests_history: Vec<RequestDetails>,
 }
 
 #[derive(ScryptoSbor, Clone)]

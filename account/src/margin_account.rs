@@ -92,12 +92,17 @@ pub mod margin_account {
             self.requests.get(index).map(|request| request.clone())
         }
 
-        pub fn get_requests(&self, start: ListIndex, end: ListIndex) -> Vec<KeeperRequest> {
-            self.requests.range(start, end)
+        pub fn get_requests(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)> {
+            let start = start.unwrap_or(0);
+            let end = (start + n).max(self.requests.len());
+            (start..end).zip(self.requests.range(start, end).into_iter()).collect()
         }
 
-        pub fn get_requests_tail(&self, num: ListIndex) -> Vec<KeeperRequest> {
-            self.requests.range(self.requests.len() - num, self.requests.len())
+        pub fn get_requests_tail(&self, n: ListIndex, end: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)> {
+            let len = self.requests.len();
+            let end = end.map(|end| (end + 1).max(len)).unwrap_or(len);
+            let start = end - n.max(end);
+            (start..end).rev().zip(self.requests.range(start, end).into_iter().rev()).collect()
         }
 
         pub fn get_requests_by_indexes(&self, indexes: Vec<ListIndex>) -> HashMap<ListIndex, Option<KeeperRequest>> {
