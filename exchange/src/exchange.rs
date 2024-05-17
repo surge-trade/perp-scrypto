@@ -49,7 +49,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1phgljsuanpej5797xjez0uk2steqx288w3xsqc9pdx8ghprcznky42",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -69,7 +69,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p503kx2m64kr0rezuqpeyeef44uh60azduy6jpyyguhyqy9j3mjjnk",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -90,7 +90,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1ph9z0kpvgre7s5yrruwrxfl9q9gfuc0ulu8077mp89zpxcw2hwj9ef",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -104,7 +104,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p460ldyepsztpc74aprvqjcn2eaqn2wn4gwfc80246c346tuljwmez",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Getter methods
             fn get_referral(&self, hash: Hash) -> Option<Referral>;
@@ -115,7 +115,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkgqsnq6md07uyk53sx6juyf5fhx3t6qesddypyekmjpt0xu3qeqk8",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Registry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
@@ -125,7 +125,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4lcrwmjg94en5g4whaut0azkuua4tpq08syxd6ev66kzjtvekhz25",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -133,7 +133,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p498gkrgnuzj82cs279mlvp9au7zq58vfzaz34gvrqlfyq2qqdaz6j",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -153,7 +153,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4w7sghk4e4y2aw8en0sgs3djrf8vk774mwx99zvra5pv2zmu9cxs0",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -512,7 +512,9 @@ mod exchange_mod {
             &self, 
             pairs: Vec<(PairId, Decimal)>,
         ) -> Vec<PairDetails> {
-            let config = VirtualConfig::new(self.config);
+            let mut config = VirtualConfig::new(self.config);
+            let pair_ids = pairs.iter().map(|(pair_id, _)| pair_id.clone()).collect();
+            config.load_pair_configs(pair_ids);
             let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
 
             pairs.into_iter().map(|(pair_id, price)| {
