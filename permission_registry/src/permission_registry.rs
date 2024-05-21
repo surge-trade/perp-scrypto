@@ -13,7 +13,7 @@ pub struct Permissions {
     AccessRule,
     Permissions,
 )]
-mod registry_mod {
+mod permission_registry_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
 
     enable_method_auth!(
@@ -27,12 +27,12 @@ mod registry_mod {
         }
     );
 
-    pub struct Registry {
+    pub struct PermissionRegistry {
         permissions: KeyValueStore<AccessRule, Permissions>,
     }
 
-    impl Registry {
-        pub fn new(owner_role: OwnerRole) -> Global<Registry> {
+    impl PermissionRegistry {
+        pub fn new(owner_role: OwnerRole) -> Global<PermissionRegistry> {
             Self {
                 permissions: KeyValueStore::new_with_registered_type(),
             }

@@ -36,7 +36,7 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
         '-v', f'/root/surge-scrypto/account:/account',
         '-v', f'/root/surge-scrypto/pool:/pool',
         '-v', f'/root/surge-scrypto/referral_generator:/referral_generator',
-        '-v', f'/root/surge-scrypto/registry:/registry',
+        '-v', f'/root/surge-scrypto/permission_registry:/permission_registry',
         ] + 
     [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
     ['radixdlt/scrypto-builder:v1.1.1'],        
@@ -72,7 +72,7 @@ async def main():
         clean('config')
         clean('pool')
         clean('referral_generator')
-        clean('registry')
+        clean('permission_registry')
         clean('fee_distributor')
         clean('fee_delegator')
         clean('exchange')
@@ -112,7 +112,7 @@ async def main():
         config_component = config_data['CONFIG_COMPONENT']
         pool_component = config_data['POOL_COMPONENT']
         referral_generator_component = config_data['REFERRAL_GENERATOR_COMPONENT']
-        registry_component = config_data['REGISTRY_COMPONENT']
+        permission_registry_component = config_data['PERMISSION_REGISTRY_COMPONENT']
         oracle_component = config_data['ORACLE_COMPONENT']
         fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
         fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
@@ -175,7 +175,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(registry_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
