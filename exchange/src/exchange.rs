@@ -56,10 +56,9 @@ mod exchange_mod {
 
             // Getter methods
             fn get_info(&self) -> ConfigInfoCompressed;
-            fn get_pair_config_len(&self) -> ListIndex;
-            fn get_pair_config(&self, pair_id: PairId) -> Option<PairConfigCompressed>;
-            fn get_pair_configs(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>>;
-            fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfigCompressed>;
+            fn get_pair_configs(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<PairConfigCompressed>;
+            fn get_pair_configs_by_ids(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>>;
+            fn get_pair_configs_len(&self) -> ListIndex;
 
             // Authority protected methods
             fn update_exchange_config(&mut self, config: ExchangeConfig);
@@ -199,20 +198,21 @@ mod exchange_mod {
             withdraw_fee_delegator => restrict_to: [OWNER];
 
             // Get methods
+            get_pairs => PUBLIC;
             get_permissions => PUBLIC;
             get_account_details => PUBLIC;
             get_pool_details => PUBLIC;
             get_pair_details => PUBLIC;
             get_exchange_config => PUBLIC;
-            get_pairs_len => PUBLIC;
-            get_pair_config => PUBLIC;
             get_pair_configs => PUBLIC;
-            get_pair_config_range => PUBLIC;
+            get_pair_configs_by_ids => PUBLIC;
+            get_pair_configs_len => PUBLIC;
             get_collateral_config => PUBLIC;
             get_collateral_configs => PUBLIC;
             get_collaterals => PUBLIC;
             get_pool_value => PUBLIC;
             get_skew_ratio => PUBLIC;
+
             get_referrer => PUBLIC;
             get_protocol_balance => PUBLIC;
 
@@ -477,6 +477,14 @@ mod exchange_mod {
 
         // --- GET METHODS ---
 
+        pub fn get_pairs(
+            &self,
+            n: ListIndex,
+            start: Option<ListIndex>,
+        ) -> Vec<PairId> {
+            self.config.get_pair_configs(n, start).into_iter().map(|v| v.pair_id).collect()
+        }
+
         pub fn get_permissions(
             &self, 
             access_rule: AccessRule,
@@ -528,33 +536,26 @@ mod exchange_mod {
             self.config.get_info().exchange.decompress()
         }
 
-        pub fn get_pairs_len(
-            &self,
-        ) -> ListIndex {
-            self.config.get_pair_config_len()
-        }
-
-        pub fn get_pair_config(
-            &self, 
-            pair_id: PairId,
-        ) -> PairConfig {
-            self.config.get_pair_config(pair_id).expect(ERROR_MISSING_PAIR_CONFIG).decompress()
-        }
-
         pub fn get_pair_configs(
+            &self, 
+            n: ListIndex, 
+            start: Option<ListIndex>,
+        ) -> Vec<PairConfig> {
+            self.config.get_pair_configs(n, start).into_iter().map(|v| v.decompress()).collect()
+        }
+        
+        pub fn get_pair_configs_by_ids(
             &self, 
             pair_ids: HashSet<PairId>,
         ) -> HashMap<PairId, PairConfig> {
-            self.config.get_pair_configs(pair_ids).into_iter()
-                .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect()
+            self.config.get_pair_configs_by_ids(pair_ids).into_iter()
+            .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect()
         }
-
-        pub fn get_pair_config_range(
-            &self, 
-            start: ListIndex, 
-            end: ListIndex,
-        ) -> Vec<PairConfig> {
-            self.config.get_pair_config_range(start, end).into_iter().map(|v| v.decompress()).collect()
+        
+        pub fn get_pair_configs_len(
+            &self,
+        ) -> ListIndex {
+            self.config.get_pair_configs_len()
         }
 
         pub fn get_collateral_config(

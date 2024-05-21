@@ -22,7 +22,7 @@ impl VirtualConfig {
     }
 
     pub fn load_pair_configs(&mut self, pair_ids: HashSet<PairId>) {
-        let pair_configs = self.config.get_pair_configs(pair_ids).into_iter()
+        let pair_configs = self.config.get_pair_configs_by_ids(pair_ids).into_iter()
             .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect();
         self.pair_configs = Some(pair_configs);
     }

@@ -20,10 +20,9 @@ mod config_mod {
         methods { 
             // Get methods
             get_info => PUBLIC;
-            get_pair_config_len => PUBLIC;
-            get_pair_config => PUBLIC;
             get_pair_configs => PUBLIC;
-            get_pair_config_range => PUBLIC;
+            get_pair_configs_by_ids => PUBLIC;
+            get_pair_configs_len => PUBLIC;
 
             // Authority protected methods
             update_exchange_config => restrict_to: [authority];
@@ -68,20 +67,18 @@ mod config_mod {
             }
         }
 
-        pub fn get_pair_config_len(&self) -> ListIndex {
-            self.pairs.len()
+        pub fn get_pair_configs(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<PairConfigCompressed> {
+            let start = start.unwrap_or(0);
+            let end = (start + n).min(self.pairs.len());
+            self.pairs.range(start, end)
         }
 
-        pub fn get_pair_config(&self, pair_id: PairId) -> Option<PairConfigCompressed> {
-            self.pairs.get(&pair_id).map(|v| v.clone())
-        }
-
-        pub fn get_pair_configs(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>> {
+        pub fn get_pair_configs_by_ids(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>> {
             pair_ids.into_iter().map(|k| (k.to_owned(), self.pairs.get(&k).map(|v| v.clone()))).collect()
         }
 
-        pub fn get_pair_config_range(&self, start: ListIndex, end: ListIndex) -> Vec<PairConfigCompressed> {
-            self.pairs.range(start, end)
+        pub fn get_pair_configs_len(&self) -> ListIndex {
+            self.pairs.len()
         }
 
         pub fn update_exchange_config(&mut self, config: ExchangeConfig) {
