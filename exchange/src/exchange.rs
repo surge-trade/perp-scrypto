@@ -254,7 +254,7 @@ mod exchange_mod {
         config: Global<Config>,
         pool: Global<MarginPool>,
         referral_generator: Global<ReferralGenerator>,
-        registry: Global<Registry>,
+        permission_registry: Global<PermissionRegistry>,
         oracle: Global<Oracle>,
         fee_distributor: Global<FeeDistributor>,
         fee_delegator: Global<FeeDelegator>,
@@ -268,7 +268,7 @@ mod exchange_mod {
             config: ComponentAddress,
             pool: ComponentAddress,
             referral_generator: ComponentAddress,
-            registry: ComponentAddress,
+            permission_registry: ComponentAddress,
             oracle: ComponentAddress,
             fee_distributor: ComponentAddress,
             fee_delegator: ComponentAddress,
@@ -281,7 +281,7 @@ mod exchange_mod {
             let config: Global<Config> = config.into();
             let pool: Global<MarginPool> = pool.into();
             let referral_generator: Global<ReferralGenerator> = referral_generator.into();
-            let registry: Global<Registry> = registry.into();
+            let permission_registry: Global<PermissionRegistry> = permission_registry.into();
             let oracle: Global<Oracle> = oracle.into();
             let fee_distributor: Global<FeeDistributor> = fee_distributor.into();
             let fee_delegator: Global<FeeDelegator> = fee_delegator.into();
@@ -292,7 +292,7 @@ mod exchange_mod {
                 config,
                 pool,
                 referral_generator,
-                registry,
+                permission_registry,
                 oracle,
                 fee_distributor,
                 fee_delegator,
@@ -489,7 +489,7 @@ mod exchange_mod {
             &self, 
             access_rule: AccessRule,
         ) -> Permissions {
-            self.registry.get_permissions(access_rule)
+            self.permission_registry.get_permissions(access_rule)
         }
 
         pub fn get_account_details(
@@ -631,11 +631,11 @@ mod exchange_mod {
                 let account_global = Blueprint::<MarginAccount>::new(initial_rule.clone(), reservation);
                 let account_component = account_global.address();
 
-                let mut permissions = self.registry.get_permissions(initial_rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(initial_rule.clone());
                 permissions.level_1.insert(account_component);
                 permissions.level_2.insert(account_component);
                 permissions.level_3.insert(account_component);
-                self.registry.set_permissions(initial_rule, permissions);
+                self.permission_registry.set_permissions(initial_rule, permissions);
             
                 let mut referral_tokens = if let Some(referral_code) = referral_code {
                     let referral_code_hash = CryptoUtils::keccak256_hash(referral_code.into_bytes());
@@ -684,15 +684,15 @@ mod exchange_mod {
                 account.verify_level_1_auth();
 
                 let old_rule = account.get_level_1_auth();
-                let mut permissions = self.registry.get_permissions(old_rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
                 permissions.level_1.remove(&account.address());
-                self.registry.set_permissions(old_rule, permissions);
+                self.permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_1_auth(rule.clone());
 
-                let mut permissions = self.registry.get_permissions(rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(rule.clone());
                 permissions.level_1.insert(account.address());
-                self.registry.set_permissions(rule, permissions);
+                self.permission_registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -710,15 +710,15 @@ mod exchange_mod {
                 account.verify_level_1_auth();
 
                 let old_rule = account.get_level_2_auth();
-                let mut permissions = self.registry.get_permissions(old_rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
                 permissions.level_2.remove(&account.address());
-                self.registry.set_permissions(old_rule, permissions);
+                self.permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_2_auth(rule.clone());
 
-                let mut permissions = self.registry.get_permissions(rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(rule.clone());
                 permissions.level_2.insert(account.address());
-                self.registry.set_permissions(rule, permissions);
+                self.permission_registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -736,15 +736,15 @@ mod exchange_mod {
                 account.verify_level_1_auth();
 
                 let old_rule = account.get_level_3_auth();
-                let mut permissions = self.registry.get_permissions(old_rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
                 permissions.level_3.remove(&account.address());
-                self.registry.set_permissions(old_rule, permissions);
+                self.permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_3_auth(rule.clone());
 
-                let mut permissions = self.registry.get_permissions(rule.clone());
+                let mut permissions = self.permission_registry.get_permissions(rule.clone());
                 permissions.level_3.insert(account.address());
-                self.registry.set_permissions(rule, permissions);
+                self.permission_registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
