@@ -37,7 +37,7 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
         '-v', f'/root/surge-scrypto/account:/account',
         '-v', f'/root/surge-scrypto/pool:/pool',
         '-v', f'/root/surge-scrypto/referral_generator:/referral_generator',
-        '-v', f'/root/surge-scrypto/permission_registry:/permission_registry',
+        '-v', f'/root/surge-scrypto/registry:/registry',
         ] + 
     [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
     ['radixdlt/scrypto-builder:v1.1.1'],        
@@ -73,7 +73,7 @@ async def main():
         clean('config')
         clean('pool')
         clean('referral_generator')
-        clean('permission_registry')
+        clean('registry')
         clean('fee_distributor')
         clean('fee_delegator')
         clean('exchange')
@@ -361,7 +361,7 @@ async def main():
         referral_generator_component = addresses[0]
         print('REFERRAL_GENERATOR_COMPONENT:', referral_generator_component)
 
-        code, definition = build('permission_registry', envs, network_config['network_name'])
+        code, definition = build('registry', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
             account,
             code,
@@ -372,23 +372,23 @@ async def main():
         )
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
-        permission_registry_package = addresses[0]
-        envs.append(('PERMISSION_REGISTRY_PACKAGE', permission_registry_package))
-        print('PERMISSION_REGISTRY_PACKAGE:', permission_registry_package)
+        registry_package = addresses[0]
+        envs.append(('REGISTRY_PACKAGE', registry_package))
+        print('REGISTRY_PACKAGE:', registry_package)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_package)),
-            'PermissionRegistry',
+            ret.ManifestBuilderAddress.STATIC(ret.Address(registry_package)),
+            'Registry',
             'new',
             [manifest_owner_role]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         addresses = await gateway.get_new_addresses(intent)
-        permission_registry_component = addresses[0]
-        print('PERMISSION_REGISTRY_COMPONENT:', permission_registry_component)
+        registry_component = addresses[0]
+        print('REGISTRY_COMPONENT:', registry_component)
 
         code, definition = build('fee_distributor', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
@@ -485,7 +485,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(registry_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
@@ -512,7 +512,7 @@ async def main():
         print(f'ACCOUNT_PACKAGE={account_package}')
         print(f'POOL_PACKAGE={pool_package}')
         print(f'REFERRAL_GENERATOR_PACKAGE={referral_generator_package}')
-        print(f'PERMISSION_REGISTRY_PACKAGE={permission_registry_package}')
+        print(f'REGISTRY_PACKAGE={registry_package}')
         print(f'ORACLE_PACKAGE={oracle_package}')
         print(f'FEE_DISTRIBUTOR_PACKAGE={fee_distributor_package}')
         print(f'FEE_DELEGATOR_PACKAGE={fee_delegator_package}')
@@ -522,7 +522,7 @@ async def main():
         print(f'CONFIG_COMPONENT={config_component}')
         print(f'POOL_COMPONENT={pool_component}')
         print(f'REFERRAL_GENERATOR_COMPONENT={referral_generator_component}')
-        print(f'PERMISSION_REGISTRY_COMPONENT={permission_registry_component}')
+        print(f'REGISTRY_COMPONENT={registry_component}')
         print(f'ORACLE_COMPONENT={oracle_component}')
         print(f'FEE_DISTRIBUTOR_COMPONENT={fee_distributor_component}')
         print(f'FEE_DELEGATOR_COMPONENT={fee_delegator_component}')
@@ -539,7 +539,7 @@ async def main():
             'ACCOUNT_PACKAGE': account_package,
             'POOL_PACKAGE': pool_package,
             'REFERRAL_GENERATOR_PACKAGE': referral_generator_package,
-            'PERMISSION_REGISTRY_PACKAGE': permission_registry_package,
+            'REGISTRY_PACKAGE': registry_package,
             'ORACLE_PACKAGE': oracle_package,
             'FEE_DISTRIBUTOR_PACKAGE': fee_distributor_package,
             'FEE_DELEGATOR_PACKAGE': fee_delegator_package,
@@ -548,7 +548,7 @@ async def main():
             'CONFIG_COMPONENT': config_component,
             'POOL_COMPONENT': pool_component,
             'REFERRAL_GENERATOR_COMPONENT': referral_generator_component,
-            'PERMISSION_REGISTRY_COMPONENT': permission_registry_component,
+            'REGISTRY_COMPONENT': registry_component,
             'ORACLE_COMPONENT': oracle_component,
             'FEE_DISTRIBUTOR_COMPONENT': fee_distributor_component,
             'FEE_DELEGATOR_COMPONENT': fee_delegator_component,
