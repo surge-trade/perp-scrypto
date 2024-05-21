@@ -21,11 +21,6 @@ async def main():
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
-        network_config = await gateway.network_configuration()
-        account_details = load_account(network_config['network_id'])
-        if account_details is None:
-            account_details = new_account(network_config['network_id'])
-        private_key, public_key, account = account_details
 
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
@@ -35,25 +30,7 @@ async def main():
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
 
-        balance = await gateway.get_xrd_balance(account)
-        if balance < 1000:
-            print('FUND ACCOUNT:', account.as_str())
-            qr = qrcode.QRCode()
-            qr.add_data(account.as_str())
-            f = io.StringIO()
-            qr.print_ascii(out=f)
-            f.seek(0)
-            print(f.read())
-        while balance < 1000:
-            await asyncio.sleep(5)
-            balance = await gateway.get_xrd_balance(account)
-
         manifest = f'''
-            CALL_METHOD
-                Address("{account.as_str()}")
-                "lock_fee"
-                Decimal("10")
-            ;
             CALL_METHOD
                 Address("{exchange_component}")
                 "get_account_details"

@@ -115,12 +115,12 @@ mod exchange_mod {
     }
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        Registry {
+        PermissionRegistry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
         
             // Authority protected methods
-            fn register_permissions(&self, access_rule: AccessRule, permissions: Permissions);
+            fn set_permissions(&self, access_rule: AccessRule, permissions: Permissions);
         }
     }
     extern_blueprint! {
@@ -635,7 +635,7 @@ mod exchange_mod {
                 permissions.level_1.insert(account_component);
                 permissions.level_2.insert(account_component);
                 permissions.level_3.insert(account_component);
-                self.registry.register_permissions(initial_rule, permissions);
+                self.registry.set_permissions(initial_rule, permissions);
             
                 let mut referral_tokens = if let Some(referral_code) = referral_code {
                     let referral_code_hash = CryptoUtils::keccak256_hash(referral_code.into_bytes());
@@ -686,13 +686,13 @@ mod exchange_mod {
                 let old_rule = account.get_level_1_auth();
                 let mut permissions = self.registry.get_permissions(old_rule.clone());
                 permissions.level_1.remove(&account.address());
-                self.registry.register_permissions(old_rule, permissions);
+                self.registry.set_permissions(old_rule, permissions);
 
                 account.set_level_1_auth(rule.clone());
 
                 let mut permissions = self.registry.get_permissions(rule.clone());
                 permissions.level_1.insert(account.address());
-                self.registry.register_permissions(rule, permissions);
+                self.registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -712,13 +712,13 @@ mod exchange_mod {
                 let old_rule = account.get_level_2_auth();
                 let mut permissions = self.registry.get_permissions(old_rule.clone());
                 permissions.level_2.remove(&account.address());
-                self.registry.register_permissions(old_rule, permissions);
+                self.registry.set_permissions(old_rule, permissions);
 
                 account.set_level_2_auth(rule.clone());
 
                 let mut permissions = self.registry.get_permissions(rule.clone());
                 permissions.level_2.insert(account.address());
-                self.registry.register_permissions(rule, permissions);
+                self.registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -738,13 +738,13 @@ mod exchange_mod {
                 let old_rule = account.get_level_3_auth();
                 let mut permissions = self.registry.get_permissions(old_rule.clone());
                 permissions.level_3.remove(&account.address());
-                self.registry.register_permissions(old_rule, permissions);
+                self.registry.set_permissions(old_rule, permissions);
 
                 account.set_level_3_auth(rule.clone());
 
                 let mut permissions = self.registry.get_permissions(rule.clone());
                 permissions.level_3.insert(account.address());
-                self.registry.register_permissions(rule, permissions);
+                self.registry.set_permissions(rule, permissions);
 
                 account.realize();
             })

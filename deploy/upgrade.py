@@ -33,10 +33,11 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
         '-v', f'/root/surge-scrypto/common:/common', 
+        '-v', f'/root/surge-scrypto/config:/config', 
         '-v', f'/root/surge-scrypto/account:/account',
+        '-v', f'/root/surge-scrypto/permission_registry:/permission_registry',
         '-v', f'/root/surge-scrypto/pool:/pool',
         '-v', f'/root/surge-scrypto/referral_generator:/referral_generator',
-        '-v', f'/root/surge-scrypto/permission_registry:/permission_registry',
         ] + 
     [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
     ['radixdlt/scrypto-builder:v1.1.1'],        
@@ -116,8 +117,7 @@ async def main():
         oracle_component = config_data['ORACLE_COMPONENT']
         fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
         fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
-        exchange_package = config_data['EXCHANGE_PACKAGE']
-        exchange_component = config_data['EXCHANGE_COMPONENT']
+        env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
 
         owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
         manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
@@ -205,6 +205,37 @@ async def main():
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
         print('Signal upgrade:', status)
+
+        manifest = f'''
+            CALL_METHOD
+                Address("{account.as_str()}")
+                "lock_fee"
+                Decimal("10")
+            ;
+            CALL_METHOD
+                Address("{account.as_str()}")
+                "create_proof_of_amount"
+                Address("{owner_resource}")
+                Decimal("1")
+            ;
+            CALL_METHOD
+                Address("{env_registry_component}")
+                "set_variables"
+                Array<Tuple>(
+                    Tuple(
+                        "exchange_component",
+                        Enum<8u8>(
+                            Address("{exchange_component}")
+                        )
+                    ),
+                )
+            ;
+        '''
+
+        payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        status = await gateway.get_transaction_status(intent)
+        print('Register exchange:', status)
 
         print('---------- DEPLOY COMPLETE ----------')
 

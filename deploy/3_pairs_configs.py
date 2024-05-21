@@ -30,7 +30,6 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
         owner_resource = config_data['OWNER_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']

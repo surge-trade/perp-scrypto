@@ -143,7 +143,7 @@ class Gateway:
             "nonce": 4294967295,
             "signer_public_keys": [],
             "flags": {
-                "use_free_credit": False,
+                "use_free_credit": True,
                 "assume_all_signature_proofs": True,
                 "skip_epoch_check": True
             }

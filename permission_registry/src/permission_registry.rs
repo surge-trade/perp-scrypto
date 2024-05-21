@@ -22,8 +22,7 @@ mod permission_registry_mod {
         },
         methods {
             get_permissions => PUBLIC;
-
-            register_permissions => restrict_to: [authority];
+            set_permissions => restrict_to: [authority];
         }
     );
 
@@ -48,7 +47,7 @@ mod permission_registry_mod {
             self.permissions.get(&access_rule).map(|p| p.clone()).unwrap_or_default()
         }
 
-        pub fn register_permissions(&mut self, access_rule: AccessRule, permissions: Permissions) {
+        pub fn set_permissions(&mut self, access_rule: AccessRule, permissions: Permissions) {
             self.permissions.insert(access_rule, permissions);
         }
     }

@@ -1,3 +1,5 @@
+import qrcode
+import io
 import radix_engine_toolkit as ret
 import asyncio
 import datetime
@@ -11,7 +13,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all
+from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 
 async def main():
     path = dirname(realpath(__file__))
@@ -28,34 +30,35 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
-        exchange_component = config_data['EXCHANGE_COMPONENT']
-        account_component = config_data['ACCOUNT_COMPONENT']
+        owner_resource = config_data['OWNER_RESOURCE']
+        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
+        xrd = network_config['xrd']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
+            qr = qrcode.QRCode()
+            qr.add_data(account.as_str())
+            f = io.StringIO()
+            qr.print_ascii(out=f)
+            f.seek(0)
+            print(f.read())
         while balance < 1000:
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
+        )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'margin_order_request',
-            [
-                ret.ManifestBuilderValue.ENUM_VALUE(0, []), # Fee oath
-                ret.ManifestBuilderValue.U64_VALUE(10000000000), # Expiry seconds
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))), # Margin account
-                ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # Pair id
-                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('-0.00010')), # Amount
-                ret.ManifestBuilderValue.ENUM_VALUE(0, [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('56000'))]), # Price limit
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Activate requests
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Cancel requests
-                ret.ManifestBuilderValue.U8_VALUE(1), # Status
-            ]
+            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
+            'add_child',
+            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xrd)))]
         )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)

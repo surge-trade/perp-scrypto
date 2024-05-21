@@ -30,11 +30,10 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
-        owner_resource = config_data['OWNER_RESOURCE']
-        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        xrd = network_config['xrd']
+        base_resource = config_data['BASE_RESOURCE']
+        exchange_component = config_data['EXCHANGE_COMPONENT']
+        account_component = config_data['ACCOUNT_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -51,20 +50,25 @@ async def main():
 
 
         builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = withdraw_to_bucket(
-            builder, 
-            account, 
-            ret.Address(xrd), 
-            ret.Decimal('1000'), 
-            'bucket1'
-        )
+        builder = lock_fee(builder, account, 200)
+        builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('100'), 'bucket1')
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
-            'wrap',
-            [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            'add_collateral',
+            [
+                ret.ManifestBuilderValue.ENUM_VALUE(0, []),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.BUCKET_VALUE, [
+                    ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))
+                ]),
+            ]
         )
         builder = deposit_all(builder, account)
+
+        # OSS
+        # manifest: ret.TransactionManifest = builder.build(network_config['network_id'])
+        # print(manifest.instructions().as_str())
+
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         print('Transaction id:', intent)

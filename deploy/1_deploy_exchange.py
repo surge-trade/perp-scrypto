@@ -35,9 +35,9 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
         '-v', f'/root/surge-scrypto/common:/common', 
         '-v', f'/root/surge-scrypto/config:/config', 
         '-v', f'/root/surge-scrypto/account:/account',
+        '-v', f'/root/surge-scrypto/permission_registry:/permission_registry',
         '-v', f'/root/surge-scrypto/pool:/pool',
         '-v', f'/root/surge-scrypto/referral_generator:/referral_generator',
-        '-v', f'/root/surge-scrypto/permission_registry:/permission_registry',
         ] + 
     [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
     ['radixdlt/scrypto-builder:v1.1.1'],        
@@ -71,6 +71,7 @@ async def main():
         clean('token_wrapper')
         clean('account')
         clean('config')
+        clean('env_registry')
         clean('pool')
         clean('referral_generator')
         clean('permission_registry')
@@ -497,6 +498,66 @@ async def main():
         exchange_component = addresses[0]
         print('EXCHANGE_COMPONENT:', exchange_component)
 
+        code, definition = build('env_registry', envs, network_config['network_name'])
+        payload, intent = await gateway.build_publish_transaction(
+            account,
+            code,
+            definition,
+            owner_role,
+            public_key,
+            private_key,
+        )
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        env_registry_package = addresses[0]
+        envs.append(('ENV_REGISTRY_PACKAGE', env_registry_package))
+        print('ENV_REGISTRY_PACKAGE:', env_registry_package)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.call_function(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(env_registry_package)),
+            'EnvRegistry',
+            'new',
+            [manifest_owner_role]
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        env_registry_component = addresses[0]
+        print('ENV_REGISTRY_COMPONENT:', env_registry_component)
+
+        manifest = f'''
+            CALL_METHOD
+                Address("{account.as_str()}")
+                "lock_fee"
+                Decimal("10")
+            ;
+            CALL_METHOD
+                Address("{account.as_str()}")
+                "create_proof_of_amount"
+                Address("{owner_resource}")
+                Decimal("1")
+            ;
+            CALL_METHOD
+                Address("{env_registry_component}")
+                "set_variables"
+                Array<Tuple>(
+                    Tuple(
+                        "exchange_component",
+                        Enum<8u8>(
+                            Address("{exchange_component}")
+                        )
+                    ),
+                )
+            ;
+        '''
+
+        payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        status = await gateway.get_transaction_status(intent)
+        print('Register exchange:', status)
+
         print('---------- DEPLOY COMPLETE ----------')
 
         print(f'STATE_VERSION={state_version}')
@@ -516,6 +577,7 @@ async def main():
         print(f'ORACLE_PACKAGE={oracle_package}')
         print(f'FEE_DISTRIBUTOR_PACKAGE={fee_distributor_package}')
         print(f'FEE_DELEGATOR_PACKAGE={fee_delegator_package}')
+        print(f'ENV_REGISTRY_PACKAGE={env_registry_package}')
         print(f'EXCHANGE_PACKAGE={exchange_package}')
 
         print(f'TOKEN_WRAPPER_COMPONENT={token_wrapper_component}')
@@ -526,6 +588,7 @@ async def main():
         print(f'ORACLE_COMPONENT={oracle_component}')
         print(f'FEE_DISTRIBUTOR_COMPONENT={fee_distributor_component}')
         print(f'FEE_DELEGATOR_COMPONENT={fee_delegator_component}')
+        print(f'ENV_REGISTRY_COMPONENT={env_registry_component}')
         print(f'EXCHANGE_COMPONENT={exchange_component}')
 
         config_data = {
@@ -543,6 +606,7 @@ async def main():
             'ORACLE_PACKAGE': oracle_package,
             'FEE_DISTRIBUTOR_PACKAGE': fee_distributor_package,
             'FEE_DELEGATOR_PACKAGE': fee_delegator_package,
+            'ENV_REGISTRY_PACKAGE': env_registry_package,
             'EXCHANGE_PACKAGE': exchange_package,
             'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
             'CONFIG_COMPONENT': config_component,
@@ -552,6 +616,7 @@ async def main():
             'ORACLE_COMPONENT': oracle_component,
             'FEE_DISTRIBUTOR_COMPONENT': fee_distributor_component,
             'FEE_DELEGATOR_COMPONENT': fee_delegator_component,
+            'ENV_REGISTRY_COMPONENT': env_registry_component,
             'EXCHANGE_COMPONENT': exchange_component
         }
 

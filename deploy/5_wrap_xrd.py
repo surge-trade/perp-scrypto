@@ -30,7 +30,6 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
         owner_resource = config_data['OWNER_RESOURCE']
         token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
@@ -49,18 +48,22 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = builder.account_create_proof_of_amount(
-            account,
-            ret.Address(owner_resource),
-            ret.Decimal('1')
+        builder = withdraw_to_bucket(
+            builder, 
+            account, 
+            ret.Address(xrd), 
+            ret.Decimal('1000'), 
+            'bucket1'
         )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
-            'add_child',
-            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xrd)))]
+            'wrap',
+            [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
         )
+        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         print('Transaction id:', intent)
