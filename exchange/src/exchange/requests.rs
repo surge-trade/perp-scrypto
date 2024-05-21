@@ -7,6 +7,7 @@ use super::errors::*;
 pub enum Limit {
     Gte(Decimal),
     Lte(Decimal),
+    None,
 }
 
 impl Limit {
@@ -14,6 +15,7 @@ impl Limit {
         match self {
             Limit::Gte(price) => value >= *price,
             Limit::Lte(price) => value <= *price,
+            Limit::None => true,
         }
     }
 
@@ -21,6 +23,7 @@ impl Limit {
         match self {
             Limit::Gte(limit) => limit.clone(),
             Limit::Lte(limit) => limit.clone(),
+            Limit::None => Decimal::ZERO,
         }
     }
 
@@ -28,6 +31,7 @@ impl Limit {
         match self {
             Limit::Gte(_) => ">=",
             Limit::Lte(_) => "<=",
+            Limit::None => "True",
         }
     }
 }
