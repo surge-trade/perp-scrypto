@@ -13,7 +13,7 @@ account = { path = "../account" }
 config = { path = "../config" }
 pool = { path = "../pool" }
 referral_generator = { path = "../referral_generator" }
-registry = { path = "../registry" }
+permission_registry = { path = "../permission_registry" }
 
 [build-dependencies]
 scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
