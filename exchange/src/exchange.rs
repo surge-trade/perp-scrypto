@@ -1474,16 +1474,14 @@ mod exchange_mod {
             account: &mut VirtualMarginAccount, 
             mut tokens: Vec<Bucket>,
         ) {
+            let amounts = tokens.iter().map(|token| (token.resource_address(), token.amount())).collect();
             if let Some(index) = tokens.iter().position(|token| token.resource_address() == BASE_RESOURCE) {
                 let base_token = tokens.remove(index);
                 let value = base_token.amount();
                 pool.deposit(base_token);
                 self._settle_account(pool, account, value);
             }
-            let amounts = tokens.iter().map(|token| {
-                self._assert_valid_collateral(config, token.resource_address());
-                (token.resource_address(), token.amount())
-            }).collect();
+            tokens.iter().for_each(|token| self._assert_valid_collateral(config, token.resource_address()));
 
             account.deposit_collateral_batch(tokens);
 
@@ -1522,6 +1520,7 @@ mod exchange_mod {
                 }
             });
             tokens.append(&mut account.withdraw_collateral_batch(claims, TO_ZERO));
+            let amounts = tokens.iter().map(|token| (token.resource_address(), token.amount())).collect();
             
             let mut target_account = Global::<Account>::try_from(target_account_component).expect(ERROR_INVALID_ACCOUNT);
             target_account.try_deposit_batch_or_abort(tokens, Some(ResourceOrNonFungible::Resource(AUTHORITY_RESOURCE)));
@@ -1531,7 +1530,7 @@ mod exchange_mod {
             Runtime::emit_event(EventRemoveCollateral {
                 account: account.address(),
                 target_account: target_account_component,
-                amounts: request.claims,
+                amounts,
             });
         }
 
