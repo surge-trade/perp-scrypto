@@ -29,7 +29,7 @@ mod env_registry_mod {
 
         pub fn get_variables(&self, keys: Vec<String>) -> HashMap<String, String> {
             keys.into_iter().map(|key| {
-                let value = self.variables.get(&key).map(|value| value.clone()).unwrap_or_default();
+                let value = self.variables.get(&key).map(|v| v.clone()).unwrap_or_default();
                 (key, value)
             }).collect()
         }
