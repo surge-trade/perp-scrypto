@@ -25,41 +25,23 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
-        exchange_component = config_data['EXCHANGE_COMPONENT']
+        env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
 
         manifest = f'''
             CALL_METHOD
-                Address("{exchange_component}")
-                "get_pair_details"
-                Array<Tuple>(
-                    Tuple(
-                        "BTC/USD",
-                        Decimal("60000"),
-                    ),
+                Address("{env_registry_component}")
+                "get_variables"
+                Array<String>(
+                    "exchange_component",
                 )
             ;
         '''
 
         result = await gateway.preview_transaction(manifest)
-
-        pairs = []
-        for pair in result['receipt']['output'][1]['programmatic_json']['elements']:
-            pair = pair['fields']
-            pairs.append({
-                'pair_id': pair[0]['value'],
-                'oi_long': pair[1]['value'],
-                'oi_short': pair[2]['value'],
-                'funding_1': pair[3]['value'],
-                'funding_2': pair[4]['value'],
-                'funding_long': pair[5]['value'],
-                'funding_short': pair[6]['value'],
-                'funding_share': pair[7]['value'],
-                'pair_config': pair[8],
-            })
-
-        print(pairs)
+        for elem in result['receipt']['output'][0]['programmatic_json']['entries']:
+            print(elem)
+            # print(elem['key']['value'], elem['value']['fields'][0]['value'])
 
 if __name__ == '__main__':
     asyncio.run(main())

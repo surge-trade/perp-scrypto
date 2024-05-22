@@ -25,7 +25,6 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
@@ -37,7 +36,7 @@ async def main():
         '''
 
         result = await gateway.preview_transaction(manifest)
-        result = result['receipt']['output'][1]['programmatic_json']['fields']
+        result = result['receipt']['output'][0]['programmatic_json']['fields']
 
         base_tokens_amount = result[0]['value']
         virtual_balance = result[1]['value']
