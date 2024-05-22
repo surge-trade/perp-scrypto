@@ -44,7 +44,6 @@ pub const ERROR_REQUEST_DECODING: &str = "Request decoding error";
 pub const ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT: &str = "Request not active or dormant";
 
 pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
-pub const ERROR_PROCESS_REQUEST_EXPIRED: &str = "Request expired";
 pub const ERROR_PROCESS_REQUEST_BEFORE_VALID_START: &str = "Request before valid start";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";

@@ -72,3 +72,4 @@ pub const STATUS_DORMANT: Status = 0;
 pub const STATUS_ACTIVE: Status = 1;
 pub const STATUS_EXECUTED: Status = 2;
 pub const STATUS_CANCELLED: Status = 3;
+pub const STATUS_EXPIRED: Status = 4;

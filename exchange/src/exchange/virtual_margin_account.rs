@@ -170,8 +170,8 @@ impl VirtualMarginAccount {
 
     pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status) {
         assert!(
-            status == STATUS_DORMANT || status == STATUS_ACTIVE,
-            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_DORMANT, STATUS_ACTIVE]
+            status == STATUS_ACTIVE || status == STATUS_DORMANT,
+            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_ACTIVE, STATUS_DORMANT]
         );
 
         let submission = Clock::current_time_rounded_to_seconds();
@@ -232,7 +232,7 @@ impl VirtualMarginAccount {
         self.account_updates.request_updates.insert(index, keeper_request);
     }
 
-    pub fn process_request(&mut self, index: ListIndex) -> (Request, Instant) {
+    pub fn process_request(&mut self, index: ListIndex) -> (Request, Instant, bool) {
         assert!(
             index >= self.valid_requests_start(),
             "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_PROCESS_REQUEST_BEFORE_VALID_START, index, self.valid_requests_start()
@@ -240,23 +240,32 @@ impl VirtualMarginAccount {
         
         let current_time = Clock::current_time_rounded_to_seconds();
         let mut keeper_request = self.keeper_request(index);
-        assert!(
-            keeper_request.status == STATUS_ACTIVE,
-            "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, STATUS_ACTIVE
-        );
-        assert!(
-            current_time.compare(keeper_request.expiry, TimeComparisonOperator::Lt),
-            "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_PROCESS_REQUEST_EXPIRED, current_time.seconds_since_unix_epoch, keeper_request.expiry.seconds_since_unix_epoch
-        );
+        
+        let expired = current_time.compare(keeper_request.expiry, TimeComparisonOperator::Gte);
+        if expired {
+            assert!(
+                keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT,
+                "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, vec![STATUS_ACTIVE, STATUS_DORMANT]
+            );
+
+            keeper_request.status = STATUS_EXPIRED;
+        } else {
+            assert!(
+                keeper_request.status == STATUS_ACTIVE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, STATUS_ACTIVE
+            );
+            
+            keeper_request.status = STATUS_EXECUTED;
+        }
+
         let submission = keeper_request.submission;
         let request = Request::decode(&keeper_request.request);
 
         self._remove_active_request(index);
-        keeper_request.status = STATUS_EXECUTED;
         keeper_request.submission = current_time;
         self.account_updates.request_updates.insert(index, keeper_request);
 
-        (request, submission)
+        (request, submission, expired)
     }
 
     pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {

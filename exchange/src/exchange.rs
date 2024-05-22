@@ -49,7 +49,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1p59f8ztmne4l59z7yxt3e0rdvf86wqskg0l7u02w3c7h38rlffsact",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -68,7 +68,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkehwuhptxu8zkpe0sa4sfy0r0jue84g8854dm3rktc5r82ulqpg0l",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -89,7 +89,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5ez4m2mz0lymqsp3kmt2z8lxe5dkhgt5alunn6dm4kjlhz3xxdwch",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -103,7 +103,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pklzxr2mmcq32hdgyaszssc0hefewrcftdls8pudqlxsxx6ehjjhfq",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Getter methods
             fn get_referral(&self, hash: Hash) -> Option<Referral>;
@@ -114,7 +114,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p49u3ztx5vdaje90guau0c40vc4lmajm6nc9aaq4verlswnw3d0dkp",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         PermissionRegistry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
@@ -124,7 +124,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5hegz9ezlmz59ulgpnw2a3y3rtm620xt79xahswtjtwqt77435puc",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -132,7 +132,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5ljnyppfx5seu7xua55gejxz6jyj3regycz79hne0kpaxnazp5th4",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -152,7 +152,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4x6veu53rnt4axy7rsajxqwpdrf8eqwx2lqp74wj22cvm59up7y0n",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -921,35 +921,38 @@ mod exchange_mod {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                let (request, submission) = account.process_request(index);
+                let (request, submission, expired) = account.process_request(index);
                 
-                let mut pair_ids = account.position_ids();
-                if let Request::MarginOrder(request) = &request {
-                    pair_ids.insert(request.pair_id.clone());
+                if !expired {
+                    let mut pair_ids = account.position_ids();
+                    if let Request::MarginOrder(request) = &request {
+                        pair_ids.insert(request.pair_id.clone());
+                    }
+                    config.load_pair_configs(pair_ids.clone());
+                    let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+
+                    let max_age = self._max_age(&config);
+                    let max_age = if max_age.compare(submission, TimeComparisonOperator::Gt) {
+                        max_age
+                    } else {
+                        submission
+                    };
+                    
+                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
+
+                    match request {
+                        Request::RemoveCollateral(request) => {
+                            self._remove_collateral(&config, &mut pool, &mut account, &oracle, request);
+                        },
+                        Request::MarginOrder(request) => {
+                            self._margin_order(&config, &mut pool, &mut account, &oracle, request);
+                        },
+                    };
+
+                    pool.realize();
                 }
-                config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
-
-                let max_age = self._max_age(&config);
-                let max_age = if max_age.compare(submission, TimeComparisonOperator::Gt) {
-                    max_age
-                } else {
-                    submission
-                };
-                
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
-
-                match request {
-                    Request::RemoveCollateral(request) => {
-                        self._remove_collateral(&config, &mut pool, &mut account, &oracle, request);
-                    },
-                    Request::MarginOrder(request) => {
-                        self._margin_order(&config, &mut pool, &mut account, &oracle, request);
-                    },
-                };
 
                 account.realize();
-                pool.realize();
 
                 let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(config.exchange_config().reward_keeper);
                 reward
