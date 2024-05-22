@@ -3,7 +3,6 @@ use scrypto::prelude::*;
 #[blueprint]
 #[types(
     String,
-    MetadataValue,
 )]
 mod env_registry_mod {
     enable_method_auth!(
@@ -15,7 +14,7 @@ mod env_registry_mod {
     );
 
     pub struct EnvRegistry {
-        variables: KeyValueStore<String, MetadataValue>,
+        variables: KeyValueStore<String, String>,
     }
 
     impl EnvRegistry {
@@ -28,11 +27,14 @@ mod env_registry_mod {
             .globalize()
         }
 
-        pub fn get_variables(&self, keys: Vec<String>) -> HashMap<String, Option<MetadataValue>> {
-            keys.into_iter().map(|key| (key.clone(), self.variables.get(&key).map(|value| value.clone()))).collect()
+        pub fn get_variables(&self, keys: Vec<String>) -> HashMap<String, String> {
+            keys.into_iter().map(|key| {
+                let value = self.variables.get(&key).map(|value| value.clone()).unwrap_or_default();
+                (key, value)
+            }).collect()
         }
 
-        pub fn set_variables(&self, variables: Vec<(String, MetadataValue)>) {
+        pub fn set_variables(&self, variables: Vec<(String, String)>) {
             for (key, value) in variables {
                 self.variables.insert(key, value);
             }
