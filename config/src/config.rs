@@ -74,7 +74,10 @@ mod config_mod {
         }
 
         pub fn get_pair_configs_by_ids(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PairConfigCompressed>> {
-            pair_ids.into_iter().map(|k| (k.to_owned(), self.pairs.get(&k).map(|v| v.clone()))).collect()
+            pair_ids.into_iter().map(|k| {
+                let value = self.pairs.get(&k).map(|v| v.clone());
+                (k, value)
+            }).collect()
         }
 
         pub fn get_pair_configs_len(&self) -> ListIndex {
