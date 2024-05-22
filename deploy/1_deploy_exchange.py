@@ -220,40 +220,40 @@ async def main():
         oracle_component = addresses[0]
         print('ORACLE_COMPONENT:', oracle_component)
 
-        # code, definition = build('env_registry', envs, network_config['network_name'])
-        # payload, intent = await gateway.build_publish_transaction(
-        #     account,
-        #     code,
-        #     definition,
-        #     owner_role,
-        #     public_key,
-        #     private_key,
-        # )
-        # await gateway.submit_transaction(payload)
-        # addresses = await gateway.get_new_addresses(intent)
-        # env_registry_package = addresses[0]
-        # envs.append(('ENV_REGISTRY_PACKAGE', env_registry_package))
-        # print('ENV_REGISTRY_PACKAGE:', env_registry_package)
+        code, definition = build('env_registry', envs, network_config['network_name'])
+        payload, intent = await gateway.build_publish_transaction(
+            account,
+            code,
+            definition,
+            owner_role,
+            public_key,
+            private_key,
+        )
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        env_registry_package = addresses[0]
+        envs.append(('ENV_REGISTRY_PACKAGE', env_registry_package))
+        print('ENV_REGISTRY_PACKAGE:', env_registry_package)
 
-        # builder = ret.ManifestBuilder()
-        # builder = lock_fee(builder, account, 100)
-        # builder = builder.call_function(
-        #     ret.ManifestBuilderAddress.STATIC(ret.Address(env_registry_package)),
-        #     'EnvRegistry',
-        #     'new',
-        #     [manifest_owner_role]
-        # )
-        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        # await gateway.submit_transaction(payload)
-        # addresses = await gateway.get_new_addresses(intent)
-        # env_registry_component = addresses[0]
-        # print('ENV_REGISTRY_COMPONENT:', env_registry_component)
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.call_function(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(env_registry_package)),
+            'EnvRegistry',
+            'new',
+            [manifest_owner_role]
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        env_registry_component = addresses[0]
+        print('ENV_REGISTRY_COMPONENT:', env_registry_component)
 
-        temp_config_path = join(path, 'config.json')
-        with open(temp_config_path, 'r') as config_file:
-            temp_config_data = json.load(config_file)
-        env_registry_package = temp_config_data['ENV_REGISTRY_PACKAGE']
-        env_registry_component = temp_config_data['ENV_REGISTRY_COMPONENT']
+        # temp_config_path = join(path, 'config.json')
+        # with open(temp_config_path, 'r') as config_file:
+        #     temp_config_data = json.load(config_file)
+        # env_registry_package = temp_config_data['ENV_REGISTRY_PACKAGE']
+        # env_registry_component = temp_config_data['ENV_REGISTRY_COMPONENT']
 
         code, definition = build('permission_registry', envs, network_config['network_name'])
         payload, intent = await gateway.build_publish_transaction(
