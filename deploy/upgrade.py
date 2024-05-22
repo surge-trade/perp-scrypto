@@ -221,13 +221,8 @@ async def main():
             CALL_METHOD
                 Address("{env_registry_component}")
                 "set_variables"
-                Array<Tuple>(
-                    Tuple(
-                        "exchange_component",
-                        Enum<8u8>(
-                            Address("{exchange_component}")
-                        )
-                    ),
+                Array<String>(
+                    "{exchange_component}"
                 )
             ;
         '''
