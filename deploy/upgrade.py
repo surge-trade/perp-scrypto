@@ -108,8 +108,19 @@ async def main():
 
         owner_resource = config_data['OWNER_RESOURCE']
         authority_resource = config_data['AUTHORITY_RESOURCE']
+        base_authority_resource = config_data['BASE_AUTHORITY_RESOURCE']
         base_resource = config_data['BASE_RESOURCE']
         keeper_reward_resource = config_data['KEEPER_REWARD_RESOURCE']
+
+        config_package = config_data['CONFIG_PACKAGE']
+        account_package = config_data['ACCOUNT_PACKAGE']
+        pool_package = config_data['POOL_PACKAGE']
+        referral_generator_package = config_data['REFERRAL_GENERATOR_PACKAGE']
+        permission_registry_package = config_data['PERMISSION_REGISTRY_PACKAGE']
+        oracle_package = config_data['ORACLE_PACKAGE']
+        fee_distributor_package = config_data['FEE_DISTRIBUTOR_PACKAGE']
+        fee_delegator_package = config_data['FEE_DELEGATOR_PACKAGE']
+
         config_component = config_data['CONFIG_COMPONENT']
         pool_component = config_data['POOL_COMPONENT']
         referral_generator_component = config_data['REFERRAL_GENERATOR_COMPONENT']
@@ -118,6 +129,7 @@ async def main():
         fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
         fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
         env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
+        exchange_component = config_data['EXCHANGE_COMPONENT']
 
         owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
         manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
@@ -135,8 +147,17 @@ async def main():
         envs = [
             ('NETWORK_ID', network_config['network_id']),
             ('AUTHORITY_RESOURCE', authority_resource),
+            ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
             ('BASE_RESOURCE', base_resource),
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
+            ('CONFIG_PACKAGE', config_package),
+            ('ACCOUNT_PACKAGE', account_package),
+            ('POOL_PACKAGE', pool_package),
+            ('REFERRAL_GENERATOR_PACKAGE', referral_generator_package),
+            ('PERMISSION_REGISTRY_PACKAGE', permission_registry_package),
+            ('ORACLE_PACKAGE', oracle_package),
+            ('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package),
+            ('FEE_DELEGATOR_PACKAGE', fee_delegator_package),
         ]
 
         code, definition = build('exchange', envs, network_config['network_name'])
@@ -156,6 +177,11 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
+        )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
             "withdraw_authority",
