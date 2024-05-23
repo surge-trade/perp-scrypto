@@ -49,7 +49,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1pkgc6qtmsxaktvute54fqlv90dm2sea45h6ztz55rclhjplr9zq6ac",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -68,7 +68,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5z2q5m6tl47q67rmyjafw2ynwjvjermlge7dtzep0ndyrx9ejzhdl",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -89,7 +89,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4mctjsjmfm9xjxr42wc2p2yzfuert7p0aqkx078tyemhwsavlkpxf",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -103,7 +103,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p54ewvvew4mve5rqvqyqr7u6seeph7yna8hycs433rd534qmjdhys6",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Getter methods
             fn get_referral(&self, hash: Hash) -> Option<Referral>;
@@ -114,7 +114,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4uxlnpp9qp2e2juqnedkqndny4qf8rvk0k3tkzc35glvqynnmn99q",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         PermissionRegistry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
@@ -124,7 +124,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5kjka0ymhlanmm637xf5aqygeyn7769tp69f2sgy4gn0522pky79x",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -132,7 +132,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p55mudcux4nsu4t288mc7sakusy2c74c4mcqdgdlyvx9espxlvytqf",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -152,7 +152,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5zq4lme8zey56hvcrzgsm0rpxqm04lzduxdynx2fehu5r6j0nxnmr",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -518,16 +518,12 @@ mod exchange_mod {
 
         pub fn get_pair_details(
             &self, 
-            pairs: Vec<(PairId, Decimal)>,
+            pair_ids: Vec<PairId>,
         ) -> Vec<PairDetails> {
             let mut config = VirtualConfig::new(self.config);
-            let pair_ids = pairs.iter().map(|(pair_id, _)| pair_id.clone()).collect();
-            config.load_pair_configs(pair_ids);
+            config.load_pair_configs(pair_ids.iter().cloned().collect());
             let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-
-            pairs.into_iter().map(|(pair_id, price)| {
-                self._pair_details(&config, &pool, &pair_id, price)
-            }).collect()
+            pair_ids.into_iter().map(|pair_id| self._pair_details(&config, &pool, &pair_id)).collect()
         }
 
         pub fn get_exchange_config(
@@ -1239,6 +1235,7 @@ mod exchange_mod {
                 let margin = amount * collateral_config.margin;
 
                 CollateralDetails {
+                    pair_id: collateral_config.pair_id.clone(),
                     resource,
                     amount,
                     amount_discounted,
@@ -1310,49 +1307,18 @@ mod exchange_mod {
             config: &VirtualConfig,
             pool: &VirtualLiquidityPool,
             pair_id: &PairId,
-            price: Decimal,
         ) -> PairDetails {
             let pair_config = config.pair_config(pair_id);
             let pool_position = pool.position(pair_id);
             let oi_long = pool_position.oi_long;
             let oi_short = pool_position.oi_short;
-            let skew = (oi_long - oi_short) * price;
-
-            let funding_1_rate = skew * pair_config.funding_1;
             let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
-            let funding_rate = funding_1_rate + funding_2_rate;
-            
-            let (funding_long_index, funding_short_index, funding_share) = if !oi_long.is_zero() && !oi_short.is_zero() {
-                if funding_rate.is_positive() {
-                    let funding_long = funding_rate;
-                    let funding_long_index = funding_long / oi_long;
-    
-                    let funding_share = funding_long * pair_config.funding_share;
-                    let funding_short_index = -(funding_long - funding_share) / oi_short;
-    
-                    (funding_long_index, funding_short_index, funding_share)
-                } else {
-                    let funding_short = -funding_rate;
-                    let funding_short_index = funding_short / oi_short;
-    
-                    let funding_share = funding_short * pair_config.funding_share;
-                    let funding_long_index = -(funding_short - funding_share) / oi_long;
-    
-                    (funding_long_index, funding_short_index, funding_share)
-                }
-            } else {
-                (dec!(0), dec!(0), dec!(0))
-            };
 
             PairDetails {
                 pair_id: pair_id.clone(),
                 oi_long,
                 oi_short,
-                funding_1: funding_1_rate,
                 funding_2: funding_2_rate,
-                funding_long: funding_long_index,
-                funding_short: funding_short_index,
-                funding_share,
                 pair_config: pair_config.clone(),
             }
         }

@@ -16,6 +16,7 @@ pub struct PositionDetails {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct CollateralDetails {
+    pub pair_id: PairId,
     pub resource: ResourceAddress,
     pub amount: Decimal,
     pub amount_discounted: Decimal,
@@ -58,11 +59,7 @@ pub struct PairDetails {
     pub pair_id: PairId,
     pub oi_long: Decimal,
     pub oi_short: Decimal,
-    pub funding_1: Decimal,
     pub funding_2: Decimal,
-    pub funding_long: Decimal,
-    pub funding_short: Decimal,
-    pub funding_share: Decimal,
     pub pair_config: PairConfig,
 }
 
