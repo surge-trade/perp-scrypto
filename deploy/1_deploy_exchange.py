@@ -548,8 +548,11 @@ async def main():
             CALL_METHOD
                 Address("{env_registry_component}")
                 "set_variables"
-                Array<String>(
-                    "{exchange_component}"
+                Array<Tuple>(
+                    Tuple(
+                        "exchange_component"
+                        "{exchange_component}"
+                    )
                 )
             ;
         '''

@@ -26,9 +26,9 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
     path = join(dirname(dirname(realpath(__file__))), name)
     print(f'Build: {path}')
     
-    # env = environ.copy()
-    # env.update({str(key): str(value) for key, value in envs})
-    # run(['scrypto', 'build'], env=env, cwd=path, check=True)
+    env = environ.copy()
+    env.update({str(key): str(value) for key, value in envs})
+    run(['scrypto', 'build'], env=env, cwd=path, check=True)
 
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
@@ -147,106 +147,106 @@ async def main():
         env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
-        # owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
-        # manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
-        #     [ret.ManifestBuilderValue.ENUM_VALUE(2, 
-        #         [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-        #             [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-        #                 [ret.ManifestBuilderValue.ENUM_VALUE(1, 
-        #                     [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
-        #                 )]
-        #             )]
-        #         )]
-        #     )]
-        # )
+        owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
+        manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
+            [ret.ManifestBuilderValue.ENUM_VALUE(2, 
+                [ret.ManifestBuilderValue.ENUM_VALUE(0, 
+                    [ret.ManifestBuilderValue.ENUM_VALUE(0, 
+                        [ret.ManifestBuilderValue.ENUM_VALUE(1, 
+                            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
+                        )]
+                    )]
+                )]
+            )]
+        )
 
-        # envs = [
-        #     ('NETWORK_ID', network_config['network_id']),
-        #     ('AUTHORITY_RESOURCE', authority_resource),
-        #     ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
-        #     ('BASE_RESOURCE', base_resource),
-        #     ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
-        #     ('CONFIG_PACKAGE', config_package),
-        #     ('ACCOUNT_PACKAGE', account_package),
-        #     ('POOL_PACKAGE', pool_package),
-        #     ('REFERRAL_GENERATOR_PACKAGE', referral_generator_package),
-        #     ('PERMISSION_REGISTRY_PACKAGE', permission_registry_package),
-        #     ('ORACLE_PACKAGE', oracle_package),
-        #     ('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package),
-        #     ('FEE_DELEGATOR_PACKAGE', fee_delegator_package),
-        # ]
+        envs = [
+            ('NETWORK_ID', network_config['network_id']),
+            ('AUTHORITY_RESOURCE', authority_resource),
+            ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
+            ('BASE_RESOURCE', base_resource),
+            ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
+            ('CONFIG_PACKAGE', config_package),
+            ('ACCOUNT_PACKAGE', account_package),
+            ('POOL_PACKAGE', pool_package),
+            ('REFERRAL_GENERATOR_PACKAGE', referral_generator_package),
+            ('PERMISSION_REGISTRY_PACKAGE', permission_registry_package),
+            ('ORACLE_PACKAGE', oracle_package),
+            ('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package),
+            ('FEE_DELEGATOR_PACKAGE', fee_delegator_package),
+        ]
 
-        # code, definition = build('exchange', envs, network_config['network_name'])
-        # payload, intent = await gateway.build_publish_transaction(
-        #     account,
-        #     code,
-        #     definition,
-        #     owner_role,
-        #     public_key,
-        #     private_key,
-        # )
-        # await gateway.submit_transaction(payload)
-        # addresses = await gateway.get_new_addresses(intent)
-        # exchange_package = addresses[0]
-        # envs.append(('EXCHANGE_PACKAGE', exchange_package))
-        # print('EXCHANGE_PACKAGE:', exchange_package)
+        code, definition = build('exchange', envs, network_config['network_name'])
+        payload, intent = await gateway.build_publish_transaction(
+            account,
+            code,
+            definition,
+            owner_role,
+            public_key,
+            private_key,
+        )
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        exchange_package = addresses[0]
+        envs.append(('EXCHANGE_PACKAGE', exchange_package))
+        print('EXCHANGE_PACKAGE:', exchange_package)
 
-        # builder = ret.ManifestBuilder()
-        # builder = lock_fee(builder, account, 100)
-        # builder = builder.account_create_proof_of_amount(
-        #     account,
-        #     ret.Address(owner_resource),
-        #     ret.Decimal('1')
-        # )
-        # builder = builder.call_method(
-        #     ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-        #     "withdraw_authority",
-        #     []
-        # )
-        # builder = builder.take_all_from_worktop(
-        #     ret.Address(authority_resource),
-        #     ret.ManifestBuilderBucket("authority")
-        # )
-        # builder = builder.call_function(
-        #     ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
-        #     'Exchange',
-        #     'new',
-        #     [
-        #         manifest_owner_role, 
-        #         ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
-        #         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
-        #     ]
-        # )
-        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        # await gateway.submit_transaction(payload)
-        # addresses = await gateway.get_new_addresses(intent)
-        # old_exchange_component = exchange_component
-        # exchange_component = addresses[0]
-        # print('EXCHANGE_COMPONENT:', exchange_component)
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
+        )
+        builder = builder.call_method(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            "withdraw_authority",
+            []
+        )
+        builder = builder.take_all_from_worktop(
+            ret.Address(authority_resource),
+            ret.ManifestBuilderBucket("authority")
+        )
+        builder = builder.call_function(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
+            'Exchange',
+            'new',
+            [
+                manifest_owner_role, 
+                ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
+            ]
+        )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        old_exchange_component = exchange_component
+        exchange_component = addresses[0]
+        print('EXCHANGE_COMPONENT:', exchange_component)
 
-        # builder = ret.ManifestBuilder()
-        # builder = lock_fee(builder, account, 100)
-        # builder = builder.account_create_proof_of_amount(
-        #     account,
-        #     ret.Address(owner_resource),
-        #     ret.Decimal('1')
-        # )
-        # builder = builder.call_method(
-        #     ret.ManifestBuilderAddress.STATIC(ret.Address(old_exchange_component)),
-        #     'signal_upgrade',
-        #     []
-        # )
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
+        )
+        builder = builder.call_method(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(old_exchange_component)),
+            'signal_upgrade',
+            []
+        )
 
-        # payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        # await gateway.submit_transaction(payload)
-        # status = await gateway.get_transaction_status(intent)
-        # print('Signal upgrade:', status)
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        status = await gateway.get_transaction_status(intent)
+        print('Signal upgrade:', status)
 
         manifest = f'''
             CALL_METHOD
@@ -263,8 +263,11 @@ async def main():
             CALL_METHOD
                 Address("{env_registry_component}")
                 "set_variables"
-                Array<String>(
-                    "{exchange_component}"
+                Array<Tuple>(
+                    Tuple(
+                        "exchange_component",
+                        "{exchange_component}"
+                    ),
                 )
             ;
         '''
@@ -276,20 +279,20 @@ async def main():
 
         print('---------- DEPLOY COMPLETE ----------')
 
-        # print(f'EXCHANGE_PACKAGE={exchange_package}')
-        # print(f'EXCHANGE_COMPONENT={exchange_component}')
+        print(f'EXCHANGE_PACKAGE={exchange_package}')
+        print(f'EXCHANGE_COMPONENT={exchange_component}')
 
-        # config_data['EXCHANGE_PACKAGE'] = exchange_package
-        # config_data['EXCHANGE_COMPONENT'] = exchange_component
+        config_data['EXCHANGE_PACKAGE'] = exchange_package
+        config_data['EXCHANGE_COMPONENT'] = exchange_component
 
-        # release_path = join(dirname(dirname(realpath(__file__))), 'releases')
-        # release_path = join(release_path, timestamp + '_' + network_config['network_name'])
+        release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+        release_path = join(release_path, timestamp + '_' + network_config['network_name'])
         
-        # with open(join(release_path, f'config.json'), 'w') as config_file:
-        #     json.dump(config_data, config_file, indent=4)
-        # with open(join(path, f'config.json'), 'w') as config_file:
-        #     json.dump(config_data, config_file, indent=4)
-        # print(f'Config saved')
+        with open(join(release_path, f'config.json'), 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        with open(join(path, f'config.json'), 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        print(f'Config saved')
 
         print('-------------------------------------')
 
