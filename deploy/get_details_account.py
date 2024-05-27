@@ -36,7 +36,7 @@ async def main():
                 Address("{exchange_component}")
                 "get_account_details"
                 Address("{account_component}")
-                10u64
+                30u64
                 Enum<0u8>()
             ;
         '''
@@ -65,8 +65,8 @@ async def main():
             ref_price = prices[pair]
             entry_price = cost / size
             value = size * ref_price
-            margin_maintenance = margin_maintenance * ref_price
             margin = margin * ref_price
+            margin_maintenance = margin_maintenance * ref_price
             pnl = value - cost - funding
             roi = pnl / cost * 100
 
@@ -78,8 +78,6 @@ async def main():
                 'ref_price': ref_price,
                 'margin': margin,
                 'margin_maintenance': margin_maintenance,
-                'cost': cost,
-                'funding': funding,
                 'pnl': pnl,
                 'roi': roi,
             })
