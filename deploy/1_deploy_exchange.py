@@ -525,6 +525,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
+                ret.ManifestBuilderValue.ENUM_VALUE(1, []),
             ]
         )
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
