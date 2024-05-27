@@ -46,61 +46,30 @@ async def main():
 
         result = await gateway.preview_transaction(manifest)
 
-        # pub struct PairConfig {
-        #     /// Price feed id
-        #     pub pair_id: PairId,
-        #     /// If the pair is disabled
-        #     pub disabled: bool,
-        #     /// Price delta ratio before updating a pair will be rewarded
-        #     pub update_price_delta_ratio: Decimal,
-        #     /// Time before updating a pair will be rewarded
-        #     pub update_period_seconds: i64,
-        #     /// Initial margin required
-        #     pub margin_initial: Decimal,
-        #     /// Maintenance margin required
-        #     pub margin_maintenance: Decimal,
-        #     /// Skew based funding 
-        #     pub funding_1: Decimal,
-        #     /// Integral of skew based funding
-        #     pub funding_2: Decimal,
-        #     /// Rate of change of funding 2 integral
-        #     pub funding_2_delta: Decimal,
-        #     /// Constant pool funding
-        #     pub funding_pool_0: Decimal,
-        #     /// Skew based pool funding
-        #     pub funding_pool_1: Decimal,
-        #     /// Share of regular funding taken as pool funding
-        #     pub funding_share: Decimal,
-        #     /// Constant fee
-        #     pub fee_0: Decimal,
-        #     /// Skew based fee
-        #     pub fee_1: Decimal,
-        # }
-
         pairs = []
         for pair in result['receipt']['output'][0]['programmatic_json']['elements']:
             pair = pair['fields']
             pair_config = pair[4]['fields']
             pairs.append({
                 'pair_id': pair[0]['value'],
-                'oi_long': int(pair[1]['value']),
-                'oi_short': int(pair[2]['value']),
-                'funding_2': int(pair[3]['value']),
+                'oi_long': float(pair[1]['value']),
+                'oi_short': float(pair[2]['value']),
+                'funding_2': float(pair[3]['value']),
                 'pair_config': {
                     'pair_id': pair_config[0]['value'],
                     'disabled': bool(pair_config[1]['value']),
-                    'update_price_delta_ratio': int(pair_config[2]['value']),
-                    'update_period_seconds': int(pair_config[3]['value']),
-                    'margin_initial': int(pair_config[4]['value']),
-                    'margin_maintenance': int(pair_config[5]['value']),
-                    'funding_1': int(pair_config[6]['value']),
-                    'funding_2': int(pair_config[7]['value']),
-                    'funding_2_delta': int(pair_config[8]['value']),
-                    'funding_pool_0': int(pair_config[9]['value']),
-                    'funding_pool_1': int(pair_config[10]['value']),
-                    'funding_share': int(pair_config[11]['value']),
-                    'fee_0': int(pair_config[12]['value']),
-                    'fee_1': int(pair_config[13]['value']),
+                    'update_price_delta_ratio': float(pair_config[2]['value']),
+                    'update_period_seconds': float(pair_config[3]['value']),
+                    'margin': float(pair_config[4]['value']),
+                    'margin_maintenance': float(pair_config[5]['value']),
+                    'funding_1': float(pair_config[6]['value']),
+                    'funding_2': float(pair_config[7]['value']),
+                    'funding_2_delta': float(pair_config[8]['value']),
+                    'funding_pool_0': float(pair_config[9]['value']),
+                    'funding_pool_1': float(pair_config[10]['value']),
+                    'funding_share': float(pair_config[11]['value']),
+                    'fee_0': float(pair_config[12]['value']),
+                    'fee_1': float(pair_config[13]['value']),
                 },
             })
 
@@ -130,8 +99,8 @@ async def main():
         # // };
 
         for pair in pairs:
-            pair['price'] = prices[pair['pair_id']]
-            pair['skew'] = (pair['oi_long'] - pair['oi_short']) * pair['price']
+            pair['ref_price'] = prices[pair['pair_id']]
+            pair['skew'] = (pair['oi_long'] - pair['oi_short']) * pair['ref_price']
             pair['funding_1'] = pair['skew'] * pair['pair_config']['funding_1']
             pair['funding_2'] = pair['funding_2'] * pair['pair_config']['funding_2']
             if pair['oi_long'] == 0 or pair['oi_short'] == 0:

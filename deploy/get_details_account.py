@@ -29,6 +29,7 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
+        # account_component = "component_tdx_2_1cqj8s9qydafchjlfuafayal2hwq7rhwev5j82uc00lcf5d5eszc0wz"
 
         manifest = f'''
             CALL_METHOD
@@ -42,30 +43,71 @@ async def main():
 
         result = await gateway.preview_transaction(manifest)
         result = result['receipt']['output'][0]['programmatic_json']['fields']
+        pair_ids = set()
+        for elem in result[1]['elements']:
+            pair_ids.add(elem['fields'][0]['value'])
+        for elem in result[2]['elements']:
+            pair_ids.add(elem['fields'][0]['value'])
+        prices = await get_prices(session, pair_ids)
 
-        virtual_balance = result[0]['value']
+        balance = result[0]['value']
 
-        positions = result[1]['elements']
-        for elem in positions:
+        positions = []
+        for elem in result[1]['elements']:            
             elem = elem['fields']
+            pair = elem[0]['value']
+            size = float(elem[1]['value'])
+            margin = float(elem[2]['value'])
+            margin_maintenance = float(elem[3]['value'])
+            cost = float(elem[4]['value'])
+            funding = float(elem[5]['value'])
+
+            ref_price = prices[pair]
+            entry_price = cost / size
+            value = size * ref_price
+            margin_maintenance = margin_maintenance * ref_price
+            margin = margin * ref_price
+            pnl = value - cost - funding
+            roi = pnl / cost * 100
+
             positions.append({
-                'pair_id': elem[0]['value'],
-                'amount': int(elem[1]['value']),
-                'margin_initial': int(elem[2]['value']),
-                'margin_maintenance': int(elem[3]['value']),
-                'cost': int(elem[4]['value']),
-                'funding': int(elem[5]['value']),
+                'pair': pair,
+                'size': size,
+                'value': value,
+                'entry_price': entry_price,
+                'ref_price': ref_price,
+                'margin': margin,
+                'margin_maintenance': margin_maintenance,
+                'cost': cost,
+                'funding': funding,
+                'pnl': pnl,
+                'roi': roi,
             })
 
         collaterals = []
         for elem in result[2]['elements']:
             elem = elem['fields']
+
+            pair = elem[0]['value']
+            resource = elem[1]['value']
+            amount = float(elem[2]['value'])
+            discount = float(elem[3]['value'])
+            margin = float(elem[4]['value'])
+
+            ref_price = prices[pair]
+            value = amount * ref_price
+            value_discounted = value * discount
+            margin = margin * ref_price
+
             collaterals.append({
-                'pair_id': elem[0]['value'],
-                'resource': elem[1]['value'],
-                'amount': int(elem[2]['value']),
-                'amount_discounted': int(elem[3]['value']),
-                'margin': int(elem[4]['value']),
+                'pair': pair,
+                'resource': resource,
+                'ref_price': ref_price,
+                'amount': amount,
+                'value': value,
+                'discount': discount,
+                'value_discounted': value_discounted,
+                'margin': margin,
             })
 
         valid_requests_start = result[3]['value']
@@ -75,7 +117,7 @@ async def main():
             elem = elem['fields']
             active_requests.append({
                 'index': elem[0]['value'],
-                'request': elem[1]['value'],
+                'request': elem[1],
                 'submission': elem[2]['value'],
                 'expiry': elem[3]['value'],
                 'status': elem[4]['value'],
@@ -86,29 +128,13 @@ async def main():
             elem = elem['fields']
             requests_history.append({
                 'index': elem[0]['value'],
-                'request': elem[1]['value'],
+                'request': elem[1],
                 'submission': elem[2]['value'],
                 'expiry': elem[3]['value'],
                 'status': elem[4]['value'],
             })
 
-        pair_ids = [pos['pair_id'] for pos in positions]
-        prices = await get_prices(session, pair_ids)
-
-        for position in positions:
-            position['price'] = prices[position['pair_id']]
-            position['value'] = position['amount'] * position['price']
-            position['margin_maintenance'] = position['margin_maintenance'] * position['price']
-            position['margin_initial'] = position['margin_initial'] * position['price']
-            position['pnl'] = position['value'] - position['cost'] - position['funding']
-
-        for collateral in collaterals:
-            collateral['price'] = prices[collateral['pair_id']]
-            collateral['value'] = collateral['amount'] * collateral['price']
-            collateral['value_discounted'] = collateral['amount_discounted'] * collateral['price']
-            collateral['margin'] = collateral['margin'] * collateral['price']
-
-        print('Virtual Balance:', virtual_balance)
+        print('Balance:', balance)
         print('Positions:', positions)
         print('Collaterals:', collaterals)
         print('Valid Requests Start:', valid_requests_start)
