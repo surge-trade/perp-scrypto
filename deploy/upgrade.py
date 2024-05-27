@@ -223,17 +223,30 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
             ]
         )
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        old_exchange_component = exchange_component
+        exchange_component = addresses[0]
+        print('EXCHANGE_COMPONENT:', exchange_component)
+
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
+        )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(old_exchange_component)),
             'signal_upgrade',
             []
         )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        exchange_component = addresses[0]
-        print('EXCHANGE_COMPONENT:', exchange_component)
+        status = await gateway.get_transaction_status(intent)
+        print('Signal upgrade:', status)
 
         manifest = f'''
             CALL_METHOD
