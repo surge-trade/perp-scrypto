@@ -1569,7 +1569,6 @@ mod exchange_mod {
             let activated_requests = account.try_set_keeper_requests_status(request.activate_requests, STATUS_ACTIVE);
             let cancelled_requests = account.try_set_keeper_requests_status(request.cancel_requests, STATUS_CANCELLED);
 
-            self._assert_account_integrity(config, pool, account, oracle);
             self._assert_pool_integrity(config, pool, skew_1 - skew_0);
 
             Runtime::emit_event(EventMarginOrder {
@@ -1731,8 +1730,6 @@ mod exchange_mod {
             self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
 
-            self._assert_account_integrity(config, pool, account, oracle);
-
             let skew_ratio_1 = self._skew_ratio(pool);
             assert!(
                 skew_ratio_1 < skew_ratio_0,
@@ -1804,6 +1801,7 @@ mod exchange_mod {
             self._settle_fee_distributor(pool, account, fee_protocol, fee_treasury, fee_referral);
 
             self._assert_position_limit(config, account);
+            self._assert_account_integrity(config, pool, account, oracle);
 
             ResultOpenPosition {
                 fee_pool: fee - fee_protocol - fee_treasury - fee_referral,

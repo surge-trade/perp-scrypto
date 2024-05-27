@@ -55,7 +55,7 @@ mod oracle_mod {
             pair_ids.into_iter().map(|pair_id| {
                 let (quote, timestamp) = *self.prices.get(&pair_id).expect(ERROR_MISSING_PAIR);
                 assert!(
-                    timestamp.compare(max_age, TimeComparisonOperator::Gt),
+                    timestamp.compare(max_age, TimeComparisonOperator::Gt), // TODO: gte?
                     "{}", ERROR_PRICE_TOO_OLD
                 );
                 (pair_id, quote)
