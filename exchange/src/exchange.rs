@@ -272,7 +272,13 @@ mod exchange_mod {
             oracle: ComponentAddress,
             fee_distributor: ComponentAddress,
             fee_delegator: ComponentAddress,
+            reservation: Option<GlobalAddressReservation>,
         ) -> Global<Exchange> {
+            let component_reservation = match reservation {
+                Some(reservation) => reservation,
+                None => Runtime::allocate_component_address(Exchange::blueprint_id()).0
+            };
+
             assert!(
                 authority_token.resource_address() == AUTHORITY_RESOURCE,
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_AUTHORITY, Runtime::bech32_encode_address(authority_token.resource_address()), Runtime::bech32_encode_address(AUTHORITY_RESOURCE)
@@ -306,6 +312,7 @@ mod exchange_mod {
                 keeper => rule!(allow_all);
                 user => rule!(allow_all);
             })
+            .with_address(component_reservation)
             .globalize()
         }
 
