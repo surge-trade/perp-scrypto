@@ -19,7 +19,7 @@ pub struct CollateralDetails {
     pub pair_id: PairId,
     pub resource: ResourceAddress,
     pub amount: Decimal,
-    pub amount_discounted: Decimal,
+    pub discount: Decimal,
     pub margin: Decimal,
 }
 
