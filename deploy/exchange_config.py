@@ -55,7 +55,7 @@ async def main():
                     ret.ManifestBuilderValue.I64_VALUE(5), # max_price_age_seconds
                     ret.ManifestBuilderValue.U16_VALUE(10), # positions_max
                     ret.ManifestBuilderValue.U16_VALUE(10), # active_requests_max
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # skew_ratio_cap
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.15')), # skew_ratio_cap
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_offset
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_a
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # adl_b

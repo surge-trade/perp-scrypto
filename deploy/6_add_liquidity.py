@@ -50,12 +50,12 @@ async def main():
 
 
         builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 800)
+        builder = lock_fee(builder, account, 100)
         builder = withdraw_to_bucket(
             builder, 
             account, 
             ret.Address(base_resource), 
-            ret.Decimal('900'), 
+            ret.Decimal('9000'), 
             'bucket1'
         )
         builder = builder.call_method(
