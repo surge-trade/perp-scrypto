@@ -40,7 +40,7 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
         '-v', f'/root/surge-scrypto/referral_generator:/referral_generator',
         ] + 
     [item for pair in [[f'-e', f'{key}={value}'] for key, value in envs] for item in pair] + 
-    ['radixdlt/scrypto-builder:v1.1.1'],        
+    ['radixdlt/scrypto-builder:v1.2.0'],        
         check=True
     )
 
