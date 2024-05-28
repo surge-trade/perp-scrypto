@@ -22,7 +22,6 @@ regex = "1.5.4"
 [dev-dependencies]
 transaction = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 radix-engine = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
-scrypto-unit = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 radix-engine-interface = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 exchange = { path = ".", features = ["test"] }

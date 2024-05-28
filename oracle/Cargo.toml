@@ -12,7 +12,6 @@ common = { path = "../common" }
 [dev-dependencies]
 transaction = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 radix-engine = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
-scrypto-unit = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 radix-engine-interface = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 serde = { version = "1.0", features = ["derive"] }
