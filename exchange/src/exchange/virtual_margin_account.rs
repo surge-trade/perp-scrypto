@@ -177,11 +177,17 @@ impl VirtualMarginAccount {
         let submission = Clock::current_time_rounded_to_seconds();
         let expiry = submission.add_seconds(expiry_seconds as i64).expect(ERROR_ARITHMETIC);
 
+        let effected_nodes = match request {
+            Request::RemoveCollateral(ref remove_collateral) => vec![remove_collateral.target_account.as_node_id().clone()],
+            Request::MarginOrder(_) => vec![],
+        };
+
         let keeper_request = KeeperRequest {
             request: request.encode(), 
             submission,
             expiry,
             status,
+            effected_nodes,
         };
         self._add_active_request(self.account_info.requests_len);
 

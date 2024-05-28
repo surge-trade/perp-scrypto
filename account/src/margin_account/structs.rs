@@ -37,4 +37,5 @@ pub struct KeeperRequest {
     pub submission: Instant,
     pub expiry: Instant,
     pub status: Status,
+    pub effected_nodes: Vec<NodeId>,
 }
