@@ -68,6 +68,7 @@ async def main():
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         clean('common')
+        clean('oracle')
         clean('token_wrapper')
         clean('account')
         clean('config')
