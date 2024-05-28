@@ -51,7 +51,7 @@ async def main():
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 200)
-        builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('100'), 'bucket1')
+        builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('1000'), 'bucket1')
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
             'add_collateral',

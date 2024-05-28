@@ -53,7 +53,6 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
 
     release_path = join(dirname(dirname(realpath(__file__))), 'releases')
     makedirs(release_path, exist_ok=True)
-
     release_path = join(release_path, timestamp + '_' + network)
     makedirs(release_path, exist_ok=True)
 
@@ -121,522 +120,580 @@ async def main():
         state_version = await gateway.get_state_version()
         print('STATE_VERSION:', state_version)
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = mint_owner_badge(builder)
-        builder = deposit_all(builder, account)
+        config_path = join(path, 'config.json')
+        try:
+            with open(config_path, 'r') as config_file:
+                config_data = json.load(config_file)
+        except FileNotFoundError:
+            config_data = {}
+        envs = [
+            ('NETWORK_ID', network_config['network_id']),
+        ]
 
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        owner_resource = addresses[0]
-        print('OWNER_RESOURCE:', owner_resource)
+        try:
+            if 'OWNER_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = mint_owner_badge(builder)
+                builder = deposit_all(builder, account)
 
-        owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
-        manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
-            [ret.ManifestBuilderValue.ENUM_VALUE(2, 
-                [ret.ManifestBuilderValue.ENUM_VALUE(0, 
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['OWNER_RESOURCE'] = addresses[0]
+
+            owner_resource = config_data['OWNER_RESOURCE']
+            envs.append(('OWNER_RESOURCE', owner_resource))
+            print('OWNER_RESOURCE:', owner_resource)
+
+            owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
+            manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
+                [ret.ManifestBuilderValue.ENUM_VALUE(2, 
                     [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-                        [ret.ManifestBuilderValue.ENUM_VALUE(1, 
-                            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
+                        [ret.ManifestBuilderValue.ENUM_VALUE(0, 
+                            [ret.ManifestBuilderValue.ENUM_VALUE(1, 
+                                [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
+                            )]
                         )]
                     )]
                 )]
-            )]
-        )
+            )
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = mint_authority(builder)
-        builder = deposit_all(builder, account)
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        authority_resource = addresses[0]
-        print('AUTHORITY_RESOURCE:', authority_resource)
+            if 'AUTHORITY_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = mint_authority(builder)
+                builder = deposit_all(builder, account)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['AUTHORITY_RESOURCE'] = addresses[0]
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = mint_base_authority(builder)
-        builder = deposit_all(builder, account)
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        base_authority_resource = addresses[0]
-        print('BASE_AUTHORITY_RESOURCE:', base_authority_resource)
+            authority_resource = config_data['AUTHORITY_RESOURCE']
+            envs.append(('AUTHORITY_RESOURCE', authority_resource))
+            print('AUTHORITY_RESOURCE:', authority_resource)
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = create_base(builder, owner_role, base_authority_resource)
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        base_resource = addresses[0]
-        print('BASE_RESOURCE:', base_resource)
+            if 'BASE_AUTHORITY_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = mint_base_authority(builder)
+                builder = deposit_all(builder, account)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['BASE_AUTHORITY_RESOURCE'] = addresses[0]
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = create_keeper_reward(builder, owner_role, authority_resource)
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        keeper_reward_resource = addresses[0]
-        print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
+            base_authority_resource = config_data['BASE_AUTHORITY_RESOURCE']
+            envs.append(('BASE_AUTHORITY_RESOURCE', base_authority_resource))
+            print('BASE_AUTHORITY_RESOURCE:', base_authority_resource)
 
-        envs = [
-            ('NETWORK_ID', network_config['network_id']),
-            ('AUTHORITY_RESOURCE', authority_resource),
-            ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
-            ('BASE_RESOURCE', base_resource),
-            ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
-        ]
+            if 'BASE_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = create_base(builder, owner_role, base_authority_resource)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['BASE_RESOURCE'] = addresses[0]
 
-        oracle_key = 'b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640'
-        oracle_key_array = [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)]
-        code, definition = build('oracle', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        oracle_package = addresses[0]
-        envs.append(('ORACLE_PACKAGE', oracle_package))
-        print('ORACLE_PACKAGE:', oracle_package)
+            base_resource = config_data['BASE_RESOURCE']
+            envs.append(('BASE_RESOURCE', base_resource))
+            print('BASE_RESOURCE:', base_resource)
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
-            'Oracle',
-            'new',
-            [manifest_owner_role, ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, oracle_key_array)]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        oracle_component = addresses[0]
-        print('ORACLE_COMPONENT:', oracle_component)
+            if 'KEEPER_REWARD_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = create_keeper_reward(builder, owner_role, authority_resource)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['KEEPER_REWARD_RESOURCE'] = addresses[0]
 
-        code, definition = build('env_registry', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        env_registry_package = addresses[0]
-        envs.append(('ENV_REGISTRY_PACKAGE', env_registry_package))
-        print('ENV_REGISTRY_PACKAGE:', env_registry_package)
+            keeper_reward_resource = config_data['KEEPER_REWARD_RESOURCE']
+            envs.append(('KEEPER_REWARD_RESOURCE', keeper_reward_resource))
+            print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
 
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(env_registry_package)),
-            'EnvRegistry',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        env_registry_component = addresses[0]
-        print('ENV_REGISTRY_COMPONENT:', env_registry_component)
-
-        # temp_config_path = join(path, 'config.json')
-        # with open(temp_config_path, 'r') as config_file:
-        #     temp_config_data = json.load(config_file)
-        # env_registry_package = temp_config_data['ENV_REGISTRY_PACKAGE']
-        # env_registry_component = temp_config_data['ENV_REGISTRY_COMPONENT']
-
-        code, definition = build('permission_registry', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        permission_registry_package = addresses[0]
-        envs.append(('PERMISSION_REGISTRY_PACKAGE', permission_registry_package))
-        print('PERMISSION_REGISTRY_PACKAGE:', permission_registry_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_package)),
-            'PermissionRegistry',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        permission_registry_component = addresses[0]
-        print('PERMISSION_REGISTRY_COMPONENT:', permission_registry_component)
-
-        code, definition = build('token_wrapper', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        token_wrapper_package = addresses[0]
-        envs.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
-        print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.account_withdraw(
-            account,
-            ret.Address(base_authority_resource),
-            ret.Decimal('1')
-        )
-        builder = builder.take_from_worktop(
-            ret.Address(base_authority_resource),
-            ret.Decimal('1'),
-            ret.ManifestBuilderBucket("authority")
-        )
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_package)),
-            'TokenWrapper',
-            'new',
-            [manifest_owner_role, ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority"))]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        token_wrapper_component = addresses[0]
-        print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
-
-        code, definition = build('config', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        config_package = addresses[0]
-        envs.append(('CONFIG_PACKAGE', config_package))
-        print('CONFIG_PACKAGE:', config_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(config_package)),
-            'Config',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        config_component = addresses[0]
-        print('CONFIG_COMPONENT:', config_component)
-
-        code, definition = build('account', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        account_package = addresses[0]
-        envs.append(('ACCOUNT_PACKAGE', account_package))
-        print('ACCOUNT_PACKAGE:', account_package)
-
-        code, definition = build('pool', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        pool_package = addresses[0]
-        envs.append(('POOL_PACKAGE', pool_package))
-        print('POOL_PACKAGE:', pool_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(pool_package)),
-            'MarginPool',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        pool_component, lp_resource = addresses[0], addresses[1]
-        print('POOL_COMPONENT:', pool_component)
-        print('LP_RESOURCE:', lp_resource)
-
-        code, definition = build('referral_generator', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        referral_generator_package = addresses[0]
-        envs.append(('REFERRAL_GENERATOR_PACKAGE', referral_generator_package))
-        print('REFERRAL_GENERATOR_PACKAGE:', referral_generator_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_package)),
-            'ReferralGenerator',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        referral_generator_component = addresses[0]
-        print('REFERRAL_GENERATOR_COMPONENT:', referral_generator_component)
-
-        code, definition = build('fee_distributor', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        fee_distributor_package = addresses[0]
-        envs.append(('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package))
-        print('FEE_DISTRIBUTOR_PACKAGE:', fee_distributor_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_package)),
-            'FeeDistributor',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        fee_distributor_component = addresses[0]
-        print('FEE_DISTRIBUTOR_COMPONENT:', fee_distributor_component)
-
-        code, definition = build('fee_delegator', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        fee_delegator_package = addresses[0]
-        envs.append(('FEE_DELEGATOR_PACKAGE', fee_delegator_package))
-        print('FEE_DELEGATOR_PACKAGE:', fee_delegator_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_package)),
-            'FeeDelegator',
-            'new',
-            [manifest_owner_role]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        fee_delegator_component = addresses[0]
-        print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
-
-        code, definition = build('exchange', envs, network_config['network_name'])
-        payload, intent = await gateway.build_publish_transaction(
-            account,
-            code,
-            definition,
-            owner_role,
-            public_key,
-            private_key,
-        )
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        exchange_package = addresses[0]
-        envs.append(('EXCHANGE_PACKAGE', exchange_package))
-        print('EXCHANGE_PACKAGE:', exchange_package)
-
-        builder = ret.ManifestBuilder()
-        builder = lock_fee(builder, account, 100)
-        builder = builder.account_withdraw(
-            account,
-            ret.Address(authority_resource),
-            ret.Decimal('1')
-        )            
-        builder = builder.take_from_worktop(
-            ret.Address(authority_resource),
-            ret.Decimal('1'),
-            ret.ManifestBuilderBucket("authority")
-        )
-        builder = builder.call_function(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
-            'Exchange',
-            'new',
-            [
-                manifest_owner_role, 
-                ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
-                ret.ManifestBuilderValue.ENUM_VALUE(1, []),
-            ]
-        )
-        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        addresses = await gateway.get_new_addresses(intent)
-        exchange_component = addresses[0]
-        print('EXCHANGE_COMPONENT:', exchange_component)
-
-        manifest = f'''
-            CALL_METHOD
-                Address("{account.as_str()}")
-                "lock_fee"
-                Decimal("10")
-            ;
-            CALL_METHOD
-                Address("{account.as_str()}")
-                "create_proof_of_amount"
-                Address("{owner_resource}")
-                Decimal("1")
-            ;
-            CALL_METHOD
-                Address("{env_registry_component}")
-                "set_variables"
-                Array<Tuple>(
-                    Tuple(
-                        "exchange_component"
-                        "{exchange_component}"
-                    )
+            if 'ORACLE_PACKAGE' not in config_data:
+                oracle_key = 'b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640'
+                oracle_key_array = [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)]
+                code, definition = build('oracle', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
                 )
-            ;
-        '''
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['ORACLE_PACKAGE'] = addresses[0]
 
-        payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
-        await gateway.submit_transaction(payload)
-        status = await gateway.get_transaction_status(intent)
-        print('Register exchange:', status)
+            oracle_package = config_data['ORACLE_PACKAGE']
+            envs.append(('ORACLE_PACKAGE', oracle_package))
+            print('ORACLE_PACKAGE:', oracle_package)
 
-        print('---------- DEPLOY COMPLETE ----------')
+            if 'ORACLE_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
+                    'Oracle',
+                    'new',
+                    [manifest_owner_role, ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, oracle_key_array)]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['ORACLE_COMPONENT'] = addresses[0]
 
-        print(f'STATE_VERSION={state_version}')
+            oracle_component = config_data['ORACLE_COMPONENT']
+            print('ORACLE_COMPONENT:', oracle_component)
 
-        print(f'OWNER_RESOURCE={owner_resource}')
-        print(f'AUTHORITY_RESOURCE={authority_resource}')
-        print(f'BASE_AUTHORITY_RESOURCE={base_authority_resource}')
-        print(f'BASE_RESOURCE={base_resource}')
-        print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
+            if 'ENV_REGISTRY_PACKAGE' not in config_data:
+                code, definition = build('env_registry', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['ENV_REGISTRY_PACKAGE'] = addresses[0]
 
-        print(f'TOKEN_WRAPPER_PACKAGE={token_wrapper_package}')
-        print(f'CONFIG_PACKAGE={config_package}')
-        print(f'ACCOUNT_PACKAGE={account_package}')
-        print(f'POOL_PACKAGE={pool_package}')
-        print(f'REFERRAL_GENERATOR_PACKAGE={referral_generator_package}')
-        print(f'PERMISSION_REGISTRY_PACKAGE={permission_registry_package}')
-        print(f'ORACLE_PACKAGE={oracle_package}')
-        print(f'FEE_DISTRIBUTOR_PACKAGE={fee_distributor_package}')
-        print(f'FEE_DELEGATOR_PACKAGE={fee_delegator_package}')
-        print(f'ENV_REGISTRY_PACKAGE={env_registry_package}')
-        print(f'EXCHANGE_PACKAGE={exchange_package}')
+            env_registry_package = config_data['ENV_REGISTRY_PACKAGE']
+            envs.append(('ENV_REGISTRY_PACKAGE', env_registry_package))
+            print('ENV_REGISTRY_PACKAGE:', env_registry_package)
 
-        print(f'TOKEN_WRAPPER_COMPONENT={token_wrapper_component}')
-        print(f'CONFIG_COMPONENT={config_component}')
-        print(f'POOL_COMPONENT={pool_component}')
-        print(f'REFERRAL_GENERATOR_COMPONENT={referral_generator_component}')
-        print(f'PERMISSION_REGISTRY_COMPONENT={permission_registry_component}')
-        print(f'ORACLE_COMPONENT={oracle_component}')
-        print(f'FEE_DISTRIBUTOR_COMPONENT={fee_distributor_component}')
-        print(f'FEE_DELEGATOR_COMPONENT={fee_delegator_component}')
-        print(f'ENV_REGISTRY_COMPONENT={env_registry_component}')
-        print(f'EXCHANGE_COMPONENT={exchange_component}')
+            if 'ENV_REGISTRY_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(env_registry_package)),
+                    'EnvRegistry',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['ENV_REGISTRY_COMPONENT'] = addresses[0]
 
-        config_data = {
-            'OWNER_RESOURCE': owner_resource,
-            'AUTHORITY_RESOURCE': authority_resource,
-            'BASE_AUTHORITY_RESOURCE': base_authority_resource,
-            'BASE_RESOURCE': base_resource,
-            'KEEPER_REWARD_RESOURCE': keeper_reward_resource,
-            'TOKEN_WRAPPER_PACKAGE': token_wrapper_package,
-            'CONFIG_PACKAGE': config_package,
-            'ACCOUNT_PACKAGE': account_package,
-            'POOL_PACKAGE': pool_package,
-            'REFERRAL_GENERATOR_PACKAGE': referral_generator_package,
-            'PERMISSION_REGISTRY_PACKAGE': permission_registry_package,
-            'ORACLE_PACKAGE': oracle_package,
-            'FEE_DISTRIBUTOR_PACKAGE': fee_distributor_package,
-            'FEE_DELEGATOR_PACKAGE': fee_delegator_package,
-            'ENV_REGISTRY_PACKAGE': env_registry_package,
-            'EXCHANGE_PACKAGE': exchange_package,
-            'TOKEN_WRAPPER_COMPONENT': token_wrapper_component,
-            'CONFIG_COMPONENT': config_component,
-            'POOL_COMPONENT': pool_component,
-            'REFERRAL_GENERATOR_COMPONENT': referral_generator_component,
-            'PERMISSION_REGISTRY_COMPONENT': permission_registry_component,
-            'ORACLE_COMPONENT': oracle_component,
-            'FEE_DISTRIBUTOR_COMPONENT': fee_distributor_component,
-            'FEE_DELEGATOR_COMPONENT': fee_delegator_component,
-            'ENV_REGISTRY_COMPONENT': env_registry_component,
-            'EXCHANGE_COMPONENT': exchange_component
-        }
+            env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
+            print('ENV_REGISTRY_COMPONENT:', env_registry_component)
 
-        release_path = join(dirname(dirname(realpath(__file__))), 'releases')
-        release_path = join(release_path, timestamp + '_' + network_config['network_name'])
+            if 'PERMISSION_REGISTRY_PACKAGE' not in config_data:
+                code, definition = build('permission_registry', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['PERMISSION_REGISTRY_PACKAGE'] = addresses[0]
+
+            permission_registry_package = config_data['PERMISSION_REGISTRY_PACKAGE']
+            envs.append(('PERMISSION_REGISTRY_PACKAGE', permission_registry_package))
+            print('PERMISSION_REGISTRY_PACKAGE:', permission_registry_package)
+
+            if 'PERMISSION_REGISTRY_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_package)),
+                    'PermissionRegistry',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['PERMISSION_REGISTRY_COMPONENT'] = addresses[0]
+
+            permission_registry_component = config_data['PERMISSION_REGISTRY_COMPONENT']
+            print('PERMISSION_REGISTRY_COMPONENT:', permission_registry_component)
+
+            if 'TOKEN_WRAPPER_PACKAGE' not in config_data:
+                code, definition = build('token_wrapper', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['TOKEN_WRAPPER_PACKAGE'] = addresses[0]
+
+            token_wrapper_package = config_data['TOKEN_WRAPPER_PACKAGE']
+            envs.append(('TOKEN_WRAPPER_PACKAGE', token_wrapper_package))
+            print('TOKEN_WRAPPER_PACKAGE:', token_wrapper_package)
+
+            if 'TOKEN_WRAPPER_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.account_withdraw(
+                    account,
+                    ret.Address(base_authority_resource),
+                    ret.Decimal('1')
+                )
+                builder = builder.take_from_worktop(
+                    ret.Address(base_authority_resource),
+                    ret.Decimal('1'),
+                    ret.ManifestBuilderBucket("authority")
+                )
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_package)),
+                    'TokenWrapper',
+                    'new',
+                    [manifest_owner_role, ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority"))]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['TOKEN_WRAPPER_COMPONENT'] = addresses[0]
+
+            token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
+            print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
+
+            if 'CONFIG_PACKAGE' not in config_data:
+                code, definition = build('config', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['CONFIG_PACKAGE'] = addresses[0]
+
+            config_package = config_data['CONFIG_PACKAGE']
+            envs.append(('CONFIG_PACKAGE', config_package))
+            print('CONFIG_PACKAGE:', config_package)
+
+            if 'CONFIG_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(config_package)),
+                    'Config',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['CONFIG_COMPONENT'] = addresses[0]
+
+            config_component = config_data['CONFIG_COMPONENT']
+            print('CONFIG_COMPONENT:', config_component)
+
+            if 'ACCOUNT_PACKAGE' not in config_data:
+                code, definition = build('account', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['ACCOUNT_PACKAGE'] = addresses[0]
+
+            account_package = config_data['ACCOUNT_PACKAGE']
+            envs.append(('ACCOUNT_PACKAGE', account_package))
+            print('ACCOUNT_PACKAGE:', account_package)
+
+            if 'POOL_PACKAGE' not in config_data:
+                code, definition = build('pool', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['POOL_PACKAGE'] = addresses[0]
+
+            pool_package = config_data['POOL_PACKAGE']
+            envs.append(('POOL_PACKAGE', pool_package))
+            print('POOL_PACKAGE:', pool_package)
+
+            if 'POOL_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(pool_package)),
+                    'MarginPool',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['POOL_COMPONENT'] = addresses[0]
+                config_data['LP_RESOURCE'] = addresses[1]
+
+            pool_component = config_data['POOL_COMPONENT']
+            lp_resource = config_data['LP_RESOURCE']
+            print('POOL_COMPONENT:', pool_component)
+            print('LP_RESOURCE:', lp_resource)
+
+            if 'REFERRAL_GENERATOR_PACKAGE' not in config_data:
+                code, definition = build('referral_generator', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['REFERRAL_GENERATOR_PACKAGE'] = addresses[0]
+
+            referral_generator_package = config_data['REFERRAL_GENERATOR_PACKAGE']
+            envs.append(('REFERRAL_GENERATOR_PACKAGE', referral_generator_package))
+            print('REFERRAL_GENERATOR_PACKAGE:', referral_generator_package)
+
+            if 'REFERRAL_GENERATOR_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_package)),
+                    'ReferralGenerator',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['REFERRAL_GENERATOR_COMPONENT'] = addresses[0]
+
+            referral_generator_component = config_data['REFERRAL_GENERATOR_COMPONENT']
+            print('REFERRAL_GENERATOR_COMPONENT:', referral_generator_component)
+
+            if 'FEE_DISTRIBUTOR_PACKAGE' not in config_data:
+                code, definition = build('fee_distributor', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['FEE_DISTRIBUTOR_PACKAGE'] = addresses[0]
+
+            fee_distributor_package = config_data['FEE_DISTRIBUTOR_PACKAGE']
+            envs.append(('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package))
+            print('FEE_DISTRIBUTOR_PACKAGE:', fee_distributor_package)
+
+            if 'FEE_DISTRIBUTOR_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_package)),
+                    'FeeDistributor',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['FEE_DISTRIBUTOR_COMPONENT'] = addresses[0]
+
+            fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
+            print('FEE_DISTRIBUTOR_COMPONENT:', fee_distributor_component)
+
+            if 'FEE_DELEGATOR_PACKAGE' not in config_data:
+                code, definition = build('fee_delegator', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['FEE_DELEGATOR_PACKAGE'] = addresses[0]
+
+            fee_delegator_package = config_data['FEE_DELEGATOR_PACKAGE']
+            envs.append(('FEE_DELEGATOR_PACKAGE', fee_delegator_package))
+            print('FEE_DELEGATOR_PACKAGE:', fee_delegator_package)
+
+            if 'FEE_DELEGATOR_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_package)),
+                    'FeeDelegator',
+                    'new',
+                    [manifest_owner_role]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['FEE_DELEGATOR_COMPONENT'] = addresses[0]
+
+            fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
+            print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
+
+            if 'EXCHANGE_PACKAGE' not in config_data:
+                code, definition = build('exchange', envs, network_config['network_name'])
+                payload, intent = await gateway.build_publish_transaction(
+                    account,
+                    code,
+                    definition,
+                    owner_role,
+                    public_key,
+                    private_key,
+                )
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['EXCHANGE_PACKAGE'] = addresses[0]
+
+            exchange_package = config_data['EXCHANGE_PACKAGE']
+            envs.append(('EXCHANGE_PACKAGE', exchange_package))
+            print('EXCHANGE_PACKAGE:', exchange_package)
+
+            if 'EXCHANGE_COMPONENT' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = builder.account_withdraw(
+                    account,
+                    ret.Address(authority_resource),
+                    ret.Decimal('1')
+                )            
+                builder = builder.take_from_worktop(
+                    ret.Address(authority_resource),
+                    ret.Decimal('1'),
+                    ret.ManifestBuilderBucket("authority")
+                )
+                builder = builder.call_function(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
+                    'Exchange',
+                    'new',
+                    [
+                        manifest_owner_role, 
+                        ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
+                        ret.ManifestBuilderValue.ENUM_VALUE(0, []),
+                    ]
+                )
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['EXCHANGE_COMPONENT'] = addresses[0]
+
+            exchange_component = config_data['EXCHANGE_COMPONENT']
+            print('EXCHANGE_COMPONENT:', exchange_component)
+
+            manifest = f'''
+                CALL_METHOD
+                    Address("{account.as_str()}")
+                    "lock_fee"
+                    Decimal("10")
+                ;
+                CALL_METHOD
+                    Address("{account.as_str()}")
+                    "create_proof_of_amount"
+                    Address("{owner_resource}")
+                    Decimal("1")
+                ;
+                CALL_METHOD
+                    Address("{env_registry_component}")
+                    "set_variables"
+                    Array<Tuple>(
+                        Tuple(
+                            "exchange_component",
+                            "{exchange_component}"
+                        ),
+                    )
+                ;
+            '''
+
+            payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+            await gateway.submit_transaction(payload)
+            status = await gateway.get_transaction_status(intent)
+            print('Register exchange:', status)
+
+            print('---------- DEPLOY COMPLETE ----------')
+
+            print(f'STATE_VERSION={state_version}')
+
+            print(f'OWNER_RESOURCE={owner_resource}')
+            print(f'AUTHORITY_RESOURCE={authority_resource}')
+            print(f'BASE_AUTHORITY_RESOURCE={base_authority_resource}')
+            print(f'BASE_RESOURCE={base_resource}')
+            print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
+
+            print(f'TOKEN_WRAPPER_PACKAGE={token_wrapper_package}')
+            print(f'CONFIG_PACKAGE={config_package}')
+            print(f'ACCOUNT_PACKAGE={account_package}')
+            print(f'POOL_PACKAGE={pool_package}')
+            print(f'REFERRAL_GENERATOR_PACKAGE={referral_generator_package}')
+            print(f'PERMISSION_REGISTRY_PACKAGE={permission_registry_package}')
+            print(f'ORACLE_PACKAGE={oracle_package}')
+            print(f'FEE_DISTRIBUTOR_PACKAGE={fee_distributor_package}')
+            print(f'FEE_DELEGATOR_PACKAGE={fee_delegator_package}')
+            print(f'ENV_REGISTRY_PACKAGE={env_registry_package}')
+            print(f'EXCHANGE_PACKAGE={exchange_package}')
+
+            print(f'TOKEN_WRAPPER_COMPONENT={token_wrapper_component}')
+            print(f'CONFIG_COMPONENT={config_component}')
+            print(f'POOL_COMPONENT={pool_component}')
+            print(f'REFERRAL_GENERATOR_COMPONENT={referral_generator_component}')
+            print(f'PERMISSION_REGISTRY_COMPONENT={permission_registry_component}')
+            print(f'ORACLE_COMPONENT={oracle_component}')
+            print(f'FEE_DISTRIBUTOR_COMPONENT={fee_distributor_component}')
+            print(f'FEE_DELEGATOR_COMPONENT={fee_delegator_component}')
+            print(f'ENV_REGISTRY_COMPONENT={env_registry_component}')
+            print(f'EXCHANGE_COMPONENT={exchange_component}')
+
+            print('-------------------------------------')
+
+        except Exception as e:
+            print('ERROR:', e)
+        finally:
+            release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+            makedirs(release_path, exist_ok=True)
+            release_path = join(release_path, timestamp + '_' + network_config['network_name'])
+            makedirs(release_path, exist_ok=True)
         
-        with open(join(release_path, f'config.json'), 'w') as config_file:
-            json.dump(config_data, config_file, indent=4)
-        with open(join(path, f'config.json'), 'w') as config_file:
-            json.dump(config_data, config_file, indent=4)
-        print(f'Config saved')
-
-        print('-------------------------------------')
+            with open(join(release_path, f'config.json'), 'w') as config_file:
+                json.dump(config_data, config_file, indent=4)
+            with open(join(path, f'config.json'), 'w') as config_file:
+                json.dump(config_data, config_file, indent=4)
+            print(f'Config saved')
 
         # withdraw_account = input("Please enter your address to withdraw: ")
         # balance = await gateway.get_xrd_balance(account)
