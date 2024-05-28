@@ -49,7 +49,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p5r80s0yatt7ymfrf4kp73n5q6kpsgwt2hcvsrq2jsekchmhsd7upu",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -68,7 +68,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p593m44p5van763l026wjh57q7v348ns5wlzxayhn268q388f9vtex",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -89,7 +89,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pkc0kxn5kk2j2e9e63sfkjm6z99dnrcf8ymka6xgksgsx9rvu7af5e",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -103,7 +103,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p5544vssudw595furn26lv304mvq48au0sgwrdrempls7g04rwc8vt",
         ReferralGenerator {
             // Getter methods
             fn get_referral(&self, hash: Hash) -> Option<Referral>;
@@ -114,7 +114,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p4pj9plrhfnuutjzlr3qsf0wyrfkjqvz33udfd6z340q3pnhheycmp",
         PermissionRegistry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
@@ -124,7 +124,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pkyqyp7u3n3gdkg6del6pjsm8cj644dqc3ezry8ylk8eaz6luhu2cp",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -132,7 +132,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1ph8rdd0h0uz7dunxk6qghf4dyx3ywwj7fvrg85xta8f8hnvc37a8l6",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -152,7 +152,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p4qkcgxddxlynkjcf54m8aq3lj5zdg49twvkvfjee72m69w47rh6jw",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -688,7 +688,7 @@ mod exchange_mod {
 
                 let old_rule = account.get_level_1_auth();
                 let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
-                permissions.level_1.remove(&account.address());
+                permissions.level_1.shift_remove(&account.address());
                 self.permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_1_auth(rule.clone());
@@ -714,7 +714,7 @@ mod exchange_mod {
 
                 let old_rule = account.get_level_2_auth();
                 let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
-                permissions.level_2.remove(&account.address());
+                permissions.level_2.shift_remove(&account.address());
                 self.permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_2_auth(rule.clone());
@@ -740,7 +740,7 @@ mod exchange_mod {
 
                 let old_rule = account.get_level_3_auth();
                 let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
-                permissions.level_3.remove(&account.address());
+                permissions.level_3.shift_remove(&account.address());
                 self.permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_3_auth(rule.clone());
