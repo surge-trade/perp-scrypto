@@ -168,7 +168,7 @@ impl VirtualMarginAccount {
         self.account.set_role("level_3", rule);
     }
 
-    pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status) {
+    pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status, effected_components: Vec<ComponentAddress>) {
         assert!(
             status == STATUS_ACTIVE || status == STATUS_DORMANT,
             "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_ACTIVE, STATUS_DORMANT]
@@ -177,17 +177,12 @@ impl VirtualMarginAccount {
         let submission = Clock::current_time_rounded_to_seconds();
         let expiry = submission.add_seconds(expiry_seconds as i64).expect(ERROR_ARITHMETIC);
 
-        let effected_nodes = match request {
-            Request::RemoveCollateral(ref remove_collateral) => vec![remove_collateral.target_account.as_node_id().clone()],
-            Request::MarginOrder(_) => vec![],
-        };
-
         let keeper_request = KeeperRequest {
             request: request.encode(), 
             submission,
             expiry,
             status,
-            effected_nodes,
+            effected_components,
         };
         self._add_active_request(self.account_info.requests_len);
 
