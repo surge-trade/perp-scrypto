@@ -5,11 +5,11 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto = { path = "../radixdlt-scrypto/scrypto" }
 common = { path = "../common" }
 
 [dev-dependencies]
-scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto-test = { path = "../radixdlt-scrypto/scrypto-test" }
 serde_json = "1.0"
 hex = "0.4.3"
 

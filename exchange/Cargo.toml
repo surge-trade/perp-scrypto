@@ -6,7 +6,7 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto = { path = "../radixdlt-scrypto/scrypto" }
 common = { path = "../common" }
 account = { path = "../account" }
 config = { path = "../config" }
@@ -15,11 +15,11 @@ referral_generator = { path = "../referral_generator" }
 permission_registry = { path = "../permission_registry" }
 
 [build-dependencies]
-scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto = { path = "../radixdlt-scrypto/scrypto" }
 regex = "1.5.4"
 
 [dev-dependencies]
-scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto-test = { path = "../radixdlt-scrypto/scrypto-test" }
 
 [profile.release]
 opt-level = 'z'        # Optimize for size.

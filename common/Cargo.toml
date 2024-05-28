@@ -6,13 +6,13 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto = { path = "../radixdlt-scrypto/scrypto" }
 
 [build-dependencies]
-scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto = { path = "../radixdlt-scrypto/scrypto" }
 
 [dev-dependencies]
-scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
+scrypto-test = { path = "../radixdlt-scrypto/scrypto-test" }
 
 [profile.release]
 opt-level = 'z'        # Optimize for size.
