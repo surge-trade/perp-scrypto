@@ -42,6 +42,11 @@ async def main():
         '''
 
         result = await gateway.preview_transaction(manifest)
+        if result['receipt']['status'] == 'Failed':
+            print("#### FAILED ####")
+            print(result['receipt']['error_message'])
+            return 
+        
         result = result['receipt']['output'][0]['programmatic_json']['fields']
         pair_ids = set()
         for elem in result[1]['elements']:
