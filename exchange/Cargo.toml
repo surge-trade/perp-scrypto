@@ -6,7 +6,6 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-sbor = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 common = { path = "../common" }
 account = { path = "../account" }
@@ -20,11 +19,7 @@ scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0"
 regex = "1.5.4"
 
 [dev-dependencies]
-transaction = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
-radix-engine = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
 scrypto-test = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
-radix-engine-interface = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.2.0" }
-exchange = { path = ".", features = ["test"] }
 
 [profile.release]
 opt-level = 'z'        # Optimize for size.
@@ -36,7 +31,6 @@ overflow-checks = true # Panic in the case of an overflow.
 
 [features]
 default = []
-test = []
 
 [lib]
 crate-type = ["cdylib", "lib"]
