@@ -528,8 +528,9 @@ mod exchange_mod {
             pair_ids: Vec<PairId>,
         ) -> Vec<PairDetails> {
             let mut config = VirtualConfig::new(self.config);
-            config.load_pair_configs(pair_ids.iter().cloned().collect());
-            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+            let pair_ids_set: HashSet<PairId> = pair_ids.iter().cloned().collect();
+            config.load_pair_configs(pair_ids_set.clone());
+            let pool = VirtualLiquidityPool::new(self.pool, pair_ids_set);
             pair_ids.into_iter().map(|pair_id| self._pair_details(&config, &pool, &pair_id)).collect()
         }
 
