@@ -49,7 +49,7 @@ mod exchange_mod {
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
-        "package_tdx_2_1pkyal9e5ggcdczjytm0t73z9x8vqj6hnt6acgjhecsl9v83fu8xf35",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -68,7 +68,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4a3yykyf9khpmkkdma4g7ktwfx27xq3xx82w46szxm0uekxa8mw3h",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -89,7 +89,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4w7j9qh2xv7adj4h5xgxhhw3hjphvgamy7x3t40mpkc929nz06cqg",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -103,7 +103,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1ph322wpww359mthslhr3zugn7arw82z7275t5v0xf6sk2j6y99w7fc",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Getter methods
             fn get_referral(&self, hash: Hash) -> Option<Referral>;
@@ -114,7 +114,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkzrusfvq8nfqycw4vwvepwjkhjykctc7jrk82ajvd7vqnrs6cmc54",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         PermissionRegistry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
@@ -124,7 +124,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1ph4gg6tcwuhy3qvruyk2d4x8vn5z830jgeclzrte3zsd7drq497q25",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -132,7 +132,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1ph5gxlw4lzvp9g3drsfapea02d0dd4npncrm2p4lljh39r8nvk9328",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Getter methods
             fn get_referrer(&self, account: ComponentAddress) -> Option<ComponentAddress>;
@@ -152,7 +152,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pk2lwgdngrl3368jvqlkdvdskk60ckufrl23gc8kg0lwq8ayntx2y8",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Getter methods
             fn get_fee_oath_resource(&self) -> ResourceAddress;
@@ -1832,7 +1832,7 @@ mod exchange_mod {
             let pair_config = config.pair_config(pair_id);
             let price = oracle.price(pair_id);
             
-            let value = -amount * price;
+            let value = amount * price;
             let value_abs = value.checked_abs().unwrap();
             let pool_value = self._pool_value(pool);
 
@@ -1840,19 +1840,19 @@ mod exchange_mod {
             let mut position = account.position(pair_id);
 
             let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price).checked_abs().expect(ERROR_ARITHMETIC);
-            let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short - amount) * price).checked_abs().expect(ERROR_ARITHMETIC);
+            let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short + amount) * price).checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_delta = skew_abs_1 - skew_abs_0;
             let fee = value_abs * (pair_config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * pair_config.fee_1).clamp(dec!(0), exchange_config.fee_max);
             let fee_protocol = fee * exchange_config.fee_share_protocol;
             let fee_treasury = fee * exchange_config.fee_share_treasury;
             let fee_referral = fee * exchange_config.fee_share_referral;
             let cost = -amount / position.amount * position.cost;
-            let pnl = value - cost - fee;
+            let pnl = -value - cost - fee;
         
-            if position.amount.is_positive() {
-                pool_position.oi_long -= amount;
+            if amount.is_negative() {
+                pool_position.oi_long += amount;
             } else {
-                pool_position.oi_short += amount;
+                pool_position.oi_short -= amount;
             }
             pool_position.cost -= cost;
 
@@ -1997,7 +1997,7 @@ mod exchange_mod {
                 let pair_config = config.pair_config(pair_id);
                 let price = oracle.price(pair_id);
                 let amount = position.amount;
-                let value = position.amount * price;
+                let value = amount * price;
                 let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
 
                 let pool_position = pool.position(pair_id);
@@ -2007,10 +2007,10 @@ mod exchange_mod {
                 let skew_abs_delta = skew_abs_1 - skew_abs_0;
                 let fee = value_abs * (pair_config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * pair_config.fee_1).clamp(dec!(0), exchange_config.fee_max);
                 let cost = position.cost;
-                let funding = if position.amount.is_positive() {
-                    position.amount * (pool_position.funding_long_index - position.funding_index)
+                let funding = if amount.is_positive() {
+                    amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
-                    position.amount * (pool_position.funding_short_index - position.funding_index)            
+                    amount * (pool_position.funding_short_index - position.funding_index)            
                 };
 
                 let pnl = value - cost - fee - funding;
@@ -2048,7 +2048,7 @@ mod exchange_mod {
                 let pair_config = config.pair_config(pair_id);
                 let price = oracle.price(pair_id);
                 let amount = position.amount;
-                let value = position.amount * price;
+                let value = amount * price;
                 let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
 
                 let mut pool_position = pool.position(pair_id);
@@ -2058,12 +2058,12 @@ mod exchange_mod {
                 let skew_abs_delta = skew_abs_1 - skew_abs_0;
                 let fee = value_abs * (pair_config.fee_0 + skew_abs_delta / pool_value.max(dec!(1)) * pair_config.fee_1).clamp(dec!(0), exchange_config.fee_max);
                 let cost = position.cost;
-                let funding = if position.amount.is_positive() {
+                let funding = if amount.is_positive() {
                     pool_position.oi_long -= amount;
-                    position.amount * (pool_position.funding_long_index - position.funding_index)
+                    amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
                     pool_position.oi_short += amount;
-                    position.amount * (pool_position.funding_short_index - position.funding_index)            
+                    amount * (pool_position.funding_short_index - position.funding_index)            
                 };
                 pool_position.cost -= cost;
 
@@ -2080,7 +2080,7 @@ mod exchange_mod {
                 total_fee_protocol += fee_protocol;
                 total_fee_treasury += fee_treasury;
                 total_fee_referral += fee_referral;
-                position_amounts.push((pair_id.clone(), position.amount));
+                position_amounts.push((pair_id.clone(), amount));
                 prices.push((pair_id.clone(), price));
 
                 pool.update_position(pair_id, pool_position);
