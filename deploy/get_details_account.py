@@ -16,6 +16,96 @@ from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 from tools.price_feeds import get_feeds, get_prices
 
+def parse_request(elem):
+    request = elem['fields']
+
+    index = request[0]['value']
+    submission = request[2]['value']
+    expiry = request[3]['value']
+    status_id = int(request[4]['value'])
+    request_variant_id = int(request[1]['variant_id'])
+    request_inner = request[1]['fields'][0]['fields']
+
+    if status_id == 0:
+        status = 'Dormant'
+    elif status_id == 1:
+        status = 'Active'
+    elif status_id == 2:
+        status = 'Executed'
+    elif status_id == 3:
+        status = 'Expired'
+    else:
+        status = 'Unknown'
+
+    if request_variant_id == 0:
+        type = 'Remove Collateral'
+        target_account = request_inner[0]['value']
+
+        claims = []
+        for claim in request_inner[1]['elements']:
+            claim = claim['fields']
+            claims.append({
+                'resource': claim[0]['value'],
+                'amount': claim[1]['value'],
+            })
+
+        request_details = {
+            'type': type,
+            'target_account': target_account,
+            'claims': claims,
+        }
+    elif request_variant_id == 1:
+        print(request_inner[0])
+        pair_id = request_inner[0]['value']
+        amount = float(request_inner[1]['value'])
+        limit_variant = int(request_inner[2]['variant_id'])
+        if limit_variant == 0 or limit_variant == 1:
+            price = float(request_inner[2]['fields'][0]['value'])
+        else:
+            price = None
+
+        activate_requests = []
+        for i in request_inner[3]['elements']:
+            activate_requests.append(i['value'])
+
+        cancel_requests = []
+        for i in request_inner[4]['elements']:
+            cancel_requests.append(i['value'])
+
+        if limit_variant == 0 and amount > 0:
+            type = 'Stop Long'
+        elif limit_variant == 0 and amount <= 0:
+            type = 'Limit Short'
+        elif limit_variant == 1 and amount >= 0:
+            type = 'Limit Long'
+        elif limit_variant == 1 and amount < 0:
+            type = 'Stop Short'    
+        elif limit_variant == 2 and amount >= 0:
+            type = 'Market Long'
+        elif limit_variant == 2 and amount < 0:
+            type = 'Market Short'
+        else:
+            type = 'Unknown'
+
+        request_details = {
+            'type': type,
+            'pair': pair_id,
+            'amount': amount,
+            'price': price,
+            'activate_requests': activate_requests,
+            'cancel_requests': cancel_requests,
+        }
+    else:
+        request_details = None
+
+    return {
+        'index': index,
+        'submission': submission,
+        'expiry': expiry,
+        'status': status,
+        'request_details': request_details,
+    }
+
 async def main():
     path = dirname(realpath(__file__))
     chdir(path)
@@ -118,25 +208,11 @@ async def main():
 
         active_requests = []
         for elem in result[4]['elements']:
-            elem = elem['fields']
-            active_requests.append({
-                'index': elem[0]['value'],
-                'request': elem[1],
-                'submission': elem[2]['value'],
-                'expiry': elem[3]['value'],
-                'status': elem[4]['value'],
-            })
+            active_requests.append(parse_request(elem))
 
         requests_history = []
         for elem in result[5]['elements']:
-            elem = elem['fields']
-            requests_history.append({
-                'index': elem[0]['value'],
-                'request': elem[1],
-                'submission': elem[2]['value'],
-                'expiry': elem[3]['value'],
-                'status': elem[4]['value'],
-            })
+            requests_history.append(parse_request(elem))
 
         print('Balance:', balance)
         print('Positions:', positions)

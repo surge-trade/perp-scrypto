@@ -28,7 +28,6 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -37,19 +36,25 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        print('ACCOUNT:', account.as_str())
+
+        transfer_account = input('Input account to transfer to: ')
+        transfer_resource = config_data['BASE_RESOURCE']
+        transfer_amount = input('Input amount to transfer: ')
+
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(account),
             'withdraw',
             [
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['xrd']))),
-                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100'))
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(transfer_resource))),
+                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal(transfer_amount))
             ]
         )
-        builder = builder.take_all_from_worktop(ret.Address(network_config['xrd']), ret.ManifestBuilderBucket("token"))
+        builder = builder.take_all_from_worktop(ret.Address(transfer_resource), ret.ManifestBuilderBucket("token"))
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address('account_tdx_2_12y3u5ghs9pukwycplk2jpwzxqpeq2kymh03sgt4tnqwvs02lkand4k')),
+            ret.ManifestBuilderAddress.STATIC(ret.Address(transfer_account)),
             'try_deposit_or_abort',
             [
                 ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("token")),
