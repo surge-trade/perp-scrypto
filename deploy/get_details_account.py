@@ -29,8 +29,8 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
-        # account_component = "component_tdx_2_1cqj8s9qydafchjlfuafayal2hwq7rhwev5j82uc00lcf5d5eszc0wz"
-        account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
+        account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
+        # account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
 
         manifest = f'''
             CALL_METHOD
