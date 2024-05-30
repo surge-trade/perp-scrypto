@@ -50,7 +50,6 @@ def parse_request(elem):
             })
 
         request_details = {
-            'type': type,
             'target_account': target_account,
             'claims': claims,
         }
@@ -88,7 +87,6 @@ def parse_request(elem):
             type = 'Unknown'
 
         request_details = {
-            'type': type,
             'pair': pair_id,
             'amount': amount,
             'price': price,
@@ -96,9 +94,11 @@ def parse_request(elem):
             'cancel_requests': cancel_requests,
         }
     else:
+        type = 'Unknown'
         request_details = None
 
     return {
+        'type': type,
         'index': index,
         'submission': submission,
         'expiry': expiry,
