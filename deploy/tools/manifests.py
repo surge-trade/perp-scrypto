@@ -163,3 +163,30 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
         address_reservation=None,
     )
     
+def mint_test_btc(builder: ManifestBuilder) -> ManifestBuilder:
+    resource_roles = FungibleResourceRoles(
+        mint_roles=None,
+        burn_roles=None,
+        freeze_roles=None,
+        recall_roles=None,
+        withdraw_roles=None,
+        deposit_roles=None,
+    )
+    metadata: MetadataModuleConfig = MetadataModuleConfig(
+        init={
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Bitcoin'), True),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('BTC'), True),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('The original cryptocurrency.'), True),
+        },
+        roles={},
+    )
+
+    return builder.create_fungible_resource_manager(
+        owner_role=OwnerRole.NONE(),
+        track_total_supply=True,
+        divisibility=18,
+        initial_supply=Decimal('21000000'),
+        resource_roles=resource_roles,
+        metadata=metadata,
+        address_reservation=None,
+    )

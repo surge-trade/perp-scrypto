@@ -13,7 +13,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
+from tools.manifests import lock_fee, deposit_all, mint_test_btc
 
 async def main():
     path = dirname(realpath(__file__))
@@ -31,9 +31,8 @@ async def main():
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
 
-        base_resource = config_data['BASE_RESOURCE']
+        owner_resource = config_data['OWNER_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
-        account_component = config_data['ACCOUNT_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -48,33 +47,47 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        builder = ret.ManifestBuilder()
+        builder = lock_fee(builder, account, 100)
+        builder = mint_test_btc(builder)
+        builder = deposit_all(builder, account)
+
+        payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        addresses = await gateway.get_new_addresses(intent)
+        config_data['BTC_RESOURCE'] = addresses[0]
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = withdraw_to_bucket(builder, account, ret.Address(base_resource), ret.Decimal('1000'), 'bucket1')
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
+        )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'add_collateral',
-            [
-                ret.ManifestBuilderValue.ENUM_VALUE(0, []),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))),
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.BUCKET_VALUE, [
-                    ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))
-                ]),
-            ]
+            'update_collateral_configs',
+            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_data['BTC_RESOURCE']))),
+                    ret.ManifestBuilderValue.TUPLE_VALUE([
+                        ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # pair_id
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.9')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
+                    ])
+                ])
+            ])]
         )
-        builder = deposit_all(builder, account)
-
-        # OSS
-        # manifest: ret.TransactionManifest = builder.build(network_config['network_id'])
-        # print(manifest.instructions().as_str())
-
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         print('Transaction id:', intent)
         await gateway.submit_transaction(payload)
         status = await gateway.get_transaction_status(intent)
         print('Transaction status:', status)
+
+        with open(join(path, f'config.json'), 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        print(f'Config saved')
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -36,7 +36,7 @@ async def main():
             CALL_METHOD
                 Address("{exchange_component}")
                 "get_pair_details"
-                Array<Tuple>(
+                Array<String>(
                     "BTC/USD",
                     "ETH/USD",
                     "XRD/USD",

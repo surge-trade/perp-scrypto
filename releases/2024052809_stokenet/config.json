@@ -25,7 +25,5 @@
     "FEE_DELEGATOR_COMPONENT": "component_tdx_2_1cp7d2h5u7jze3947v72x9q729gclq43v4ym0e6h99pkyuny9kc2adq",
     "EXCHANGE_COMPONENT": "component_tdx_2_1cqdgd2jmnr8g0tvavm6mmje9q7snszurm6vgqxevukya2z695hekh2",
     "ACCOUNT_PACKAGE": "package_tdx_2_1p4a3yykyf9khpmkkdma4g7ktwfx27xq3xx82w46szxm0uekxa8mw3h",
-    "EXCHANGE_PACKAGE": "package_tdx_2_1phuyehf03zu6229vzktlzyfhvhq5umtn645j2pnj7ntjmkec8gce2d",
-    "ACCOUNT_COMPONENT": "component_tdx_2_1czlvw342q3nk92hwyr3lagwtkgy9gjjacy3zgaenj99shqk06t3ds5",
-    "BTC_RESOURCE": "resource_tdx_2_1t4hrpszvak4vsmshfm77yxg2h6ljg2afsmddskttkw90vy35eryhq5"
+    "EXCHANGE_PACKAGE": "package_tdx_2_1phuyehf03zu6229vzktlzyfhvhq5umtn645j2pnj7ntjmkec8gce2d"
 }

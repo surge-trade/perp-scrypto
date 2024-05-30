@@ -213,7 +213,7 @@ async def main():
         builder = builder.allocate_global_address(
             ret.Address(exchange_package),
             'Exchange',
-            ret.ManifestAddressReservation('exchange_component_reservation'),
+            ret.ManifestBuilderAddressReservation('exchange_component_reservation'),
             ret.ManifestBuilderNamedAddress('exchange_component')
         )
         builder = builder.call_function(
@@ -230,7 +230,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
-                ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestAddressReservation('exchange_component_reservation'))]),
+                ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
             ]
         )
         builder = builder.call_method(
