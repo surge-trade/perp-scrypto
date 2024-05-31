@@ -47,14 +47,18 @@ async def main():
         lp_supply = result[6]['value']
         lp_price = result[7]['value']
 
-        print('Base Tokens Amount:', base_tokens_amount)
-        print('Virtual Balance:', virtual_balance)
-        print('Unrealized Pool Funding:', unrealized_pool_funding)
-        print('PnL Snap:', pnl_snap)
-        print('Skew Ratio:', skew_ratio)
-        print('Skew Ratio Cap:', skew_ratio_cap)
-        print('LP Supply:', lp_supply)
-        print('LP Price:', lp_price)
+        pool_details = {
+            'base_tokens_amount': base_tokens_amount,
+            'virtual_balance': virtual_balance,
+            'unrealized_pool_funding': unrealized_pool_funding,
+            'pnl_snap': pnl_snap,
+            'skew_ratio': skew_ratio,
+            'skew_ratio_cap': skew_ratio_cap,
+            'lp_supply': lp_supply,
+            'lp_price': lp_price,
+        }
+
+        print(json.dumps(pool_details, indent=2))
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -119,8 +119,9 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
-        account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
+        # account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
         # account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
+        account_component = "component_tdx_2_1cqsdhl3jnx63zvdk9ltxw7vvr5hx74dvr2k7rwmmfm074p04u0ld3e"
 
         manifest = f'''
             CALL_METHOD
@@ -214,12 +215,16 @@ async def main():
         for elem in result[5]['elements']:
             requests_history.append(parse_request(elem))
 
-        print('Balance:', balance)
-        print('Positions:', positions)
-        print('Collaterals:', collaterals)
-        print('Valid Requests Start:', valid_requests_start)
-        print('Active Requests:', active_requests)
-        print('Requests History:', requests_history)
+        account_details = {
+            'balance': balance,
+            'positions': positions,
+            'collaterals': collaterals,
+            'valid_requests_start': valid_requests_start,
+            'active_requests': active_requests,
+            'requests_history': requests_history,
+        }
+
+        print(json.dumps(account_details, indent=2))
 
 if __name__ == '__main__':
     asyncio.run(main())
