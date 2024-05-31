@@ -91,8 +91,8 @@ async def main():
                     funding_share = funding_share
                 else:
                     funding_short = -funding
-                    funding_short_index = funding_short / pair['oi_short']
-                    funding_share = funding_short * pair['pair_config']['funding_share']
+                    funding_short_index = funding_short / oi_short
+                    funding_share = funding_short * pair_config['funding_share']
                     funding_long_index = -(funding_short - funding_share) / oi_long
                     funding_long = funding_long_index
                     funding_short = funding_short_index
