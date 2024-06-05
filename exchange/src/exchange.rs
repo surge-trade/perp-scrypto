@@ -2108,8 +2108,6 @@ mod exchange_mod {
         ) -> ResultValueCollateral {
             let mut total_value_discounted = dec!(0);
             let mut total_margin = dec!(0);
-            let mut collateral_amounts = vec![];
-            let mut prices = vec![];
             for (&resource, &amount) in account.collateral_amounts().iter() {
                 let collateral_config = config.collateral_configs().get(&resource).unwrap();
                 let price_resource = oracle.price_resource(resource);
@@ -2119,8 +2117,6 @@ mod exchange_mod {
 
                 total_value_discounted += value_discounted;
                 total_margin += margin;
-                collateral_amounts.push((resource, amount));
-                prices.push((resource, price_resource));
             }
 
             ResultValueCollateral {
