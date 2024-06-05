@@ -49,32 +49,67 @@ async def main():
         pairs = []
         for pair in result['receipt']['output'][0]['programmatic_json']['elements']:
             pair = pair['fields']
+            pair_id = pair[0]['value']
+            oi_long = float(pair[1]['value'])
+            oi_short = float(pair[2]['value'])
+            funding_2 = float(pair[3]['value'])
             pair_config = pair[4]['fields']
-            pairs.append({
-                'pair_id': pair[0]['value'],
-                'oi_long': float(pair[1]['value']),
-                'oi_short': float(pair[2]['value']),
-                'funding_2': float(pair[3]['value']),
-                'pair_config': {
-                    'pair_id': pair_config[0]['value'],
-                    'disabled': bool(pair_config[1]['value']),
-                    'update_price_delta_ratio': float(pair_config[2]['value']),
-                    'update_period_seconds': float(pair_config[3]['value']),
-                    'margin': float(pair_config[4]['value']),
-                    'margin_maintenance': float(pair_config[5]['value']),
-                    'funding_1': float(pair_config[6]['value']),
-                    'funding_2': float(pair_config[7]['value']),
-                    'funding_2_delta': float(pair_config[8]['value']),
-                    'funding_pool_0': float(pair_config[9]['value']),
-                    'funding_pool_1': float(pair_config[10]['value']),
-                    'funding_share': float(pair_config[11]['value']),
-                    'fee_0': float(pair_config[12]['value']),
-                    'fee_1': float(pair_config[13]['value']),
-                },
-            })
+            pair_config = {
+                'pair_id': pair_config[0]['value'],
+                'disabled': bool(pair_config[1]['value']),
+                'update_price_delta_ratio': float(pair_config[2]['value']),
+                'update_period_seconds': float(pair_config[3]['value']),
+                'margin': float(pair_config[4]['value']),
+                'margin_maintenance': float(pair_config[5]['value']),
+                'funding_1': float(pair_config[6]['value']),
+                'funding_2': float(pair_config[7]['value']),
+                'funding_2_delta': float(pair_config[8]['value']),
+                'funding_pool_0': float(pair_config[9]['value']),
+                'funding_pool_1': float(pair_config[10]['value']),
+                'funding_share': float(pair_config[11]['value']),
+                'fee_0': float(pair_config[12]['value']),
+                'fee_1': float(pair_config[13]['value']),
+            }
 
-        pair_ids = [pair['pair_id'] for pair in pairs]
-        prices = await get_prices(session, pair_ids)
+            ref_price = prices[pair_id]
+            skew = (oi_long - oi_short) * ref_price
+            funding_1 = skew * pair_config['funding_1']
+            funding_2 = funding_2 * pair_config['funding_2']
+            if oi_long == 0 or oi_short == 0:
+                funding_long = 0
+                funding_short = 0
+                funding_share = 0
+            else:
+                funding = funding_1 + funding_2
+                if funding > 0:
+                    funding_long = funding
+                    funding_long_index = funding_long / oi_long
+                    funding_share = funding_long * pair_config['funding_share']
+                    funding_short_index = -(funding_long - funding_share) / oi_short
+                    funding_long = funding_long_index
+                    funding_short = funding_short_index
+                    funding_share = funding_share
+                else:
+                    funding_short = -funding
+                    funding_short_index = funding_short / oi_short
+                    funding_share = funding_short * pair_config['funding_share']
+                    funding_long_index = -(funding_short - funding_share) / oi_long
+                    funding_long = funding_long_index
+                    funding_short = funding_short_index
+                    funding_share = funding_share
+
+            pairs.append({
+                'pair_id': pair_id,
+                'oi_long': oi_long,
+                'oi_short': oi_short,
+                'skew': skew,
+                'funding_1': funding_1,
+                'funding_2': funding_2,
+                'funding_long': funding_long,
+                'funding_short': funding_short,
+                'funding_share': funding_share,
+                'pair_config': pair_config,
+            })
 
         # // let (funding_long_index, funding_short_index, funding_share) = if !oi_long.is_zero() && !oi_short.is_zero() {
         # //     if funding_rate.is_positive() {
@@ -96,37 +131,9 @@ async def main():
         # //     }
         # // } else {
         # //     (dec!(0), dec!(0), dec!(0))
-        # // };
+        # // };            
 
-        for pair in pairs:
-            pair['ref_price'] = prices[pair['pair_id']]
-            pair['skew'] = (pair['oi_long'] - pair['oi_short']) * pair['ref_price']
-            pair['funding_1'] = pair['skew'] * pair['pair_config']['funding_1']
-            pair['funding_2'] = pair['funding_2'] * pair['pair_config']['funding_2']
-            if pair['oi_long'] == 0 or pair['oi_short'] == 0:
-                pair['funding_long'] = 0
-                pair['funding_short_index'] = 0
-                pair['funding_share'] = 0
-            else:
-                funding = pair['funding_1'] + pair['funding_2']
-                if funding > 0:
-                    funding_long = funding
-                    funding_long_index = funding_long / pair['oi_long']
-                    funding_share = funding_long * pair['pair_config']['funding_share']
-                    funding_short_index = -(funding_long - funding_share) / pair['oi_short']
-                    pair['funding_long'] = funding_long_index
-                    pair['funding_short'] = funding_short_index
-                    pair['funding_share'] = funding_share
-                else:
-                    funding_short = -funding
-                    funding_short_index = funding_short / pair['oi_short']
-                    funding_share = funding_short * pair['pair_config']['funding_share']
-                    funding_long_index = -(funding_short - funding_share) / pair['oi_long']
-                    pair['funding_long'] = funding_long_index
-                    pair['funding_short'] = funding_short_index
-                    pair['funding_share'] = funding_share
-
-        print(pairs)
+        print(json.dumps(pairs, indent=2))
 
 if __name__ == '__main__':
     asyncio.run(main())
