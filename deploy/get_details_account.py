@@ -163,11 +163,11 @@ async def main():
             cost = float(elem[4]['value'])
             funding = float(elem[5]['value'])
 
-            ref_price = prices[pair]
+            mark_price = prices[pair]
             entry_price = cost / size
-            value = size * ref_price
-            margin = margin * ref_price
-            margin_maintenance = margin_maintenance * ref_price
+            value = size * mark_price
+            margin = margin * mark_price
+            margin_maintenance = margin_maintenance * mark_price
             pnl = value - cost - funding
             roi = pnl / abs(cost) * 100
 
@@ -176,7 +176,7 @@ async def main():
                 'size': size,
                 'value': value,
                 'entry_price': entry_price,
-                'ref_price': ref_price,
+                'mark_price': mark_price,
                 'margin': margin,
                 'margin_maintenance': margin_maintenance,
                 'pnl': pnl,
@@ -193,15 +193,15 @@ async def main():
             discount = float(elem[3]['value'])
             margin = float(elem[4]['value'])
 
-            ref_price = prices[pair]
-            value = amount * ref_price
+            mark_price = prices[pair]
+            value = amount * mark_price
             value_discounted = value * discount
-            margin = margin * ref_price
+            margin = margin * mark_price
 
             collaterals.append({
                 'pair': pair,
                 'resource': resource,
-                'ref_price': ref_price,
+                'mark_price': mark_price,
                 'amount': amount,
                 'value': value,
                 'discount': discount,
