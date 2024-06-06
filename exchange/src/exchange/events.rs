@@ -124,7 +124,7 @@ pub struct EventLiquidate { // TODO: add funding and cost info?
 }
 
 // #[derive(ScryptoSbor, ScryptoEvent)]
-// pub struct EventLiquidate { // TODO: add funding and cost info?
+// pub struct EventLiquidate { // TODO: add funding and cost info? pool loss?
 //     pub account: ComponentAddress,
 //     pub account_value: Decimal,
 //     pub margin: Decimal,
