@@ -64,7 +64,7 @@ async def main():
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pub margin_initial: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
@@ -80,7 +80,7 @@ async def main():
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pub margin_initial: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
@@ -96,7 +96,7 @@ async def main():
                     ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pub margin_initial: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
