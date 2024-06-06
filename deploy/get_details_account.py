@@ -119,8 +119,8 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
-        account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
-        # account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
+        # account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
+        account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
         # account_component = "component_tdx_2_1cqsdhl3jnx63zvdk9ltxw7vvr5hx74dvr2k7rwmmfm074p04u0ld3e"
 
         manifest = f'''
@@ -165,7 +165,7 @@ async def main():
             margin = margin * ref_price
             margin_maintenance = margin_maintenance * ref_price
             pnl = value - cost - funding
-            roi = pnl / cost * 100
+            roi = pnl / abs(cost) * 100
 
             positions.append({
                 'pair': pair,
@@ -215,6 +215,31 @@ async def main():
         for elem in result[5]['elements']:
             requests_history.append(parse_request(elem))
 
+        balance = float(result[0]['value'])
+        total_pnl = sum([x['pnl'] for x in positions])
+        total_margin = sum([x['margin'] for x in positions]) + sum([x['margin'] for x in collaterals])
+        total_margin_maintenance = sum([x['margin_maintenance'] for x in positions]) + sum([x['margin'] for x in collaterals])
+        total_collateral_value = sum([x['value'] for x in collaterals])
+        total_collateral_value_discounted = sum([x['value_discounted'] for x in collaterals])
+
+        account_value = balance + total_pnl + total_collateral_value
+        account_value_discounted = balance + total_pnl + total_collateral_value_discounted
+        available_margin = account_value_discounted - total_margin
+        available_margin_maintenance = account_value_discounted - total_margin_maintenance
+
+        overview = {
+            'account_value': account_value,
+            'account_value_discounted': account_value_discounted,
+            'available_margin': available_margin,
+            'available_margin_maintenance': available_margin_maintenance,
+            'balance': balance,
+            'total_pnl': total_pnl,
+            'total_margin': total_margin,
+            'total_margin_maintenance': total_margin_maintenance,
+            'total_collateral_value': total_collateral_value,
+            'total_collateral_value_discounted': total_collateral_value_discounted,
+        }
+
         account_details = {
             'balance': balance,
             'positions': positions,
@@ -222,6 +247,7 @@ async def main():
             'valid_requests_start': valid_requests_start,
             'active_requests': active_requests,
             'requests_history': requests_history,
+            'overview': overview,
         }
 
         print(json.dumps(account_details, indent=2))
