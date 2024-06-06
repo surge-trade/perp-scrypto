@@ -15,6 +15,7 @@ pub const ERROR_INVALID_LP_TOKEN: &str = "Invalid LP token";
 pub const ERROR_REMOVE_COLLATERAL_INSUFFICIENT_POOL_TOKENS: &str = "Insufficient pool balance for withdrawal";
 
 pub const ERROR_LIQUIDATION_SUFFICIENT_MARGIN: &str = "Sufficient margin for liquidation";
+pub const ERROR_LIQUIDATION_INSUFFICIENT_PAYMENT: &str = "Insufficient payment for liquidation";
 
 pub const ERROR_ADL_SKEW_TOO_LOW: &str = "Skew ratio is too low for ADL";
 pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL not positive";
