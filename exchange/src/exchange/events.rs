@@ -123,6 +123,25 @@ pub struct EventLiquidate { // TODO: add funding and cost info?
     pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
 }
 
+// #[derive(ScryptoSbor, ScryptoEvent)]
+// pub struct EventLiquidate { // TODO: add funding and cost info?
+//     pub account: ComponentAddress,
+//     pub account_value: Decimal,
+//     pub margin: Decimal,
+//     pub virtual_balance: Decimal,
+//     pub position_amounts: Vec<(PairId, Decimal)>,
+//     pub positions_pnl: Decimal,
+//     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
+//     pub collateral_value: Decimal,
+//     pub collateral_value_discounted: Decimal,
+//     pub fee_pool: Decimal,
+//     pub fee_protocol: Decimal,
+//     pub fee_treasury: Decimal,
+//     pub fee_referral: Decimal,
+//     pub position_prices: Vec<(PairId, Decimal)>,
+//     pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
+// }
+
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventAutoDeleverage {
     pub account: ComponentAddress,
