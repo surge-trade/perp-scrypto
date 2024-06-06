@@ -33,7 +33,11 @@ def parse_request(elem):
     elif status_id == 2:
         status = 'Executed'
     elif status_id == 3:
+        status = 'Canceled'
+    elif status_id == 4:
         status = 'Expired'
+    elif status_id == 5:
+        status = 'Failed'
     else:
         status = 'Unknown'
 
