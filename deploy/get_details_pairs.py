@@ -47,13 +47,14 @@ async def main():
         result = await gateway.preview_transaction(manifest)
 
         pairs = []
-        for pair in result['receipt']['output'][0]['programmatic_json']['elements']:
-            pair = pair['fields']
-            pair_id = pair[0]['value']
-            oi_long = float(pair[1]['value'])
-            oi_short = float(pair[2]['value'])
-            funding_2 = float(pair[3]['value'])
-            pair_config = pair[4]['fields']
+        for elem in result['receipt']['output'][0]['programmatic_json']['elements']:
+            elem = elem['fields']
+            pair = elem[0]['value']
+            oi_long = float(elem[1]['value'])
+            oi_short = float(elem[2]['value'])
+            funding_2 = float(elem[3]['value'])
+
+            pair_config = elem[4]['fields']
             pair_config = {
                 'pair_id': pair_config[0]['value'],
                 'disabled': bool(pair_config[1]['value']),
@@ -71,8 +72,8 @@ async def main():
                 'fee_1': float(pair_config[13]['value']),
             }
 
-            ref_price = prices[pair_id]
-            skew = (oi_long - oi_short) * ref_price
+            price = prices[pair]
+            skew = (oi_long - oi_short) * price
             funding_1 = skew * pair_config['funding_1']
             funding_2 = funding_2 * pair_config['funding_2']
             if oi_long == 0 or oi_short == 0:
@@ -99,7 +100,7 @@ async def main():
                     funding_share = funding_share
 
             pairs.append({
-                'pair_id': pair_id,
+                'pair': pair,
                 'oi_long': oi_long,
                 'oi_short': oi_short,
                 'skew': skew,
