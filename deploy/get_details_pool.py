@@ -38,8 +38,8 @@ async def main():
         result = await gateway.preview_transaction(manifest)
         result = result['receipt']['output'][0]['programmatic_json']['fields']
 
-        base_tokens_amount = result[0]['value']
-        virtual_balance = result[1]['value']
+        token_amount = result[0]['value']
+        balance = result[1]['value']
         unrealized_pool_funding = result[2]['value']
         pnl_snap = result[3]['value']
         skew_ratio = result[4]['value']
@@ -48,8 +48,8 @@ async def main():
         lp_price = result[7]['value']
 
         pool_details = {
-            'base_tokens_amount': base_tokens_amount,
-            'virtual_balance': virtual_balance,
+            'token_amount': token_amount,
+            'balance': balance,
             'unrealized_pool_funding': unrealized_pool_funding,
             'pnl_snap': pnl_snap,
             'skew_ratio': skew_ratio,
