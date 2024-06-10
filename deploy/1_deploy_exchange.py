@@ -209,6 +209,10 @@ async def main():
                 addresses = await gateway.get_new_addresses(intent)
                 config_data['PROTOCOL_RESOURCE'] = addresses[0]
 
+            protocol_resource = config_data['PROTOCOL_RESOURCE']
+            envs.append(('PROTOCOL_RESOURCE', protocol_resource))
+            print('PROTOCOL_RESOURCE:', protocol_resource)
+
             if 'KEEPER_REWARD_RESOURCE' not in config_data:
                 builder = ret.ManifestBuilder()
                 builder = lock_fee(builder, account, 100)
