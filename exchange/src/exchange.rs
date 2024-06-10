@@ -35,6 +35,7 @@ use self::virtual_oracle::*;
     EventRequests,
     EventValidRequestsStart,
     EventLiquidityChange,
+    EventAddCollateral,
     EventRemoveCollateral,
     EventMarginOrder,
     EventSwapDebt,
