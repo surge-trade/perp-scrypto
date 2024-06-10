@@ -50,7 +50,7 @@ def parse_request(elem):
             claim = claim['fields']
             claims.append({
                 'resource': claim[0]['value'],
-                'amount': claim[1]['value'],
+                'size': claim[1]['value'],
             })
 
         request_details = {
@@ -60,12 +60,12 @@ def parse_request(elem):
     elif request_variant_id == 1:
         print(request_inner[0])
         pair_id = request_inner[0]['value']
-        amount = float(request_inner[1]['value'])
+        size = float(request_inner[1]['value'])
         limit_variant = int(request_inner[2]['variant_id'])
         if limit_variant == 0 or limit_variant == 1:
-            price = float(request_inner[2]['fields'][0]['value'])
+            limit_price = float(request_inner[2]['fields'][0]['value'])
         else:
-            price = None
+            limit_price = None
 
         activate_requests = []
         for i in request_inner[3]['elements']:
@@ -75,25 +75,25 @@ def parse_request(elem):
         for i in request_inner[4]['elements']:
             cancel_requests.append(i['value'])
 
-        if limit_variant == 0 and amount > 0:
+        if limit_variant == 0 and size > 0:
             type = 'Stop Long'
-        elif limit_variant == 0 and amount <= 0:
+        elif limit_variant == 0 and size <= 0:
             type = 'Limit Short'
-        elif limit_variant == 1 and amount >= 0:
+        elif limit_variant == 1 and size >= 0:
             type = 'Limit Long'
-        elif limit_variant == 1 and amount < 0:
+        elif limit_variant == 1 and size < 0:
             type = 'Stop Short'    
-        elif limit_variant == 2 and amount >= 0:
+        elif limit_variant == 2 and size >= 0:
             type = 'Market Long'
-        elif limit_variant == 2 and amount < 0:
+        elif limit_variant == 2 and size < 0:
             type = 'Market Short'
         else:
             type = 'Unknown'
 
         request_details = {
             'pair': pair_id,
-            'amount': amount,
-            'price': price,
+            'size': size,
+            'limit_price': limit_price,
             'activate_requests': activate_requests,
             'cancel_requests': cancel_requests,
         }
@@ -189,12 +189,12 @@ async def main():
 
             pair = elem[0]['value']
             resource = elem[1]['value']
-            amount = float(elem[2]['value'])
+            size = float(elem[2]['value'])
             discount = float(elem[3]['value'])
             margin = float(elem[4]['value'])
 
             mark_price = prices[pair]
-            value = amount * mark_price
+            value = size * mark_price
             value_discounted = value * discount
             margin = margin * mark_price
 
@@ -202,7 +202,7 @@ async def main():
                 'pair': pair,
                 'resource': resource,
                 'mark_price': mark_price,
-                'amount': amount,
+                'size': size,
                 'value': value,
                 'discount': discount,
                 'value_discounted': value_discounted,

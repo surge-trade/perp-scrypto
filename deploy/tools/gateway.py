@@ -78,6 +78,25 @@ class Gateway:
                     amount = float(item['amount'])
                     break
             return amount
+        
+    async def get_component_history(self, component: str, limit: int = 30) -> dict:
+        headers = {
+            'Content-Type': 'application/json',
+        }
+        body = {
+            "limit_per_page": limit,
+            "affected_global_entities_filter": [component],
+            "opt_ins": {
+                "receipt_events": True,
+            }
+        }
+        async with self.session.post(
+            f'{self.gateway_url}/stream/transactions',
+            json=body,
+            headers=headers) as response:
+        
+            data = await response.json()
+            return data
 
     async def submit_transaction(self, transaction: str) -> dict:
         headers = {
