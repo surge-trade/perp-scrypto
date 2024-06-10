@@ -55,6 +55,12 @@ pub struct EventValidRequestsStart {
 // ---
 
 #[derive(ScryptoSbor, ScryptoEvent)]
+pub struct EventFeeOathPayment {
+    pub account: ComponentAddress,
+    pub fee: Decimal,
+}
+
+#[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventAddLiquidity {
     pub amount: Decimal,
     pub lp_amount: Decimal,
@@ -92,6 +98,8 @@ pub struct EventMarginOrder {
     pub amount_open: Decimal,
     pub activated_requests: Vec<ListIndex>,
     pub cancelled_requests: Vec<ListIndex>,
+    pub pnl: Decimal,
+    pub funding: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
@@ -108,13 +116,17 @@ pub struct EventSwapDebt {
 }
 
 #[derive(ScryptoSbor, ScryptoEvent)]
-pub struct EventLiquidate { // TODO: add funding and cost info?
+pub struct EventLiquidate { 
     pub account: ComponentAddress,
+    pub account_value: Decimal,
+    pub margin: Decimal,
+    pub virtual_balance: Decimal,
     pub position_amounts: Vec<(PairId, Decimal)>,
+    pub positions_pnl: Decimal,
     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
     pub collateral_value: Decimal,
     pub collateral_value_discounted: Decimal,
-    pub margin: Decimal,
+    pub pool_loss: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
@@ -123,25 +135,6 @@ pub struct EventLiquidate { // TODO: add funding and cost info?
     pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
 }
 
-// #[derive(ScryptoSbor, ScryptoEvent)]
-// pub struct EventLiquidate { // TODO: add funding and cost info? pool loss?
-//     pub account: ComponentAddress,
-//     pub account_value: Decimal,
-//     pub margin: Decimal,
-//     pub virtual_balance: Decimal,
-//     pub position_amounts: Vec<(PairId, Decimal)>,
-//     pub positions_pnl: Decimal,
-//     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
-//     pub collateral_value: Decimal,
-//     pub collateral_value_discounted: Decimal,
-//     pub fee_pool: Decimal,
-//     pub fee_protocol: Decimal,
-//     pub fee_treasury: Decimal,
-//     pub fee_referral: Decimal,
-//     pub position_prices: Vec<(PairId, Decimal)>,
-//     pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
-// }
-
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventAutoDeleverage {
     pub account: ComponentAddress,
@@ -149,6 +142,8 @@ pub struct EventAutoDeleverage {
     pub amount: Decimal,
     pub pnl_percent: Decimal,
     pub threshold: Decimal,
+    pub pnl: Decimal,
+    pub funding: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,

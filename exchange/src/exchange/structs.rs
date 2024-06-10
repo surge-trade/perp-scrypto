@@ -71,6 +71,7 @@ pub struct ResultOpenPosition {
 }
 
 pub struct ResultClosePosition {
+    pub pnl: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
