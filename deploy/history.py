@@ -16,31 +16,6 @@ from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 from tools.price_feeds import get_feeds, get_prices
 
-# def parse_field(field):
-#     match field['kind']:
-#         case 'Enum':
-#             temp = []
-#             for item in field['fields']:
-#                 temp.append(parse_field(item['value']))
-#             return temp
-#         case 'Array':
-#             temp = []
-#             for item in field['elements']:
-#                 temp.append(item['value'])
-#             return temp
-#         case 'Tuple':
-#             temp = []
-#             for item in field['fields']:
-#                 temp.append(parse_field(item['value']))
-#             return temp
-#         case 'Map':
-#             temp = {}
-#             for item in field['entries']:
-#                 temp[item['key']] = parse_field(item['value'])
-#             return temp
-#         case _:
-#             return field['value']
-
 async def main():
     path = dirname(realpath(__file__))
     chdir(path)
@@ -54,7 +29,8 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
-        account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
+        print(account_component)
+        # account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
         # account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
         # account_component = "component_tdx_2_1cqsdhl3jnx63zvdk9ltxw7vvr5hx74dvr2k7rwmmfm074p04u0ld3e"
 
@@ -76,18 +52,16 @@ async def main():
                                 continue
 
                             pair = fields[1]['value']
-                            limit_variant = int(fields[2]['variant_id'])
-                            if limit_variant == 0 or limit_variant == 1:
-                                limit_price = float(fields[2]['fields'][0]['value'])
-                            else:
-                                limit_price = None
-                            size_open = float(fields[3]['value'])
-                            size_close = float(fields[4]['value'])
-                            fee_pool = float(fields[7]['value'])
-                            fee_protocol = float(fields[8]['value'])
-                            fee_treasury = float(fields[9]['value'])
-                            fee_referral = float(fields[10]['value'])
-                            index_price = float(fields[11]['value'])
+                            price = float(fields[2]['value'])
+                            limit_variant = int(fields[3]['variant_id'])
+                            size_open = float(fields[4]['value'])
+                            size_close = float(fields[5]['value'])
+                            pnl = float(fields[6]['value'])
+                            funding = float(fields[7]['value'])
+                            fee_pool = float(fields[8]['value'])
+                            fee_protocol = float(fields[9]['value'])
+                            fee_treasury = float(fields[10]['value'])
+                            fee_referral = float(fields[11]['value'])
 
                             size = size_open + size_close
                             fee = fee_pool + fee_protocol + fee_treasury + fee_referral
@@ -108,12 +82,13 @@ async def main():
                                 type = 'Unknown'
 
                             trade_history.append({
+                                    'pair': pair,
                                     'type': type, 
-                                    'pair': pair, 
-                                    'size': size, 
+                                    'price': price,
+                                    'size': size,
+                                    'pnl': pnl,
+                                    'funding': funding,
                                     'fee': fee, 
-                                    'limit_price': limit_price, 
-                                    'index_price': index_price,
                                     'txid': txid
                                 }
                             )
@@ -123,23 +98,25 @@ async def main():
                                 continue
                             
                             pair = fields[1]['value']
-                            size = float(fields[2]['value'])
-                            fee_pool = float(fields[5]['value'])
-                            fee_protocol = float(fields[6]['value'])
-                            fee_treasury = float(fields[7]['value'])
-                            fee_referral = float(fields[8]['value'])
-                            index_price = float(fields[9]['value'])
+                            price = float(fields[2]['value'])
+                            size = float(fields[3]['value'])
+                            pnl = float(fields[4]['value'])
+                            funding = float(fields[5]['value'])
+                            fee_pool = float(fields[6]['value'])
+                            fee_protocol = float(fields[7]['value'])
+                            fee_treasury = float(fields[8]['value'])
+                            fee_referral = float(fields[9]['value'])
                     
-                            limit_price = None
                             fee = fee_pool + fee_protocol + fee_treasury + fee_referral
 
                             trade_history.append({
-                                'type': 'Auto Deleverage',
                                 'pair': pair,
+                                'type': 'Auto Deleverage',
+                                'price': price,
                                 'size': size,
+                                'pnl': pnl,
+                                'funding': funding,
                                 'fee': fee,
-                                'limit_price': limit_price,
-                                'index_price': index_price,
                                 'txid': txid
                             })
                         case 'EventLiquidation':
