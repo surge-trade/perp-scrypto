@@ -41,7 +41,8 @@ mod fee_distributor_mod {
             update_treasury_virtual_balance => restrict_to: [authority];
 
             set_referrer => restrict_to: [authority];
-            reward => restrict_to: [authority];
+            distribute => restrict_to: [authority];
+            distribute_referral => restrict_to: [authority];
             collect => restrict_to: [authority];
         }
     );
@@ -121,11 +122,12 @@ mod fee_distributor_mod {
                 });
         }
 
-        pub fn reward(&mut self, amount_protocol: Decimal, amount_treasury: Decimal, mut amount_referral: Decimal, referred_account: ComponentAddress) {
-            assert!(amount_protocol >= dec!(0));
-            assert!(amount_treasury >= dec!(0));
-            assert!(amount_referral >= dec!(0));
+        pub fn distribute(&mut self, amount_protocol: Decimal, amount_treasury: Decimal) {
+            self.protocol_virtual_balance += amount_protocol;
+            self.treasury_virtual_balance += amount_treasury;
+        }
 
+        pub fn distribute_referral(&mut self, amount_protocol: Decimal, amount_treasury: Decimal, mut amount_referral: Decimal, referred_account: ComponentAddress) {
             self.protocol_virtual_balance += amount_protocol;
             self.treasury_virtual_balance += amount_treasury;
 

@@ -34,9 +34,7 @@ use self::virtual_oracle::*;
     EventAccountCreation,
     EventRequests,
     EventValidRequestsStart,
-    EventAddLiquidity,
-    EventRemoveLiquidity,
-    EventAddCollateral,
+    EventLiquidityChange,
     EventRemoveCollateral,
     EventMarginOrder,
     EventSwapDebt,
@@ -147,7 +145,8 @@ mod exchange_mod {
             fn update_protocol_virtual_balance(&self, protocol_virtual_balance: Decimal);
             fn update_treasury_virtual_balance(&self, treasury_virtual_balance: Decimal);
             fn set_referrer(&self, account: ComponentAddress, referrer: Option<ComponentAddress>);
-            fn reward(&self, amount_protocol: Decimal, amount_treasury: Decimal, amount_referral: Decimal, referred_account: ComponentAddress);
+            fn distribute(&self, amount_protocol: Decimal, amount_treasury: Decimal);
+            fn distribute_referral(&self, amount_protocol: Decimal, amount_treasury: Decimal, amount_referral: Decimal, referred_account: ComponentAddress);
             fn collect(&self, account: ComponentAddress) -> Decimal;
         }
     }
@@ -1384,6 +1383,7 @@ mod exchange_mod {
             pool: &mut VirtualLiquidityPool,
             payment: Bucket,
         ) -> Bucket {
+            let exchange_config = config.exchange_config();
             assert!(
                 payment.resource_address() == BASE_RESOURCE,
                 "{}", ERROR_INVALID_PAYMENT
@@ -1391,6 +1391,8 @@ mod exchange_mod {
 
             let value = payment.amount();
             let fee = value * config.exchange_config().fee_liquidity;
+            let fee_protocol = fee * exchange_config.fee_share_protocol;
+            let fee_treasury = fee * exchange_config.fee_share_treasury;
             let pool_value = self._pool_value(pool).max(dec!(1));
             let lp_supply = pool.lp_token_manager().total_supply().unwrap();
 
@@ -1403,13 +1405,17 @@ mod exchange_mod {
             };
 
             pool.deposit(payment);
+            self._settle_fee_distributor(pool, fee_protocol, fee_treasury);
+
             let lp_token = pool.mint_lp(lp_amount);
 
-            Runtime::emit_event(EventAddLiquidity {
+            Runtime::emit_event(EventLiquidityChange {
                 amount: value,
                 lp_amount,
                 lp_price,
-                fee_liquidity: fee,
+                fee_pool: fee - fee_protocol - fee_treasury,
+                fee_protocol,
+                fee_treasury,
             });
 
             lp_token
@@ -1421,6 +1427,7 @@ mod exchange_mod {
             pool: &mut VirtualLiquidityPool,
             lp_token: Bucket,
         ) -> Bucket {
+            let exchange_config = config.exchange_config();
             assert!(
                 lp_token.resource_address() == pool.lp_token_manager().address(),
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(lp_token.resource_address()), Runtime::bech32_encode_address(pool.lp_token_manager().address())
@@ -1433,18 +1440,22 @@ mod exchange_mod {
             let lp_price = pool_value / lp_supply;
             let value = lp_amount * lp_price;
             let fee = value * config.exchange_config().fee_liquidity;
-            let amount = value - fee;
-
+            let fee_protocol = fee * exchange_config.fee_share_protocol;
+            let fee_treasury = fee * exchange_config.fee_share_treasury;
+            
             pool.burn_lp(lp_token);
-            let token = pool.withdraw(amount, TO_ZERO);
+            let token = pool.withdraw(value - fee, TO_ZERO);
+            self._settle_fee_distributor(pool, fee_protocol, fee_treasury);
             
             self._assert_pool_integrity(config, pool, dec!(0));
 
-            Runtime::emit_event(EventRemoveLiquidity {
-                amount,
-                lp_amount,
+            Runtime::emit_event(EventLiquidityChange {
+                amount: -token.amount(),
+                lp_amount: -lp_amount,
                 lp_price,
-                fee_liquidity: fee,
+                fee_pool: fee - fee_protocol - fee_treasury,
+                fee_protocol,
+                fee_treasury,
             });
 
             token
@@ -1691,7 +1702,7 @@ mod exchange_mod {
             } else {
                 dec!(0)
             };
-            self._settle_fee_distributor(pool, account, result_positions.fee_protocol, result_positions.fee_treasury, result_positions.fee_referral);
+            self._settle_fee_distributor_referral(pool, account, result_positions.fee_protocol, result_positions.fee_treasury, result_positions.fee_referral);
 
             account.update_valid_requests_start();
 
@@ -1833,7 +1844,7 @@ mod exchange_mod {
             pool.update_position(pair_id, pool_position);
             account.update_position(pair_id, position);
 
-            self._settle_fee_distributor(pool, account, fee_protocol, fee_treasury, fee_referral);
+            self._settle_fee_distributor_referral(pool, account, fee_protocol, fee_treasury, fee_referral);
 
             self._assert_position_limit(config, account);
             self._assert_account_integrity(config, pool, account, oracle);
@@ -1890,7 +1901,7 @@ mod exchange_mod {
             account.update_position(pair_id, position);
 
             self._settle_account(pool, account, pnl);
-            self._settle_fee_distributor(pool, account, fee_protocol, fee_treasury, fee_referral);
+            self._settle_fee_distributor_referral(pool, account, fee_protocol, fee_treasury, fee_referral);
 
             ResultClosePosition {
                 pnl,
@@ -2224,13 +2235,23 @@ mod exchange_mod {
         fn _settle_fee_distributor(
             &self,
             pool: &mut VirtualLiquidityPool,
+            protocol_amount: Decimal,
+            treasury_amount: Decimal,
+        ) {
+            pool.update_virtual_balance(pool.virtual_balance() - protocol_amount + treasury_amount);
+            self.fee_distributor.distribute(protocol_amount, treasury_amount);
+        }
+
+        fn _settle_fee_distributor_referral(
+            &self,
+            pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
             protocol_amount: Decimal,
             treasury_amount: Decimal,
             referral_amount: Decimal,
         ) {
             pool.update_virtual_balance(pool.virtual_balance() - protocol_amount + treasury_amount + referral_amount);
-            self.fee_distributor.reward(protocol_amount, treasury_amount, referral_amount, account.address());
+            self.fee_distributor.distribute_referral(protocol_amount, treasury_amount, referral_amount, account.address());
         }
         
         fn _save_funding_index(
