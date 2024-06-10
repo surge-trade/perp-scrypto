@@ -55,12 +55,6 @@ pub struct EventValidRequestsStart {
 // ---
 
 #[derive(ScryptoSbor, ScryptoEvent)]
-pub struct EventFeeOathPayment {
-    pub account: ComponentAddress,
-    pub fee: Decimal,
-}
-
-#[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventLiquidityChange {
     pub lp_price: Decimal,
     pub lp_amount: Decimal,

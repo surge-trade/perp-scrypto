@@ -1374,11 +1374,6 @@ mod exchange_mod {
 
             account.update_virtual_balance(account.virtual_balance() - fee_value);
             fee_oath.burn();
-
-            Runtime::emit_event(EventFeeOathPayment {
-                account: account.address(),
-                fee: fee_value,
-            });
         }
 
         fn _add_liquidity(
