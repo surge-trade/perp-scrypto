@@ -62,9 +62,9 @@ pub struct EventFeeOathPayment {
 
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventLiquidityChange {
-    pub amount: Decimal,
-    pub lp_amount: Decimal,
     pub lp_price: Decimal,
+    pub lp_amount: Decimal,
+    pub amount: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,

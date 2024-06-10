@@ -1410,9 +1410,9 @@ mod exchange_mod {
             let lp_token = pool.mint_lp(lp_amount);
 
             Runtime::emit_event(EventLiquidityChange {
-                amount: value,
-                lp_amount,
                 lp_price,
+                lp_amount,
+                amount: value,
                 fee_pool: fee - fee_protocol - fee_treasury,
                 fee_protocol,
                 fee_treasury,
@@ -1450,9 +1450,9 @@ mod exchange_mod {
             self._assert_pool_integrity(config, pool, dec!(0));
 
             Runtime::emit_event(EventLiquidityChange {
-                amount: -token.amount(),
-                lp_amount: -lp_amount,
                 lp_price,
+                lp_amount: -lp_amount,
+                amount: -token.amount(),
                 fee_pool: fee - fee_protocol - fee_treasury,
                 fee_protocol,
                 fee_treasury,
