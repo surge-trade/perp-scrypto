@@ -1783,7 +1783,7 @@ mod exchange_mod {
                 account: account.address(),
                 pair_id: pair_id.clone(),
                 price,
-                amount: amount_close,
+                amount_close,
                 pnl: result_close.pnl,
                 funding,
                 fee_pool: result_close.fee_pool,

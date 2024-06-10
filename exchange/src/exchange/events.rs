@@ -128,7 +128,7 @@ pub struct EventAutoDeleverage {
     pub account: ComponentAddress,
     pub pair_id: PairId,
     pub price: Decimal,
-    pub amount: Decimal,
+    pub amount_close: Decimal,
     pub pnl: Decimal,
     pub funding: Decimal,
     pub fee_pool: Decimal,
