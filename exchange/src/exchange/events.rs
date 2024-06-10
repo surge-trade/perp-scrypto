@@ -93,18 +93,18 @@ pub struct EventRemoveCollateral {
 pub struct EventMarginOrder {
     pub account: ComponentAddress,
     pub pair_id: PairId,
+    pub price: Decimal,
     pub price_limit: Limit,
     pub amount_close: Decimal,
     pub amount_open: Decimal,
-    pub activated_requests: Vec<ListIndex>,
-    pub cancelled_requests: Vec<ListIndex>,
     pub pnl: Decimal,
     pub funding: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-    pub price: Decimal,
+    pub activated_requests: Vec<ListIndex>,
+    pub cancelled_requests: Vec<ListIndex>,
 }
 
 #[derive(ScryptoSbor, ScryptoEvent)]
@@ -118,6 +118,8 @@ pub struct EventSwapDebt {
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventLiquidate { 
     pub account: ComponentAddress,
+    pub position_prices: Vec<(PairId, Decimal)>,
+    pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
     pub account_value: Decimal,
     pub margin: Decimal,
     pub virtual_balance: Decimal,
@@ -126,27 +128,25 @@ pub struct EventLiquidate {
     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
     pub collateral_value: Decimal,
     pub collateral_value_discounted: Decimal,
-    pub pool_loss: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-    pub position_prices: Vec<(PairId, Decimal)>,
-    pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
+    pub pool_loss: Decimal,
 }
 
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventAutoDeleverage {
     pub account: ComponentAddress,
     pub pair_id: PairId,
+    pub price: Decimal,
     pub amount: Decimal,
-    pub pnl_percent: Decimal,
-    pub threshold: Decimal,
     pub pnl: Decimal,
     pub funding: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,
     pub fee_referral: Decimal,
-    pub price: Decimal,
+    pub pnl_percent: Decimal,
+    pub threshold: Decimal,
 }

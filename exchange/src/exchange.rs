@@ -1589,6 +1589,7 @@ mod exchange_mod {
             Runtime::emit_event(EventMarginOrder {
                 account: account.address(),
                 pair_id: pair_id.clone(),
+                price,
                 price_limit,
                 amount_close,
                 amount_open,
@@ -1600,7 +1601,6 @@ mod exchange_mod {
                 fee_protocol,
                 fee_treasury,
                 fee_referral,
-                price,
             });
         }
 
@@ -1697,6 +1697,8 @@ mod exchange_mod {
 
             Runtime::emit_event(EventLiquidate {
                 account: account.address(),
+                position_prices: result_positions.position_prices,
+                collateral_prices: result_collateral.collateral_prices,
                 account_value,
                 margin,
                 virtual_balance,
@@ -1705,13 +1707,11 @@ mod exchange_mod {
                 collateral_amounts: result_collateral.collateral_amounts,
                 collateral_value: result_collateral.collateral_value,
                 collateral_value_discounted: result_collateral.collateral_value_discounted,
-                pool_loss,
                 fee_pool: result_positions.fee_pool,
                 fee_protocol: result_positions.fee_protocol,
                 fee_treasury: result_positions.fee_treasury,
                 fee_referral: result_positions.fee_referral,
-                position_prices: result_positions.position_prices,
-                collateral_prices: result_collateral.collateral_prices,
+                pool_loss,
             });
 
             tokens
@@ -1772,16 +1772,16 @@ mod exchange_mod {
             Runtime::emit_event(EventAutoDeleverage {
                 account: account.address(),
                 pair_id: pair_id.clone(),
+                price,
                 amount: amount_close,
-                pnl_percent,
-                threshold,
                 pnl: result_close.pnl,
                 funding,
                 fee_pool: result_close.fee_pool,
                 fee_protocol: result_close.fee_protocol,
                 fee_treasury: result_close.fee_treasury,
                 fee_referral: result_close.fee_referral,
-                price,
+                pnl_percent,
+                threshold,
             });
         }
 
