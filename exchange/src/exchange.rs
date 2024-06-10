@@ -8,7 +8,7 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use common::{PairId, ListIndex, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _KEEPER_REWARD_RESOURCE, TO_ZERO, TO_INFINITY};
+use common::{PairId, ListIndex, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _PROTOCOL_RESOURCE, _KEEPER_REWARD_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
 use config::*;
 use permission_registry::*;
@@ -44,6 +44,7 @@ use self::virtual_oracle::*;
 mod exchange_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
+    const PROTOCOL_RESOURCE: ResourceAddress = _PROTOCOL_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
 
     extern_blueprint! {
@@ -1074,12 +1075,15 @@ mod exchange_mod {
 
         pub fn swap_protocol_fee(&self, mut payment: Bucket) -> (Bucket, Bucket) {
             authorize!(self, {
+                let config = VirtualConfig::new(self.config);
+
                 assert!(
-                    payment.resource_address() == KEEPER_REWARD_RESOURCE, // TODO: Change to protocol fee resource
-                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(KEEPER_REWARD_RESOURCE)
+                    payment.resource_address() == PROTOCOL_RESOURCE,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(PROTOCOL_RESOURCE)
                 );
 
-                payment.take(dec!(1)).burn(); // TODO: Set fee amount
+                let burn_amount = config.exchange_config().protocol_burn_amount;
+                payment.take_advanced(burn_amount, TO_INFINITY).burn();
                 
                 let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
                 let amount = self.fee_distributor.get_protocol_virtual_balance();

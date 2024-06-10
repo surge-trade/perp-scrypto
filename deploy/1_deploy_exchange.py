@@ -13,7 +13,7 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority, create_base, create_keeper_reward
+from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority, create_base, create_protocol_resource, create_keeper_reward
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
@@ -199,6 +199,15 @@ async def main():
             base_resource = config_data['BASE_RESOURCE']
             envs.append(('BASE_RESOURCE', base_resource))
             print('BASE_RESOURCE:', base_resource)
+
+            if 'PROTOCOL_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = create_protocol_resource(builder, owner_role, authority_resource)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['PROTOCOL_RESOURCE'] = addresses[0]
 
             if 'KEEPER_REWARD_RESOURCE' not in config_data:
                 builder = ret.ManifestBuilder()

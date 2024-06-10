@@ -48,6 +48,8 @@ pub struct ExchangeConfig {
     pub fee_share_referral: Decimal,
     /// Maximum fee rate that can be charged
     pub fee_max: Decimal,
+    /// Amount to burn for protocol fees
+    pub protocol_burn_amount: Decimal,
     /// Keeper reward amount
     pub reward_keeper: Decimal,
 }
@@ -78,6 +80,8 @@ pub struct ExchangeConfigCompressed {
     pub fee_share_referral: DFloat16,
     /// Maximum fee rate that can be charged
     pub fee_max: DFloat16,
+    /// Amount to burn for protocol fees
+    pub protocol_burn_amount: DFloat16,
     /// Keeper reward amount
     pub keeper_reward: DFloat16,
 }
@@ -97,6 +101,7 @@ impl Default for ExchangeConfig {
             fee_share_treasury: dec!(0.1),
             fee_share_referral: dec!(0.1),
             fee_max: dec!(0.01),
+            protocol_burn_amount: dec!(1000),
             reward_keeper: dec!(1),
         }
     }
@@ -116,6 +121,7 @@ impl ExchangeConfig {
         assert!(self.fee_share_referral >= dec!(0), "Invalid referral fee");
         assert!(self.fee_share_protocol + self.fee_share_treasury + self.fee_share_referral <= dec!(1), "Invalid fee share");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
+        assert!(self.protocol_burn_amount > dec!(0), "Invalid protocol burn amount");
         assert!(self.reward_keeper >= dec!(0), "Invalid keeper reward");
     }
 
@@ -133,6 +139,7 @@ impl ExchangeConfig {
             fee_share_treasury: DFloat16::from(self.fee_share_treasury),
             fee_share_referral: DFloat16::from(self.fee_share_referral),
             fee_max: DFloat16::from(self.fee_max),
+            protocol_burn_amount: DFloat16::from(self.protocol_burn_amount),
             keeper_reward: DFloat16::from(self.reward_keeper),
         }
     }
@@ -153,6 +160,7 @@ impl ExchangeConfigCompressed {
             fee_share_treasury: self.fee_share_treasury.into(),
             fee_share_referral: self.fee_share_referral.into(),
             fee_max: self.fee_max.into(),
+            protocol_burn_amount: self.protocol_burn_amount.into(),
             reward_keeper: self.keeper_reward.into(),
         }
     }

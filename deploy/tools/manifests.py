@@ -129,6 +129,40 @@ def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resou
         address_reservation=None,
     )
 
+def create_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole, authority_resource: str) -> ManifestBuilder:
+    resource_roles: FungibleResourceRoles = FungibleResourceRoles(
+        mint_roles=ResourceManagerRole(
+            role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
+            role_updater=None
+        ),
+        burn_roles=ResourceManagerRole(
+            role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
+            role_updater=None
+        ),
+        freeze_roles=None,
+        recall_roles=None,
+        withdraw_roles=None,
+        deposit_roles=None,
+    )
+    metadata = MetadataModuleConfig(
+        init={
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Protocol Resource'), True),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('PROTO'), True),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('The token of the protocol. Much utility. Very awesome.'), True),
+        },
+        roles={},
+    )
+
+    return builder.create_fungible_resource_manager(
+        owner_role=owner_role,
+        track_total_supply=True,
+        divisibility=18,
+        initial_supply=None,
+        resource_roles=resource_roles,
+        metadata=metadata,
+        address_reservation=None,
+    )
+
 def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, authority_resource: str) -> ManifestBuilder:
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=ResourceManagerRole(
