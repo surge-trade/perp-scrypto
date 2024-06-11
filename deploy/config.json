@@ -1,5 +1,5 @@
 {
-    "OWNER_RESOURCE": "resource_tdx_2_1t5j0dwv0gykln47mj6mxqscv3rearmt86edefz84wp4p7apxx3jyma",
+    "OWNER_RESOURCE": "resource_tdx_2_1t53rle03rv834xgk94j28jq8q7svf4j59d807mevsqrdgsta0f9eaz",
     "AUTHORITY_RESOURCE": "resource_tdx_2_1t5utx8ll6cdktlwmmjadu2t4clyggm7cs5ca6navnc3pxlc34sp0t0",
     "BASE_AUTHORITY_RESOURCE": "resource_tdx_2_1t598aufmrllrw2slugk9p2n5d2fgquu4fnvas2yds8v4sdgd2jqspx",
     "BASE_RESOURCE": "resource_tdx_2_1t4ml5n6jp5yk39myqdz2ld5srmyx66q3amz99lvkqkmekcpzr678n3",
@@ -7,8 +7,8 @@
     "KEEPER_REWARD_RESOURCE": "resource_tdx_2_1t4zsm08nf36vq6c5ls3rzrsxveuppha789ue92x2z2ufr8je82xzjt",
     "ORACLE_PACKAGE": "package_tdx_2_1p5jkdn3kg6ht82nupyglymt3umjkvkkn5navzv8yzwsdv6z8rzgvgn",
     "ORACLE_COMPONENT": "component_tdx_2_1cp3kxmh0f0n83hwl9l84hnxhf0n4e78gxut9xgq0sj9y2k4n9ykkjh",
-    "ENV_REGISTRY_PACKAGE": "package_tdx_2_1p5fy6d68xy93u4k3hxwysfvs0wlqpwwceczghf6v245vkp0w0rhluh",
-    "ENV_REGISTRY_COMPONENT": "component_tdx_2_1cpgswlcqpltj3rcmlr5yq4lu23najnmkal4rp2n4ud3c2ygn9nupfr",
+    "ENV_REGISTRY_PACKAGE": "package_tdx_2_1p5gkas270ejzlc66heatfwvwyjdlz7ftd85p9sdz9kqmzjhfxz88r8",
+    "ENV_REGISTRY_COMPONENT": "component_tdx_2_1cq426p6wv5yk9clkne4m5j325p3gdp4h8vu8mxvmsvz98vfancgfda",
     "PERMISSION_REGISTRY_PACKAGE": "package_tdx_2_1phrfts8vd0ypp03sqwgz3wcenxe0ennle9mysjah6pgws4p05eykkz",
     "PERMISSION_REGISTRY_COMPONENT": "component_tdx_2_1cqh380pkaueqytatdcw3mhw3jeqkau04ttkcsusrwru5faj30cg08e",
     "TOKEN_WRAPPER_PACKAGE": "package_tdx_2_1pkae4h93sn3s020lntqqd65czsn78qn74waqy0et8vus8kskhuwju4",
