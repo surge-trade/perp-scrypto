@@ -2,13 +2,13 @@ import qrcode
 import io
 import radix_engine_toolkit as ret
 import asyncio
-import datetime
 import json
 from os.path import dirname, join, realpath
 from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
+from datetime import datetime
 load_dotenv()
 
 from tools.gateway import Gateway
@@ -41,6 +41,7 @@ async def main():
         
         for transaction in result['items']:
             txid = transaction['intent_hash']
+            timestamp = transaction['confirmed_at'].split('.')[0] + '+00:00'
             for event in transaction['receipt']['events']:
                 try:
                     name = event['name']
@@ -82,6 +83,7 @@ async def main():
                                 type = 'Unknown'
 
                             trade_history.append({
+                                    'timestamp': timestamp,
                                     'pair': pair,
                                     'type': type, 
                                     'price': price,
@@ -110,6 +112,7 @@ async def main():
                             fee = fee_pool + fee_protocol + fee_treasury + fee_referral
 
                             trade_history.append({
+                                'timestamp': timestamp,
                                 'pair': pair,
                                 'type': 'Auto Deleverage',
                                 'price': price,
@@ -125,6 +128,7 @@ async def main():
                                 continue
 
                             liquidation_history.append({
+                                'timestamp': timestamp,
                                 'txid': txid
                             })
                 except:
