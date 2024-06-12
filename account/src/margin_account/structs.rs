@@ -16,6 +16,7 @@ pub struct MarginAccountInfo {
     pub requests_len: ListIndex,
     pub active_requests_len: usize,
     pub valid_requests_start: ListIndex,
+    pub referral_id: Option<NonFungibleLocalId>,
 }
 
 #[derive(ScryptoSbor)]

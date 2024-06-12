@@ -22,7 +22,6 @@ fn main() {
         env::var("PERMISSION_REGISTRY_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("FEE_DISTRIBUTOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
-        env::var("FEE_DELEGATOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
     ];
 
     // Find all matches and replace them sequentially with the new addresses

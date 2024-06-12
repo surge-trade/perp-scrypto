@@ -4,12 +4,22 @@ use scrypto::prelude::*;
 use common::{Vaults, _AUTHORITY_RESOURCE, TO_ZERO};
 use self::errors::*;
 
+#[derive(ScryptoSbor, NonFungibleData, Clone)]
+pub struct ReferralData {
+    pub fee_referral: Decimal,
+    pub fee_rebate: Decimal,
+    pub referrals: u64,
+    pub max_referrals: u64,
+    pub balance: Decimal,
+    pub total_rewarded: Decimal,
+}
+
 #[derive(ScryptoSbor, Clone)]
-pub struct Referral {
-    referrer: ComponentAddress,
+pub struct ReferralCode {
+    referral_id: NonFungibleLocalId,
     claims: Vec<(ResourceAddress, Decimal)>,
     count: u64,
-    initial_count: u64,
+    max_count: u64,
 }
 
 #[blueprint]
@@ -17,7 +27,7 @@ pub struct Referral {
     ResourceAddress,
     Vault,
     Hash,
-    Referral,
+    ReferralCode,
 )]
 mod referral_generator_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
@@ -36,14 +46,14 @@ mod referral_generator_mod {
 
     pub struct ReferralGenerator {
         vaults: Vaults,
-        referrals: KeyValueStore<Hash, Referral>,
+        referral_codes: KeyValueStore<Hash, ReferralCode>,
     }
 
     impl ReferralGenerator {
         pub fn new(owner_role: OwnerRole) -> Global<ReferralGenerator> {
             Self {
                 vaults: Vaults::new(ReferralGeneratorKeyValueStore::new_with_registered_type),
-                referrals: KeyValueStore::new_with_registered_type(),
+                referral_codes: KeyValueStore::new_with_registered_type(),
             }
             .instantiate()
             .prepare_to_globalize(owner_role)
@@ -53,11 +63,11 @@ mod referral_generator_mod {
             .globalize()
         }
 
-        pub fn get_referral(&self, hash: Hash) -> Option<Referral> {
-            self.referrals.get(&hash).map(|entry| entry.clone())
+        pub fn get_referral(&self, hash: Hash) -> Option<ReferralCode> {
+            self.referral_codes.get(&hash).map(|entry| entry.clone())
         }
         
-        pub fn create_referrals(&mut self, tokens: Vec<Bucket>, referrer: ComponentAddress, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>) {
+        pub fn create_referrals(&mut self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>) {
             let mut amounts: HashMap<ResourceAddress, Decimal> = HashMap::new();
             for bucket in tokens.iter() {
                 let amount = amounts.entry(bucket.resource_address()).or_insert(Decimal::zero());
@@ -82,32 +92,32 @@ mod referral_generator_mod {
 
             for (hash, claims, count) in referrals {
                 assert!(
-                    self.referrals.get(&hash).is_none(),
-                    "{}", ERROR_ALREADY_REFERRAL_EXISTS
+                    self.referral_codes.get(&hash).is_none(),
+                    "{}", ERROR_REFERRAL_CODE_ALREADY_EXISTS
                 );
-                self.referrals.insert(hash, Referral {
-                    referrer,
+                self.referral_codes.insert(hash, ReferralCode {
+                    referral_id: referral_id.clone(),
                     claims,
-                    count,
-                    initial_count: count,
+                    count: 0,
+                    max_count: count,
                 });
             }
 
             self.vaults.put_batch(tokens);
         }
 
-        pub fn claim_referral(&mut self, hash: Hash) -> (ComponentAddress, Vec<Bucket>) {
-            let mut referral = self.referrals.get_mut(&hash).expect(ERROR_REFERRAL_NOT_FOUND);
+        pub fn claim_referral(&mut self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>) {
+            let mut referral_code = self.referral_codes.get_mut(&hash).expect(ERROR_REFERRAL_CODE_NOT_FOUND);
 
             assert!(
-                referral.count > 0,
-                "{}", ERROR_REFERRAL_ALREADY_CLAIMED
+                referral_code.count < referral_code.max_count,
+                "{}", ERROR_REFERRAL_CODE_ALREADY_CLAIMED
             );
 
-            referral.count -= 1;
-            let tokens = self.vaults.take_advanced_batch(referral.claims.clone(), TO_ZERO);
+            referral_code.count += 1;
+            let tokens = self.vaults.take_advanced_batch(referral_code.claims.clone(), TO_ZERO);
 
-            (referral.referrer, tokens)
+            (referral_code.referral_id.clone(), tokens)
         }
     }
 }

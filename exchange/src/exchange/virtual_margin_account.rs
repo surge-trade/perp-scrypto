@@ -1,22 +1,33 @@
 use scrypto::prelude::*;
 use std::cmp::Reverse;
 use account::*;
-use common::{PairId, ListIndex};
+use referral_generator::*;
+use common::{PairId, ListIndex, _REFERRAL_RESOURCE};
 use super::errors::*;
 use super::events::*;
 use super::exchange_mod::MarginAccount;
 use super::requests::*;
 
+const REFERRAL_RESOURCE: ResourceAddress = _REFERRAL_RESOURCE;
+
 pub struct VirtualMarginAccount {
     account: Global<MarginAccount>,
     account_info: MarginAccountInfo,
     account_updates: MarginAccountUpdates,
+    referral_data: Option<ReferralData>,
+    referral_rewarded: bool,
 }
 
 impl VirtualMarginAccount {
     pub fn new(account: ComponentAddress, collateral_resources: Vec<ResourceAddress>) -> Self {
         let account = Global::<MarginAccount>::try_from(account).expect(ERROR_INVALID_MARGIN_ACCOUNT);
         let account_info = account.get_info(collateral_resources);
+        let referral_data: Option<ReferralData> = if let Some(referral) = account_info.referral_id.clone() {
+            let referral_data: ReferralData = NonFungible::from(NonFungibleGlobalId::new(REFERRAL_RESOURCE, referral)).data();
+            Some(referral_data)
+        } else {
+            None
+        };
 
         Self {
             account,
@@ -30,6 +41,8 @@ impl VirtualMarginAccount {
                 active_request_removals: vec![],
             },
             account_info,
+            referral_data,
+            referral_rewarded: false,
         }
     }
 
@@ -44,6 +57,14 @@ impl VirtualMarginAccount {
                 requests,
             };
             Runtime::emit_event(event_requests);
+        }
+
+        if self.referral_rewarded {
+            let referral_id = self.account_info.referral_id.unwrap();
+            let referral_data = self.referral_data.unwrap();
+            let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+            referral_manager.update_non_fungible_data(&referral_id, "balance", referral_data.balance);
+            referral_manager.update_non_fungible_data(&referral_id, "total_rewarded", referral_data.total_rewarded);
         }
 
         self.account.update(self.account_updates);
@@ -68,6 +89,32 @@ impl VirtualMarginAccount {
     // pub fn position_amount(&self, pair_id: PairId) -> Decimal {
     //     self.account_info.positions.get(&pair_id).map(|position| position.amount).unwrap_or_default()
     // }
+
+    pub fn referral(&self) -> Option<(NonFungibleGlobalId, ReferralData)> {
+        if let Some(referral_id) = self.account_info.referral_id.clone() {
+            let referral_id = NonFungibleGlobalId::new(REFERRAL_RESOURCE, referral_id);
+            let referral_data = self.referral_data.clone().unwrap();
+            Some((referral_id, referral_data))
+        } else {
+            None
+        }
+    }
+
+    pub fn fee_share_referral(&self) -> Decimal {
+        self.referral_data.as_ref().map_or(dec!(0), |referral_data| referral_data.fee_referral)
+    }
+
+    pub fn fee_rebate(&self) -> Decimal {
+        self.referral_data.as_ref().map_or(dec!(0), |referral_data| (dec!(1) - referral_data.fee_rebate))
+    }
+
+    pub fn reward_referral(&mut self, amount: Decimal) {
+        if let Some(referral_data) = self.referral_data.as_mut() {
+            referral_data.balance += amount;
+            referral_data.total_rewarded += amount;
+            self.referral_rewarded = true;
+        }
+    }
 
     pub fn keeper_request(&self, index: ListIndex) -> KeeperRequest {
         if let Some(request) = self.account_updates.request_updates.get(&index) {

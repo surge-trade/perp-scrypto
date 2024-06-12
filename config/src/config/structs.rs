@@ -99,7 +99,7 @@ impl Default for ExchangeConfig {
             fee_liquidity: dec!(0.005),
             fee_share_protocol: dec!(0.1),
             fee_share_treasury: dec!(0.1),
-            fee_share_referral: dec!(0.1),
+            fee_share_referral: dec!(1),
             fee_max: dec!(0.01),
             protocol_burn_amount: dec!(1000),
             reward_keeper: dec!(1),
