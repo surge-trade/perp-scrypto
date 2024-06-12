@@ -73,66 +73,51 @@ async def main():
             }
 
             price = prices[pair]
+            oi_net = oi_long + oi_short
             skew = (oi_long - oi_short) * price
+
             funding_1 = skew * pair_config['funding_1']
             funding_2 = funding_2 * pair_config['funding_2']
+
             if oi_long == 0 or oi_short == 0:
+                funding_share = 0
                 funding_long = 0
                 funding_short = 0
-                funding_share = 0
             else:
                 funding = funding_1 + funding_2
                 if funding > 0:
                     funding_long = funding
-                    funding_long_index = funding_long / oi_long
                     funding_share = funding_long * pair_config['funding_share']
+                    funding_long_index = funding_long / oi_long
                     funding_short_index = -(funding_long - funding_share) / oi_short
-                    funding_long = funding_long_index
-                    funding_short = funding_short_index
-                    funding_share = funding_share
                 else:
                     funding_short = -funding
-                    funding_short_index = funding_short / oi_short
                     funding_share = funding_short * pair_config['funding_share']
                     funding_long_index = -(funding_short - funding_share) / oi_long
-                    funding_long = funding_long_index
-                    funding_short = funding_short_index
-                    funding_share = funding_share
+                    funding_short_index = funding_short / oi_short
+
+            funding_pool_0 = oi_net * price * pair_config['funding_pool_0']
+            funding_pool_1 = abs(skew) * pair_config['funding_pool_1']
+            funding_pool = funding_pool_0 + funding_pool_1
+            funding_pool_index = funding_pool / oi_net
+
+            funding_long = funding_long_index + funding_pool_index
+            funding_short = funding_short_index + funding_pool_index
+            funding_pool += funding_share
 
             pairs.append({
                 'pair': pair,
                 'oi_long': oi_long,
                 'oi_short': oi_short,
+                'oi_net': oi_net,
                 'skew': skew,
                 'funding_1': funding_1,
                 'funding_2': funding_2,
                 'funding_long': funding_long,
                 'funding_short': funding_short,
-                'funding_share': funding_share,
+                'funding_pool': funding_pool,
                 'pair_config': pair_config,
-            })
-
-        # // let (funding_long_index, funding_short_index, funding_share) = if !oi_long.is_zero() && !oi_short.is_zero() {
-        # //     if funding_rate.is_positive() {
-        # //         let funding_long = funding_rate;
-        # //         let funding_long_index = funding_long / oi_long;
-
-        # //         let funding_share = funding_long * pair_config.funding_share;
-        # //         let funding_short_index = -(funding_long - funding_share) / oi_short;
-
-        # //         (funding_long_index, funding_short_index, funding_share)
-        # //     } else {
-        # //         let funding_short = -funding_rate;
-        # //         let funding_short_index = funding_short / oi_short;
-
-        # //         let funding_share = funding_short * pair_config.funding_share;
-        # //         let funding_long_index = -(funding_short - funding_share) / oi_long;
-
-        # //         (funding_long_index, funding_short_index, funding_share)
-        # //     }
-        # // } else {
-        # //     (dec!(0), dec!(0), dec!(0))
-        # // };            
+            })     
 
         print(json.dumps(pairs, indent=2))
 

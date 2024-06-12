@@ -32,8 +32,8 @@ async def main():
             config_data = json.load(config_file)
 
         owner_resource = config_data['OWNER_RESOURCE']
-        base_resource = config_data['BASE_RESOURCE']
-        exchange_component = config_data['EXCHANGE_COMPONENT']
+        token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
+        usd = config_data['USD_RESOURCE']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -54,13 +54,13 @@ async def main():
         builder = withdraw_to_bucket(
             builder, 
             account, 
-            ret.Address(base_resource), 
-            ret.Decimal('300000'), 
+            ret.Address(usd), 
+            ret.Decimal('1000000'), 
             'bucket1'
         )
         builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'add_liquidity',
+            ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
+            'wrap',
             [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
         )
         builder = deposit_all(builder, account)

@@ -33,54 +33,33 @@ async def main():
 
         owner_resource = config_data['OWNER_RESOURCE']
         token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        xrd = network_config['xrd']
+        usd = config_data['USD_RESOURCE']
 
         balance = await gateway.get_xrd_balance(account)
-        if balance < 10000:
-            builder = ret.ManifestBuilder()
-            builder = builder.call_method(
-                ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
-                'lock_fee',
-                [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100'))]
-            )
-            builder = builder.call_method(
-                ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
-                'free',
-                []
-            )
-            builder = deposit_all(builder, account)
-
-            payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-            await gateway.submit_transaction(payload)
-
-        # if balance < 1000:
-        #     print('FUND ACCOUNT:', account.as_str())
-        #     qr = qrcode.QRCode()
-        #     qr.add_data(account.as_str())
-        #     f = io.StringIO()
-        #     qr.print_ascii(out=f)
-        #     f.seek(0)
-        #     print(f.read())
-        # while balance < 1000:
-        #     await asyncio.sleep(5)
-        #     balance = await gateway.get_xrd_balance(account)
-
+        if balance < 1000:
+            print('FUND ACCOUNT:', account.as_str())
+            qr = qrcode.QRCode()
+            qr.add_data(account.as_str())
+            f = io.StringIO()
+            qr.print_ascii(out=f)
+            f.seek(0)
+            print(f.read())
+        while balance < 1000:
+            await asyncio.sleep(5)
+            balance = await gateway.get_xrd_balance(account)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
-        builder = withdraw_to_bucket(
-            builder, 
-            account, 
-            ret.Address(xrd), 
-            ret.Decimal('9000'), 
-            'bucket1'
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(owner_resource),
+            ret.Decimal('1')
         )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
-            'wrap',
-            [ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket('bucket1'))]
+            'add_child',
+            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(usd)))]
         )
-        builder = deposit_all(builder, account)
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         print('Transaction id:', intent)
