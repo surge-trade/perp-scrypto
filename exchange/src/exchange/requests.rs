@@ -21,8 +21,8 @@ impl Limit {
 
     pub fn price(&self) -> Decimal {
         match self {
-            Limit::Gte(limit) => limit.clone(),
-            Limit::Lte(limit) => limit.clone(),
+            Limit::Gte(limit) => *limit,
+            Limit::Lte(limit) => *limit,
             Limit::None => Decimal::ZERO,
         }
     }
@@ -46,6 +46,7 @@ pub struct RequestRemoveCollateral {
 pub struct RequestMarginOrder {
     pub pair_id: PairId,
     pub amount: Decimal,
+    pub reduce_only: bool,
     pub price_limit: Limit,
     pub activate_requests: Vec<ListIndex>,
     pub cancel_requests: Vec<ListIndex>,

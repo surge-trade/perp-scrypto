@@ -31,6 +31,7 @@ pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
 pub const ERROR_INVALID_REQUEST_STATUS: &str = "Invalid request status";
 
+pub const ERROR_MISSING_POOL_POSITION: &str = "Pool position not found";
 pub const ERROR_MISSING_PAIR_CONFIG: &str = "Pair config not found";
 pub const ERROR_MISSING_PRICE: &str = "Price not found";
 pub const ERROR_MISSING_RESOURCE_FEED: &str = "Resource feed not found";
@@ -46,7 +47,11 @@ pub const ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT: &str = "Request not active
 
 pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
 pub const ERROR_PROCESS_REQUEST_BEFORE_VALID_START: &str = "Request before valid start";
+pub const ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION: &str = "Request before submission";
 
 pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 
 pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";
+
+pub const ERROR_INVALID_REFERRAL: &str = "Invalid referral";
+pub const ERROR_REFERRAL_LIMIT_REACHED: &str = "Referral limit reached";

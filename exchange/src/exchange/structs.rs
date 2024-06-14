@@ -40,6 +40,7 @@ pub struct AccountDetails {
     pub valid_requests_start: ListIndex,
     pub active_requests: Vec<RequestDetails>,
     pub requests_history: Vec<RequestDetails>,
+    pub referral: Option<(NonFungibleGlobalId, ReferralData)>,
 }
 
 #[derive(ScryptoSbor, Clone)]
@@ -63,21 +64,6 @@ pub struct PairDetails {
     pub pair_config: PairConfig,
 }
 
-pub struct ResultOpenPosition {
-    pub fee_pool: Decimal,
-    pub fee_protocol: Decimal,
-    pub fee_treasury: Decimal,
-    pub fee_referral: Decimal,
-}
-
-pub struct ResultClosePosition {
-    pub pnl: Decimal,
-    pub fee_pool: Decimal,
-    pub fee_protocol: Decimal,
-    pub fee_treasury: Decimal,
-    pub fee_referral: Decimal,
-}
-
 pub struct ResultValuePositions {
     pub pnl: Decimal,
     pub margin_positions: Decimal,
@@ -86,10 +72,7 @@ pub struct ResultValuePositions {
 pub struct ResultLiquidatePositions {
     pub pnl: Decimal,
     pub margin_positions: Decimal,
-    pub fee_pool: Decimal,
-    pub fee_protocol: Decimal,
-    pub fee_treasury: Decimal,
-    pub fee_referral: Decimal,
+    pub fee_paid: Decimal,
     pub position_amounts: Vec<(PairId, Decimal)>,
     pub position_prices: Vec<(PairId, Decimal)>,
 }

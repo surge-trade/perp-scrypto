@@ -48,10 +48,16 @@ pub mod margin_account {
         requests: List<KeeperRequest>,
         active_requests: HashSet<ListIndex>,
         valid_requests_start: ListIndex,
+        referral_id: Option<NonFungibleLocalId>,
     }
 
     impl MarginAccount {
-        pub fn new(initial_rule: AccessRule, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount> {
+        pub fn new(
+            level_1: AccessRule, 
+            level_2: AccessRule, 
+            level_3: AccessRule, 
+            referral_id: Option<NonFungibleLocalId>,
+            reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount> {
             let component_reservation = match reservation {
                 Some(reservation) => reservation,
                 None => Runtime::allocate_component_address(MarginAccount::blueprint_id()).0
@@ -64,14 +70,15 @@ pub mod margin_account {
                 requests: List::new(MarginAccountKeyValueStore::new_with_registered_type),
                 active_requests: HashSet::new(),
                 valid_requests_start: 0,
+                referral_id,
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
-                level_1 => initial_rule.clone();
-                level_2 => initial_rule.clone();
-                level_3 => initial_rule.clone();
+                level_1 => level_1;
+                level_2 => level_2;
+                level_3 => level_3;
             })
             .with_address(component_reservation)
             .globalize()
@@ -85,6 +92,7 @@ pub mod margin_account {
                 requests_len: self.requests.len(),
                 active_requests_len: self.active_requests.len(),
                 valid_requests_start: self.valid_requests_start,
+                referral_id: self.referral_id.clone(),
             }
         }
 
