@@ -334,7 +334,7 @@ impl VirtualMarginAccount {
 
         let submission = keeper_request.submission;
         assert!(
-            submission.compare(current_time, TimeComparisonOperator::Gt),
+            current_time.compare(submission, TimeComparisonOperator::Gt),
             "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION, current_time.seconds_since_unix_epoch, submission.seconds_since_unix_epoch
         );
 
