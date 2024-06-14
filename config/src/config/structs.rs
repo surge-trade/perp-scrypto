@@ -119,7 +119,6 @@ impl ExchangeConfig {
         assert!(self.fee_share_protocol >= dec!(0), "Invalid protocol fee");
         assert!(self.fee_share_treasury >= dec!(0), "Invalid treasury fee");
         assert!(self.fee_share_referral >= dec!(0), "Invalid referral fee");
-        assert!(self.fee_share_protocol + self.fee_share_treasury + self.fee_share_referral <= dec!(1), "Invalid fee share");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
         assert!(self.protocol_burn_amount > dec!(0), "Invalid protocol burn amount");
         assert!(self.reward_keeper >= dec!(0), "Invalid keeper reward");

@@ -214,7 +214,7 @@ async def main():
             print('LP_RESOURCE:', lp_resource)
 
             if 'REFERRAL_RESOURCE' not in config_data:
-                manifest = create_referral_str(builder, owner_role, authority_resource)
+                manifest = create_referral_str(account, owner_resource, authority_resource)
                 payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
@@ -486,12 +486,9 @@ async def main():
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
                 config_data['POOL_COMPONENT'] = addresses[0]
-                config_data['LP_RESOURCE'] = addresses[1]
 
             pool_component = config_data['POOL_COMPONENT']
-            lp_resource = config_data['LP_RESOURCE']
             print('POOL_COMPONENT:', pool_component)
-            print('LP_RESOURCE:', lp_resource)
 
             if 'REFERRAL_GENERATOR_PACKAGE' not in config_data:
                 code, definition = build('referral_generator', envs, network_config['network_name'])
@@ -594,9 +591,13 @@ async def main():
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
                 config_data['FEE_DELEGATOR_COMPONENT'] = addresses[0]
+                config_data['FEE_OATH_RESOURCE'] = addresses[1]
 
             fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
+            fee_oath_resource = config_data['FEE_OATH_RESOURCE']
+            envs.append(('FEE_OATH_RESOURCE', fee_oath_resource))
             print('FEE_DELEGATOR_COMPONENT:', fee_delegator_component)
+            print('FEE_OATH_RESOURCE:', fee_oath_resource)
 
             if 'EXCHANGE_PACKAGE' not in config_data:
                 code, definition = build('exchange', envs, network_config['network_name'])
@@ -688,7 +689,7 @@ async def main():
                         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
                         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                         ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
+                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_oath_resource))),
                         ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
                     ]
                 )
@@ -732,6 +733,10 @@ async def main():
                         Tuple(
                             "keeper_reward_resource",
                             "{keeper_reward_resource}"
+                        ),
+                        Tuple(
+                            "fee_oath_resource",
+                            "{fee_oath_resource}"
                         ),
                         Tuple(
                             "token_wrapper_component",
@@ -789,6 +794,7 @@ async def main():
             print(f'LP_RESOURCE={lp_resource}')
             print(f'REFERRAL_RESOURCE={referral_resource}')
             print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
+            print(f'FEE_OATH_RESOURCE={fee_oath_resource}')
 
             print(f'TOKEN_WRAPPER_PACKAGE={token_wrapper_package}')
             print(f'CONFIG_PACKAGE={config_package}')
@@ -816,7 +822,8 @@ async def main():
             print('-------------------------------------')
 
         except Exception as e:
-            print('ERROR:', e)
+            import traceback
+            print('TRACEBACK:', traceback.format_exc())
         finally:
             release_path = join(dirname(dirname(realpath(__file__))), 'releases')
             makedirs(release_path, exist_ok=True)

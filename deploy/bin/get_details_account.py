@@ -4,11 +4,16 @@ import radix_engine_toolkit as ret
 import asyncio
 import datetime
 import json
+import sys
 from os.path import dirname, join, realpath
 from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
+
+path = dirname(dirname(realpath(__file__)))
+sys.path.append(path)
+chdir(path)
 load_dotenv()
 
 from tools.gateway import Gateway
@@ -58,21 +63,21 @@ def parse_request(elem):
             'claims': claims,
         }
     elif request_variant_id == 1:
-        print(request_inner[0])
         pair_id = request_inner[0]['value']
         size = float(request_inner[1]['value'])
-        limit_variant = int(request_inner[2]['variant_id'])
+        reduce_only = bool(request_inner[2]['value'])
+        limit_variant = int(request_inner[3]['variant_id'])
         if limit_variant == 0 or limit_variant == 1:
-            limit_price = float(request_inner[2]['fields'][0]['value'])
+            limit_price = float(request_inner[3]['fields'][0]['value'])
         else:
             limit_price = None
 
         activate_requests = []
-        for i in request_inner[3]['elements']:
+        for i in request_inner[4]['elements']:
             activate_requests.append(i['value'])
 
         cancel_requests = []
-        for i in request_inner[4]['elements']:
+        for i in request_inner[5]['elements']:
             cancel_requests.append(i['value'])
 
         if limit_variant == 0 and size > 0:
@@ -93,6 +98,7 @@ def parse_request(elem):
         request_details = {
             'pair': pair_id,
             'size': size,
+            'reduce_only': reduce_only,
             'limit_price': limit_price,
             'activate_requests': activate_requests,
             'cancel_requests': cancel_requests,
@@ -111,9 +117,6 @@ def parse_request(elem):
     }
 
 async def main():
-    path = dirname(realpath(__file__))
-    chdir(path)
-
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
 
@@ -123,9 +126,6 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
-        # account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
-        account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
-        # account_component = "component_tdx_2_1cqsdhl3jnx63zvdk9ltxw7vvr5hx74dvr2k7rwmmfm074p04u0ld3e"
 
         manifest = f'''
             CALL_METHOD
