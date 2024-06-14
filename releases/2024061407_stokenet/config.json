@@ -26,9 +26,7 @@
     "REFERRAL_GENERATOR_COMPONENT": "component_tdx_2_1cqqz9kxgc4jf36u449lm2a393gscenqu2ts0ddxem3cr8vak4zxqgu",
     "FEE_DISTRIBUTOR_PACKAGE": "package_tdx_2_1p4usndnzqd94gkgzntn3qga2m39kqr950rk2c62a340860ylefn2pd",
     "FEE_DISTRIBUTOR_COMPONENT": "component_tdx_2_1crq9zagpuajya0y5ulsr3gax4qyxudadv20qx0n796g0fev8pnzf3f",
-    "EXCHANGE_PACKAGE": "package_tdx_2_1phzed2cd4pf40q23ujr6q2jeca0yv8c4phehk3y7w3rssyhh7kcyjh",
-    "EXCHANGE_COMPONENT": "component_tdx_2_1cq6l8ltzz7yhtmwj28lptm8v7ulgk9pstkhc4xwvfhnuf3pm33g72u",
-    "FEE_DELEGATOR_PACKAGE": "package_tdx_2_1pkcnlc26mehlyjmn8p92vy6jdahy0r3a0w7p88swlr5kxapf8ngpkk",
-    "FEE_DELEGATOR_COMPONENT": "component_tdx_2_1czfz99ph7upjq840dg4g6tkfwxw9gyqsfdxpkqd3vcd98034xlng58",
-    "FEE_OATH_RESOURCE": "resource_tdx_2_1tkc5jkjk2945f6d8fhc70wnkdy22l95lv5cdvg6v4t4q2d9hr4dlhs"
+    "FEE_DELEGATOR_PACKAGE": "package_tdx_2_1pkxttjj9m2avzqsncsmy47qnpsmxrpsmascpyl496tggt6qrem7p2f",
+    "FEE_DELEGATOR_COMPONENT": "component_tdx_2_1crwghta7649rk6qdmras654jkhadr0q3q09056v7c54cexf8xadpaf",
+    "EXCHANGE_PACKAGE": "package_tdx_2_1phzed2cd4pf40q23ujr6q2jeca0yv8c4phehk3y7w3rssyhh7kcyjh"
 }
