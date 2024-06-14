@@ -111,6 +111,7 @@ mod token_wrapper_mod {
         }
 
         pub fn add_child(&mut self, child_resource: ResourceAddress) {
+            // TODO: Error if already exists
             self.child_list.push(child_resource);
             self.child_vaults.insert(
                 child_resource, 
