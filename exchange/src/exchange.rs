@@ -742,7 +742,9 @@ mod exchange_mod {
                     target_account,
                     claims,
                 });
-                account.push_request(request, expiry_seconds, STATUS_ACTIVE, vec![target_account]);
+
+                let submission = Clock::current_time_rounded_to_seconds();
+                account.push_request(request, submission, expiry_seconds, STATUS_ACTIVE, vec![target_account]);
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
@@ -752,10 +754,12 @@ mod exchange_mod {
         pub fn margin_order_request(
             &self,
             fee_oath: Option<Bucket>,
+            submission: Option<Instant>,
             expiry_seconds: u64,
             account: ComponentAddress,
             pair_id: PairId,
             amount: Decimal,
+            reduce_only: bool,
             price_limit: Limit,
             activate_requests: Vec<ListIndex>,
             cancel_requests: Vec<ListIndex>,
@@ -770,11 +774,23 @@ mod exchange_mod {
                 let request = Request::MarginOrder(RequestMarginOrder {
                     pair_id,
                     amount,
+                    reduce_only,
                     price_limit,
                     activate_requests,
                     cancel_requests,
                 });
-                account.push_request(request, expiry_seconds, status, vec![]);
+
+                let current_time = Clock::current_time_rounded_to_seconds();
+                let submission = if let Some(submission) = submission {
+                    if current_time.compare(submission, TimeComparisonOperator::Gt) {
+                        current_time
+                    } else {
+                        submission
+                    }
+                } else {
+                    current_time
+                };
+                account.push_request(request, submission, expiry_seconds, status, vec![]);
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
@@ -824,7 +840,7 @@ mod exchange_mod {
             authorize!(self, {
                 let mut config = VirtualConfig::new(self.config);
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                let (request, submission, expired) = account.process_request(index);
+                let (request, expired) = account.process_request(index);
                 
                 if !expired {
                     let mut pair_ids = account.position_ids();
@@ -835,12 +851,6 @@ mod exchange_mod {
                     let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
 
                     let max_age = self._max_age(&config);
-                    let max_age = if max_age.compare(submission, TimeComparisonOperator::Gt) {
-                        max_age
-                    } else {
-                        submission
-                    };
-                    
                     let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                     match request {
@@ -1449,6 +1459,7 @@ mod exchange_mod {
         ) {
             let pair_id = &request.pair_id;
             let amount = request.amount;
+            let reduce_only = request.reduce_only;
             let price_limit = request.price_limit;
 
             let price = oracle.price(pair_id);
@@ -1462,17 +1473,22 @@ mod exchange_mod {
                 
             let (amount_close, amount_open) = {
                 let position_amount = account.positions().get(pair_id).map_or(dec!(0), |p| p.amount);
-                if position_amount.is_positive() && amount.is_negative() {
-                    let amount_close = amount.max(-position_amount);
-                    let amount_open = amount - amount_close;
-                    (amount_close, amount_open)
+
+                let amount_close = if position_amount.is_positive() && amount.is_negative() {
+                    amount.max(-position_amount)
                 } else if position_amount.is_negative() && amount.is_positive() {
-                    let amount_close = amount.min(-position_amount);
-                    let amount_open = amount - amount_close;
-                    (amount_close, amount_open)
+                    amount.min(-position_amount)
                 } else {
-                    (dec!(0), amount)
-                }
+                    dec!(0)
+                };
+
+                let amount_open = if !reduce_only {
+                    amount - amount_close
+                } else {
+                    dec!(0)
+                };
+
+                (amount_close, amount_open)
             };
 
             let skew_0 = pool.skew_abs_snap();

@@ -243,13 +243,11 @@ impl VirtualMarginAccount {
         self.account.set_role("level_3", rule);
     }
 
-    pub fn push_request(&mut self, request: Request, expiry_seconds: u64, status: Status, effected_components: Vec<ComponentAddress>) {
+    pub fn push_request(&mut self, request: Request, submission: Instant, expiry_seconds: u64, status: Status, effected_components: Vec<ComponentAddress>) {
         assert!(
             status == STATUS_ACTIVE || status == STATUS_DORMANT,
             "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_ACTIVE, STATUS_DORMANT]
         );
-
-        let submission = Clock::current_time_rounded_to_seconds();
         let expiry = submission.add_seconds(expiry_seconds as i64).expect(ERROR_ARITHMETIC);
 
         let keeper_request = KeeperRequest {
@@ -308,7 +306,7 @@ impl VirtualMarginAccount {
         self.request_updates.insert(index, keeper_request);
     }
 
-    pub fn process_request(&mut self, index: ListIndex) -> (Request, Instant, bool) {
+    pub fn process_request(&mut self, index: ListIndex) -> (Request, bool) {
         assert!(
             index >= self.valid_requests_start(),
             "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_PROCESS_REQUEST_BEFORE_VALID_START, index, self.valid_requests_start()
@@ -335,13 +333,18 @@ impl VirtualMarginAccount {
         }
 
         let submission = keeper_request.submission;
+        assert!(
+            submission.compare(current_time, TimeComparisonOperator::Gt),
+            "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION, current_time.seconds_since_unix_epoch, submission.seconds_since_unix_epoch
+        );
+
         let request = Request::decode(&keeper_request.request);
 
         self._remove_active_request(index);
         keeper_request.submission = current_time;
         self.request_updates.insert(index, keeper_request);
 
-        (request, submission, expired)
+        (request, expired)
     }
 
     pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {

@@ -46,6 +46,7 @@ pub struct RequestRemoveCollateral {
 pub struct RequestMarginOrder {
     pub pair_id: PairId,
     pub amount: Decimal,
+    pub reduce_only: bool,
     pub price_limit: Limit,
     pub activate_requests: Vec<ListIndex>,
     pub cancel_requests: Vec<ListIndex>,
