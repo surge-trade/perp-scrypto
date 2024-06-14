@@ -8,6 +8,14 @@ pub struct AccountPosition {
     pub funding_index: Decimal,
 }
 
+impl AccountPosition {
+    pub fn remove(&mut self) {
+        self.amount = dec!(0);
+        self.cost = dec!(0);
+        self.funding_index = dec!(0);
+    }
+}
+
 #[derive(ScryptoSbor)]
 pub struct MarginAccountInfo {
     pub positions: HashMap<PairId, AccountPosition>,

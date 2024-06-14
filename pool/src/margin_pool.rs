@@ -37,34 +37,11 @@ pub mod margin_pool_mod {
         unrealized_pool_funding: Decimal,
         skew_abs_snap: Decimal,
         pnl_snap: Decimal,
-        lp_token_manager: ResourceManager,
     }
 
     impl MarginPool {
         pub fn new(owner_role: OwnerRole) -> Global<MarginPool> {
-            let (component_reservation, this) = Runtime::allocate_component_address(MarginPool::blueprint_id());
-
-            let lp_token_manager = ResourceBuilder::new_fungible(owner_role.clone())
-                .metadata(metadata!(
-                    init {
-                        "package" => GlobalAddress::from(Runtime::package_address()), locked;
-                        "component" => GlobalAddress::from(this), locked;
-                        "name" => format!("LP Token"), updatable;
-                        "symbol" => format!("LPT"), updatable;
-                        "description" => format!("Liquidity provider token the represents a share of ownership of a pool."), updatable;
-                    }
-                ))
-                .mint_roles(mint_roles!{
-                        minter => rule!(require(AUTHORITY_RESOURCE)); 
-                        minter_updater => rule!(deny_all);
-                    }
-                )
-                .burn_roles(burn_roles!{
-                        burner => rule!(require(AUTHORITY_RESOURCE)); 
-                        burner_updater => rule!(deny_all);
-                    }
-                )
-                .create_with_no_initial_supply();
+            let (component_reservation, _this) = Runtime::allocate_component_address(MarginPool::blueprint_id());
 
             Self {
                 positions: KeyValueStore::new_with_registered_type(),
@@ -73,7 +50,6 @@ pub mod margin_pool_mod {
                 unrealized_pool_funding: dec!(0),
                 skew_abs_snap: dec!(0),
                 pnl_snap: dec!(0),
-                lp_token_manager,
             }
             .instantiate()
             .prepare_to_globalize(owner_role)
@@ -92,17 +68,16 @@ pub mod margin_pool_mod {
                 unrealized_pool_funding: self.unrealized_pool_funding,
                 skew_abs_snap: self.skew_abs_snap,
                 pnl_snap: self.pnl_snap,
-                lp_token_manager: self.lp_token_manager,
             }
         }
 
-        pub fn get_position(&self, pair_id: PairId) -> Option<PoolPosition> {
-            self.positions.get(&pair_id).map(|position| position.clone())
+        pub fn get_position(&self, pair_id: PairId) -> PoolPosition {
+            self.positions.get(&pair_id).map(|v| v.clone()).unwrap_or_default()
         }
 
-        pub fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PoolPosition>> {
+        pub fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, PoolPosition> {
             pair_ids.into_iter().map(|k| {
-                let value = self.positions.get(&k).map(|v| v.clone());
+                let value = self.positions.get(&k).map(|v| v.clone()).unwrap_or_default();
                 (k, value)
             }).collect()
         }

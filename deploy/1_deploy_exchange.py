@@ -13,8 +13,8 @@ load_dotenv()
 
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
-from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority, create_base, create_protocol_resource, create_keeper_reward
-
+from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority
+from tools.manifests import create_base, create_protocol_resource, create_keeper_reward, create_lp, create_referral_str
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
 def clean(name: str) -> None:
@@ -199,6 +199,30 @@ async def main():
             base_resource = config_data['BASE_RESOURCE']
             envs.append(('BASE_RESOURCE', base_resource))
             print('BASE_RESOURCE:', base_resource)
+
+            if 'LP_RESOURCE' not in config_data:
+                builder = ret.ManifestBuilder()
+                builder = lock_fee(builder, account, 100)
+                builder = create_lp(builder, owner_role, authority_resource)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['LP_RESOURCE'] = addresses[0]
+
+            lp_resource = config_data['LP_RESOURCE']
+            envs.append(('LP_RESOURCE', lp_resource))
+            print('LP_RESOURCE:', lp_resource)
+
+            if 'REFERRAL_RESOURCE' not in config_data:
+                manifest = create_referral_str(builder, owner_role, authority_resource)
+                payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['REFERRAL_RESOURCE'] = addresses[0]
+
+            referral_resource = config_data['REFERRAL_RESOURCE']
+            envs.append(('REFERRAL_RESOURCE', referral_resource))
+            print('REFERRAL_RESOURCE:', referral_resource)
 
             if 'PROTOCOL_RESOURCE' not in config_data:
                 builder = ret.ManifestBuilder()
@@ -694,6 +718,54 @@ async def main():
                     "set_variables"
                     Array<Tuple>(
                         Tuple(
+                            "lp_resource",
+                            "{lp_resource}"
+                        ),
+                        Tuple(
+                            "referral_resource",
+                            "{referral_resource}"
+                        ),
+                        Tuple(
+                            "base_resource",
+                            "{base_resource}"
+                        ),
+                        Tuple(
+                            "keeper_reward_resource",
+                            "{keeper_reward_resource}"
+                        ),
+                        Tuple(
+                            "token_wrapper_component",
+                            "{token_wrapper_component}"
+                        ),
+                        Tuple(
+                            "config_component",
+                            "{config_component}"
+                        ),
+                        Tuple(
+                            "pool_component",
+                            "{pool_component}"
+                        ),
+                        Tuple(
+                            "referral_generator_component",
+                            "{referral_generator_component}"
+                        ),
+                        Tuple(
+                            "permission_registry_component",
+                            "{permission_registry_component}"
+                        ),
+                        Tuple(
+                            "oracle_component",
+                            "{oracle_component}"
+                        ),
+                        Tuple(
+                            "fee_distributor_component",
+                            "{fee_distributor_component}"
+                        ),
+                        Tuple(
+                            "fee_delegator_component",
+                            "{fee_delegator_component}"
+                        ),
+                        Tuple(
                             "exchange_component",
                             "{exchange_component}"
                         ),
@@ -714,6 +786,8 @@ async def main():
             print(f'AUTHORITY_RESOURCE={authority_resource}')
             print(f'BASE_AUTHORITY_RESOURCE={base_authority_resource}')
             print(f'BASE_RESOURCE={base_resource}')
+            print(f'LP_RESOURCE={lp_resource}')
+            print(f'REFERRAL_RESOURCE={referral_resource}')
             print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
 
             print(f'TOKEN_WRAPPER_PACKAGE={token_wrapper_package}')

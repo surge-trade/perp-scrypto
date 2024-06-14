@@ -15,15 +15,31 @@ pub struct PoolPosition {
     pub last_price: Decimal,
 }
 
+impl Default for PoolPosition {
+    fn default() -> Self {
+        PoolPosition {
+            oi_long: dec!(0),
+            oi_short: dec!(0),
+            cost: dec!(0),
+            skew_abs_snap: dec!(0),
+            pnl_snap: dec!(0),
+            funding_2_rate: dec!(0),
+            funding_long_index: dec!(0),
+            funding_short_index: dec!(0),
+            last_update: Clock::current_time_rounded_to_seconds(),
+            last_price: dec!(1),
+        }
+    }
+}
+
 #[derive(ScryptoSbor)]
 pub struct MarginPoolInfo {
-    pub positions: HashMap<PairId, Option<PoolPosition>>,
+    pub positions: HashMap<PairId, PoolPosition>,
     pub base_tokens_amount: Decimal,
     pub virtual_balance: Decimal,
     pub unrealized_pool_funding: Decimal,
     pub skew_abs_snap: Decimal,
     pub pnl_snap: Decimal,
-    pub lp_token_manager: ResourceManager,
 }
 
 #[derive(ScryptoSbor)]

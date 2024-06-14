@@ -45,6 +45,22 @@ fn main() {
         }).unwrap().into_node_id().to_vec()
     ).unwrap();
 
+    writeln!(f, "pub const _LP_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
+        env::var("LP_RESOURCE").map(|var| {
+            ResourceAddress::try_from_bech32(&decoder, &var)
+        }).unwrap_or_else(|_| {
+            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
+        }).unwrap().into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const _REFERRAL_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
+        env::var("REFERRAL_RESOURCE").map(|var| {
+            ResourceAddress::try_from_bech32(&decoder, &var)
+        }).unwrap_or_else(|_| {
+            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
+        }).unwrap().into_node_id().to_vec()
+    ).unwrap();
+
     writeln!(f, "pub const _PROTOCOL_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
         env::var("PROTOCOL_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
@@ -55,14 +71,6 @@ fn main() {
 
     writeln!(f, "pub const _KEEPER_REWARD_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
         env::var("KEEPER_REWARD_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var)
-        }).unwrap_or_else(|_| {
-            ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)
-        }).unwrap().into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _REFERRAL_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("REFERRAL_RESOURCE").map(|var| {
             ResourceAddress::try_from_bech32(&decoder, &var)
         }).unwrap_or_else(|_| {
             ResourceAddress::try_from_bech32(&decoder, &DEFAULT_RESOURCE)

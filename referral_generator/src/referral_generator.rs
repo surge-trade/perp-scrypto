@@ -4,16 +4,6 @@ use scrypto::prelude::*;
 use common::{Vaults, _AUTHORITY_RESOURCE, TO_ZERO};
 use self::errors::*;
 
-#[derive(ScryptoSbor, NonFungibleData, Clone)]
-pub struct ReferralData {
-    pub fee_referral: Decimal,
-    pub fee_rebate: Decimal,
-    pub referrals: u64,
-    pub max_referrals: u64,
-    pub balance: Decimal,
-    pub total_rewarded: Decimal,
-}
-
 #[derive(ScryptoSbor, Clone)]
 pub struct ReferralCode {
     referral_id: NonFungibleLocalId,
@@ -37,10 +27,10 @@ mod referral_generator_mod {
             authority => updatable_by: [];
         },
         methods {
-            get_referral => PUBLIC;
+            get_referral_code => PUBLIC;
 
-            create_referrals => restrict_to: [authority];
-            claim_referral => restrict_to: [authority];
+            create_referral_codes => restrict_to: [authority];
+            claim_referral_code => restrict_to: [authority];
         }
     );
 
@@ -63,11 +53,11 @@ mod referral_generator_mod {
             .globalize()
         }
 
-        pub fn get_referral(&self, hash: Hash) -> Option<ReferralCode> {
+        pub fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode> {
             self.referral_codes.get(&hash).map(|entry| entry.clone())
         }
         
-        pub fn create_referrals(&mut self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>) {
+        pub fn create_referral_codes(&mut self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>) {
             let mut amounts: HashMap<ResourceAddress, Decimal> = HashMap::new();
             for bucket in tokens.iter() {
                 let amount = amounts.entry(bucket.resource_address()).or_insert(Decimal::zero());
@@ -106,7 +96,7 @@ mod referral_generator_mod {
             self.vaults.put_batch(tokens);
         }
 
-        pub fn claim_referral(&mut self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>) {
+        pub fn claim_referral_code(&mut self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>) {
             let mut referral_code = self.referral_codes.get_mut(&hash).expect(ERROR_REFERRAL_CODE_NOT_FOUND);
 
             assert!(

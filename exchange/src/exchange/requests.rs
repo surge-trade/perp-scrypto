@@ -21,8 +21,8 @@ impl Limit {
 
     pub fn price(&self) -> Decimal {
         match self {
-            Limit::Gte(limit) => limit.clone(),
-            Limit::Lte(limit) => limit.clone(),
+            Limit::Gte(limit) => *limit,
+            Limit::Lte(limit) => *limit,
             Limit::None => Decimal::ZERO,
         }
     }

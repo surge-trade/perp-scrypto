@@ -8,7 +8,7 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use common::{PairId, ListIndex, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _PROTOCOL_RESOURCE, _KEEPER_REWARD_RESOURCE, _REFERRAL_RESOURCE, TO_ZERO, TO_INFINITY};
+use common::{PairId, ListIndex, ReferralData, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _LP_RESOURCE, _PROTOCOL_RESOURCE, _KEEPER_REWARD_RESOURCE, _REFERRAL_RESOURCE, TO_ZERO, TO_INFINITY};
 use account::*;
 use config::*;
 use permission_registry::*;
@@ -45,6 +45,7 @@ use self::virtual_oracle::*;
 mod exchange_mod {
     const AUTHORITY_RESOURCE: ResourceAddress = _AUTHORITY_RESOURCE;
     const BASE_RESOURCE: ResourceAddress = _BASE_RESOURCE;
+    const LP_RESOURCE: ResourceAddress = _LP_RESOURCE;
     const PROTOCOL_RESOURCE: ResourceAddress = _PROTOCOL_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
     const REFERRAL_RESOURCE: ResourceAddress = _REFERRAL_RESOURCE;
@@ -94,8 +95,8 @@ mod exchange_mod {
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
-            fn get_position(&self, pair_id: PairId) -> Option<PoolPosition>;
-            fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, Option<PoolPosition>>;     
+            fn get_position(&self, pair_id: PairId) -> PoolPosition;
+            fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, PoolPosition>;     
 
             // Authority protected methods
             fn update(&self, update: MarginPoolUpdates);
@@ -107,11 +108,11 @@ mod exchange_mod {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Getter methods
-            fn get_referral(&self, hash: Hash) -> Option<ReferralCode>;
+            fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
 
             // Authority protected methods
-            fn create_referrals(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>);
-            fn claim_referral(&self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>);
+            fn create_referral_codes(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>);
+            fn claim_referral_code(&self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>);
         }
     }
     extern_blueprint! {
@@ -361,7 +362,7 @@ mod exchange_mod {
                 let amount = self.fee_distributor.get_treasury_virtual_balance();
 
                 self.fee_distributor.update_treasury_virtual_balance(dec!(0));
-                pool.update_virtual_balance(pool.virtual_balance() + amount);
+                pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
                 pool.realize();
@@ -512,7 +513,7 @@ mod exchange_mod {
                 );
 
                 referral_manager.update_non_fungible_data(referral_id, "referrals", referral_data.referrals + count);
-                self.referral_generator.create_referrals(tokens, referral_id.clone(), referrals);
+                self.referral_generator.create_referral_codes(tokens, referral_id.clone(), referrals);
             })
         }
 
@@ -530,7 +531,7 @@ mod exchange_mod {
                 let amount = referral_data.balance;
 
                 referral_manager.update_non_fungible_data(referral_id, "balance", dec!(0));
-                pool.update_virtual_balance(pool.virtual_balance() + amount);
+                pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
                 pool.realize();
@@ -550,9 +551,8 @@ mod exchange_mod {
             authorize!(self, {
                 let referral_id = if let Some(referral_code) = referral_code {
                     let referral_code_hash = CryptoUtils::keccak256_hash(referral_code.into_bytes());
-                    let (referral_id, referral_tokens) = self.referral_generator.claim_referral(referral_code_hash);
+                    let (referral_id, referral_tokens) = self.referral_generator.claim_referral_code(referral_code_hash);
                     tokens.extend(referral_tokens);
-
                     Some(referral_id)
                 } else {
                     None
@@ -572,8 +572,6 @@ mod exchange_mod {
                 permissions.level_2.insert(account_component);
                 permissions.level_3.insert(account_component);
                 self.permission_registry.set_permissions(initial_rule, permissions);
-            
-
 
                 let config = VirtualConfig::new(self.config);
                 let mut account = VirtualMarginAccount::new(account_component, config.collaterals());
@@ -990,7 +988,7 @@ mod exchange_mod {
                 let amount = self.fee_distributor.get_protocol_virtual_balance();
 
                 self.fee_distributor.update_protocol_virtual_balance(dec!(0));
-                pool.update_virtual_balance(pool.virtual_balance() + amount);
+                pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
                 pool.realize();
@@ -1211,7 +1209,8 @@ mod exchange_mod {
             config: &VirtualConfig,
             pool: &VirtualLiquidityPool,
         ) -> PoolDetails {
-            let lp_supply = pool.lp_token_manager().total_supply().unwrap();
+            let lp_token_manager = ResourceManager::from_address(LP_RESOURCE);
+            let lp_supply = lp_token_manager.total_supply().unwrap();
             let pool_value = self._pool_value(pool).max(dec!(1));
             let lp_price = if lp_supply.is_zero() {
                 dec!(1)
@@ -1290,7 +1289,7 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, collateral_value_approx, result_value_collateral.margin_collateral
             );
 
-            account.update_virtual_balance(account.virtual_balance() - fee_value);
+            account.add_virtual_balance(-fee_value);
             fee_oath.burn();
         }
 
@@ -1300,6 +1299,7 @@ mod exchange_mod {
             pool: &mut VirtualLiquidityPool,
             payment: Bucket,
         ) -> Bucket {
+            let lp_token_manager = ResourceManager::from_address(LP_RESOURCE);
             assert!(
                 payment.resource_address() == BASE_RESOURCE,
                 "{}", ERROR_INVALID_PAYMENT
@@ -1308,7 +1308,7 @@ mod exchange_mod {
             let value = payment.amount();
             let fee = value * config.exchange_config().fee_liquidity;
             let pool_value = self._pool_value(pool).max(dec!(1));
-            let lp_supply = pool.lp_token_manager().total_supply().unwrap();
+            let lp_supply = lp_token_manager.total_supply().unwrap();
 
             let (lp_amount, lp_price) = if lp_supply.is_zero() {
                 (value, dec!(1))
@@ -1319,7 +1319,7 @@ mod exchange_mod {
             };
 
             pool.deposit(payment);
-            let lp_token = pool.mint_lp(lp_amount);
+            let lp_token = lp_token_manager.mint(lp_amount);
             let (fee_pool, fee_protocol, fee_treasury) = self._settle_fees_basic(config, pool, fee);
 
             Runtime::emit_event(EventLiquidityChange {
@@ -1340,20 +1340,21 @@ mod exchange_mod {
             pool: &mut VirtualLiquidityPool,
             lp_token: Bucket,
         ) -> Bucket {
+            let lp_token_manager = ResourceManager::from_address(LP_RESOURCE);
             assert!(
-                lp_token.resource_address() == pool.lp_token_manager().address(),
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(lp_token.resource_address()), Runtime::bech32_encode_address(pool.lp_token_manager().address())
+                lp_token.resource_address() == LP_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(lp_token.resource_address()), Runtime::bech32_encode_address(LP_RESOURCE)
             );
 
             let lp_amount = lp_token.amount();
             let pool_value = self._pool_value(pool).max(dec!(0));
-            let lp_supply = pool.lp_token_manager().total_supply().unwrap();
+            let lp_supply = lp_token_manager.total_supply().unwrap();
 
             let lp_price = pool_value / lp_supply;
             let value = lp_amount * lp_price;
             let fee = value * config.exchange_config().fee_liquidity;
             
-            pool.burn_lp(lp_token);
+            lp_token.burn();
             let token = pool.withdraw(value - fee, TO_ZERO);
             let (fee_pool, fee_protocol, fee_treasury) = self._settle_fees_basic(config, pool, fee);
             
@@ -1477,17 +1478,17 @@ mod exchange_mod {
             let skew_0 = pool.skew_abs_snap();
 
             let mut pnl = dec!(0);
-            let mut fee = dec!(0);
+            let mut fee_paid = dec!(0);
             if !amount_close.is_zero() {
                 let (pnl_close, fee_close) = self._close_position(config, pool, account, oracle, pair_id, amount_close);
                 pnl += pnl_close;
-                fee += fee_close;
+                fee_paid += fee_close;
             }
             if !amount_open.is_zero() {
                 let fee_open = self._open_position(config, pool, account, oracle, pair_id, amount_open);
-                fee += fee_open;
+                fee_paid += fee_open;
             }
-            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee);
+            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee_paid);
 
             self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
@@ -1604,7 +1605,7 @@ mod exchange_mod {
             } else {
                 dec!(0)
             };
-            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, result_positions.fee);
+            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, result_positions.fee_paid);
 
             account.update_valid_requests_start();
 
@@ -1671,8 +1672,8 @@ mod exchange_mod {
             );
             
             let amount_close = -amount;
-            let (pnl, fee) = self._close_position(config, pool, account, oracle, pair_id, amount_close);
-            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee);
+            let (pnl, fee_paid) = self._close_position(config, pool, account, oracle, pair_id, amount_close);
+            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee_paid);
 
             self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
@@ -1710,6 +1711,7 @@ mod exchange_mod {
         ) -> Decimal {
             let exchange_config = config.exchange_config();
             let pair_config = config.pair_config(pair_id);
+            let fee_rebate = account.fee_rebate();
 
             assert!(
                 !pair_config.disabled, 
@@ -1717,16 +1719,15 @@ mod exchange_mod {
             );
 
             let price = oracle.price(pair_id);
-
             let value = amount * price;
             let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
             let pool_value = self._pool_value(pool);
 
-            let mut pool_position = pool.position(pair_id);
-            let mut position = account.position(pair_id);
+            let pool_position = pool.position_mut(pair_id);
+            let position = account.position_mut(pair_id);
             
-            let fee_rate = self._calculate_fee_rate(pair_config, &pool_position, pool_value, price, amount);
-            let fee = value_abs * (fee_rate * account.fee_rebate()).clamp(dec!(0), exchange_config.fee_max);
+            let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
+            let fee = value_abs * (fee_rate * fee_rebate).clamp(dec!(0), exchange_config.fee_max);
             let cost = value + fee;
 
             if amount.is_positive() {
@@ -1738,9 +1739,6 @@ mod exchange_mod {
             
             position.amount += amount;
             position.cost += cost;
-
-            pool.update_position(pair_id, pool_position);
-            account.update_position(pair_id, position);
 
             self._assert_position_limit(config, account);
             self._assert_account_integrity(config, pool, account, oracle);
@@ -1759,17 +1757,18 @@ mod exchange_mod {
         ) -> (Decimal, Decimal) {
             let exchange_config = config.exchange_config();
             let pair_config = config.pair_config(pair_id);
+            let fee_rebate = account.fee_rebate();
+
             let price = oracle.price(pair_id);
-            
             let value = amount * price;
             let value_abs = value.checked_abs().unwrap();
             let pool_value = self._pool_value(pool);
 
-            let mut pool_position = pool.position(pair_id);
-            let mut position = account.position(pair_id);
+            let pool_position = pool.position_mut(pair_id);
+            let position = account.position_mut(pair_id);
 
-            let fee_rate = self._calculate_fee_rate(pair_config, &pool_position, pool_value, price, amount);
-            let fee = value_abs * (fee_rate * account.fee_rebate()).clamp(dec!(0), exchange_config.fee_max);
+            let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
+            let fee = value_abs * (fee_rate * fee_rebate).clamp(dec!(0), exchange_config.fee_max);
             let cost = -amount / position.amount * position.cost;
             let pnl = -value - cost - fee;
         
@@ -1782,9 +1781,6 @@ mod exchange_mod {
 
             position.amount += amount;
             position.cost -= cost;
-
-            pool.update_position(pair_id, pool_position);
-            account.update_position(pair_id, position);
 
             self._settle_account(pool, account, pnl);
 
@@ -1801,7 +1797,7 @@ mod exchange_mod {
             let pair_config = config.pair_config(pair_id);
             let price = oracle.price(pair_id);
 
-            let mut pool_position = pool.position(pair_id);
+            let pool_position = pool.position_mut(pair_id);
             let oi_long = pool_position.oi_long;
             let oi_short = pool_position.oi_short;
 
@@ -1809,18 +1805,20 @@ mod exchange_mod {
             let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
             pool_position.skew_abs_snap = skew_abs;
-            pool.update_skew_abs_snap(pool.skew_abs_snap() + skew_abs_snap_delta);
 
             let pnl = skew - pool_position.cost;
             let pnl_snap_delta = pnl - pool_position.pnl_snap;
             pool_position.pnl_snap = pnl;
-            pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
             
             let current_time = Clock::current_time_rounded_to_seconds();
             let period_seconds = current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch;
             let period = Decimal::from(period_seconds);
             
-            if !period.is_zero() {
+            let price_delta_ratio = (price - pool_position.last_price).checked_abs().expect(ERROR_ARITHMETIC) / pool_position.last_price;
+            pool_position.last_price = price;
+            pool_position.last_update = current_time;
+            
+            let funding_pool_delta = if !period.is_zero() {
                 let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
                 pool_position.funding_2_rate += funding_2_rate_delta;
 
@@ -1853,18 +1851,21 @@ mod exchange_mod {
 
                     let funding_pool = funding_pool_rate * period;
                     let funding_pool_index = funding_pool / (oi_long + oi_short);
-                    pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() + funding_pool + funding_share);
 
                     pool_position.funding_long_index += funding_long_index + funding_pool_index;
                     pool_position.funding_short_index += funding_short_index + funding_pool_index;
+
+                    funding_pool + funding_share
+                } else {
+                    dec!(0)
                 }
-            }
+            } else {
+                dec!(0)
+            };
 
-            let price_delta_ratio = (price - pool_position.last_price).checked_abs().expect(ERROR_ARITHMETIC) / pool_position.last_price;
-            pool_position.last_price = price;
-            pool_position.last_update = current_time;
-
-            pool.update_position(pair_id, pool_position);
+            pool.add_skew_abs_snap(skew_abs_snap_delta);
+            pool.add_pnl_snap(pnl_snap_delta);
+            pool.add_unrealized_pool_funding(funding_pool_delta);
 
             if period_seconds >= pair_config.update_period_seconds || price_delta_ratio >= pair_config.update_price_delta_ratio {
                 true
@@ -1881,7 +1882,7 @@ mod exchange_mod {
         ) {
             let price = oracle.price(pair_id);
 
-            let mut pool_position = pool.position(pair_id);
+            let pool_position = pool.position_mut(pair_id);
             let oi_long = pool_position.oi_long;
             let oi_short = pool_position.oi_short;
 
@@ -1889,14 +1890,13 @@ mod exchange_mod {
             let skew_abs = skew.checked_abs().expect(ERROR_ARITHMETIC);
             let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
             pool_position.skew_abs_snap = skew_abs;
-            pool.update_skew_abs_snap(pool.skew_abs_snap() + skew_abs_snap_delta);
-
+            
             let pnl = skew - pool_position.cost;
             let pnl_snap_delta = pnl - pool_position.pnl_snap;
             pool_position.pnl_snap = pnl;
-            pool.update_pnl_snap(pool.pnl_snap() + pnl_snap_delta);
 
-            pool.update_position(pair_id, pool_position);
+            pool.add_skew_abs_snap(skew_abs_snap_delta);
+            pool.add_pnl_snap(pnl_snap_delta);
         }
 
         fn _value_positions(
@@ -1920,7 +1920,7 @@ mod exchange_mod {
 
                 let pool_position = pool.position(pair_id);
 
-                let fee_rate = self._calculate_fee_rate(pair_config, &pool_position, pool_value, price, amount);
+                let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
                 let fee = value_abs * (fee_rate * account.fee_rebate()).clamp(dec!(0), exchange_config.fee_max);
                 let cost = position.cost;
                 let funding = if amount.is_positive() {
@@ -1950,24 +1950,25 @@ mod exchange_mod {
         ) -> ResultLiquidatePositions {
             let exchange_config = config.exchange_config();
             let pool_value = self._pool_value(pool);
+            let fee_rebate = account.fee_rebate();
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
             let mut total_funding = dec!(0);
-            let mut total_fee = dec!(0);
+            let mut total_fee_paid = dec!(0);
             let mut position_amounts = vec![];
             let mut prices = vec![];
-            for (pair_id, position) in account.positions().clone().iter() {
+            for (pair_id, position) in account.positions_mut() {
                 let pair_config = config.pair_config(pair_id);
                 let price = oracle.price(pair_id);
                 let amount = position.amount;
                 let value = amount * price;
                 let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
 
-                let mut pool_position = pool.position(pair_id);
+                let pool_position = pool.position_mut(pair_id);
 
-                let fee_rate = self._calculate_fee_rate(pair_config, &pool_position, pool_value, price, amount);
-                let fee = value_abs * (fee_rate * account.fee_rebate()).clamp(dec!(0), exchange_config.fee_max);
+                let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
+                let fee = value_abs * (fee_rate * fee_rebate).clamp(dec!(0), exchange_config.fee_max);
                 let cost = position.cost;
                 let funding = if amount.is_positive() {
                     pool_position.oi_long -= amount;
@@ -1984,19 +1985,18 @@ mod exchange_mod {
                 
                 total_pnl += pnl;
                 total_margin += margin;
-                total_fee += fee;
+                total_fee_paid += fee;
                 position_amounts.push((pair_id.clone(), amount));
                 prices.push((pair_id.clone(), price));
 
-                pool.update_position(pair_id, pool_position);
-                account.remove_position(pair_id);
+                position.remove();
             }
-            pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() - total_funding);
+            pool.add_unrealized_pool_funding(-total_funding);
 
             ResultLiquidatePositions {
                 pnl: total_pnl,
                 margin_positions: total_margin,
-                fee: total_fee,
+                fee_paid: total_fee_paid,
                 position_amounts,
                 position_prices: prices,
             }
@@ -2067,8 +2067,8 @@ mod exchange_mod {
             account: &mut VirtualMarginAccount,
             amount: Decimal,
         ) {
-            pool.update_virtual_balance(pool.virtual_balance() - amount);
-            account.update_virtual_balance(account.virtual_balance() + amount);
+            pool.add_virtual_balance(-amount);
+            account.add_virtual_balance(amount);
         }
 
         fn _settle_funding(
@@ -2089,7 +2089,7 @@ mod exchange_mod {
                 dec!(0)
             };
 
-            pool.update_unrealized_pool_funding(pool.unrealized_pool_funding() - funding);
+            pool.add_unrealized_pool_funding(-funding);
             self._settle_account(pool, account, -funding);
 
             -funding
@@ -2106,7 +2106,7 @@ mod exchange_mod {
             let fee_treasury = fee_paid * exchange_config.fee_share_treasury;
             let fee_pool = fee_paid - fee_protocol - fee_treasury;
 
-            pool.update_virtual_balance(pool.virtual_balance() - fee_protocol - fee_treasury);
+            pool.add_virtual_balance(-fee_protocol -fee_treasury);
             self.fee_distributor.distribute(fee_protocol, fee_treasury);
 
             (fee_pool, fee_protocol, fee_treasury)
@@ -2125,7 +2125,7 @@ mod exchange_mod {
             let fee_referral = fee_paid * exchange_config.fee_share_referral * account.fee_share_referral();
             let fee_pool = fee_paid - fee_protocol - fee_treasury - fee_referral;
 
-            pool.update_virtual_balance(pool.virtual_balance() - fee_protocol - fee_treasury - fee_referral);
+            pool.add_virtual_balance(-fee_protocol -fee_treasury -fee_referral);
             self.fee_distributor.distribute(fee_protocol, fee_treasury);
             account.reward_referral(fee_referral);
 
@@ -2139,7 +2139,7 @@ mod exchange_mod {
             pair_id: &PairId,
         ) {
             let pool_position = pool.position(pair_id);
-            let mut position = account.position(pair_id);
+            let position: &mut AccountPosition = account.position_mut(pair_id);
 
             let funding_index = if position.amount.is_positive() {
                 pool_position.funding_long_index
@@ -2147,8 +2147,6 @@ mod exchange_mod {
                 pool_position.funding_short_index
             };
             position.funding_index = funding_index;
-
-            account.update_position(pair_id, position)
         }
     }
 }
