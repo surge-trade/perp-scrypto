@@ -3,11 +3,16 @@ import asyncio
 import httpx
 import datetime
 import json
+import sys
 from os.path import dirname, join, realpath
 from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
+
+path = dirname(dirname(realpath(__file__)))
+sys.path.append(path)
+chdir(path)
 load_dotenv()
 
 from tools.gateway import Gateway
@@ -67,7 +72,7 @@ async def stream_prices(oracle: Oracle, pair_id: int, pair_name: str):
                     print(f"Failed to fetch data for {pair_name}, status code: {response.status_code}")
 
 async def main():
-    path = dirname(realpath(__file__))
+    path = dirname(dirname(realpath(__file__)))
     chdir(path)
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:

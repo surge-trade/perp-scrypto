@@ -4,11 +4,16 @@ import radix_engine_toolkit as ret
 import asyncio
 import datetime
 import json
+import sys
 from os.path import dirname, join, realpath
 from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
+
+path = dirname(dirname(realpath(__file__)))
+sys.path.append(path)
+chdir(path)
 load_dotenv()
 
 from tools.gateway import Gateway
@@ -111,9 +116,6 @@ def parse_request(elem):
     }
 
 async def main():
-    path = dirname(realpath(__file__))
-    chdir(path)
-
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
 

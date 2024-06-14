@@ -2,11 +2,16 @@ import radix_engine_toolkit as ret
 import asyncio
 import datetime
 import json
+import sys
 from os.path import dirname, join, realpath
 from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
+
+path = dirname(dirname(realpath(__file__)))
+sys.path.append(path)
+chdir(path)
 load_dotenv()
 
 from tools.gateway import Gateway
@@ -14,9 +19,6 @@ from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all
 
 async def main():
-    path = dirname(realpath(__file__))
-    chdir(path)
-
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
         network_config = await gateway.network_configuration()
@@ -52,7 +54,7 @@ async def main():
             'update_exchange_config',
             [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.I64_VALUE(5), # max_price_age_seconds
+                    ret.ManifestBuilderValue.I64_VALUE(30), # max_price_age_seconds
                     ret.ManifestBuilderValue.U16_VALUE(10), # positions_max
                     ret.ManifestBuilderValue.U16_VALUE(30), # active_requests_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.15')), # skew_ratio_cap
