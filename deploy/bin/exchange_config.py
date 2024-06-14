@@ -64,7 +64,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # fee_liquidity
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_protocol
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_treasury
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_referral
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # fee_share_referral
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1000')), # protocol_burn_amount
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # reward_keeper

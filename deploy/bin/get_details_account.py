@@ -126,9 +126,6 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         account_component = config_data['ACCOUNT_COMPONENT']
-        # account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
-        account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
-        # account_component = "component_tdx_2_1cqsdhl3jnx63zvdk9ltxw7vvr5hx74dvr2k7rwmmfm074p04u0ld3e"
 
         manifest = f'''
             CALL_METHOD
