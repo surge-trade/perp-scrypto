@@ -214,7 +214,7 @@ async def main():
             print('LP_RESOURCE:', lp_resource)
 
             if 'REFERRAL_RESOURCE' not in config_data:
-                manifest = create_referral_str(builder, owner_role, authority_resource)
+                manifest = create_referral_str(account, owner_resource, authority_resource)
                 payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
@@ -486,12 +486,9 @@ async def main():
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
                 config_data['POOL_COMPONENT'] = addresses[0]
-                config_data['LP_RESOURCE'] = addresses[1]
 
             pool_component = config_data['POOL_COMPONENT']
-            lp_resource = config_data['LP_RESOURCE']
             print('POOL_COMPONENT:', pool_component)
-            print('LP_RESOURCE:', lp_resource)
 
             if 'REFERRAL_GENERATOR_PACKAGE' not in config_data:
                 code, definition = build('referral_generator', envs, network_config['network_name'])

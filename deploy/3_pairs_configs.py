@@ -32,6 +32,7 @@ async def main():
             config_data = json.load(config_file)
 
         owner_resource = config_data['OWNER_RESOURCE']
+        oracle_component = config_data['ORACLE_COMPONENT']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
@@ -47,6 +48,30 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        manifest = f'''
+                CALL_METHOD
+                    Address("{account.as_str()}")
+                    "lock_fee"
+                    Decimal("10")
+                ;
+                CALL_METHOD
+                    Address("{account.as_str()}")
+                    "create_proof_of_amount"
+                    Address("{owner_resource}")
+                    Decimal("1")
+                ;
+                CALL_METHOD
+                    Address("{oracle_component}")
+                    "update_pairs"
+                    Bytes("a9bf994ab6f2861e40760cceca7b777f5f3877eb8ebffddff009ca7faa2c7d0c3d576fa3c1cb873f0e9ef3d4df6b54ff0e0bfc8f8fcac78b3bbb2fe2b9fbdea126b7512df2a252081652441b7e7871bfbae7a693e430e24bd5a50123e8b70e80")
+                    Bytes("5c202104030c074254432f555344a000b8e659da8d7e9d1f0e000000000000000000000000000005078c6b6600000000030c074554482f555344a0e093c65644365286bb00000000000000000000000000000005111c6b6600000000030c075852442f555344a000bc6c3d82037d000000000000000000000000000000000005111c6b6600000000030c07534f4c2f555344a00068b3d15b5ed9fe0700000000000000000000000000000005551a6b6600000000")
+                ;
+            '''
+
+        payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+        await gateway.submit_transaction(payload)
+        status = await gateway.get_transaction_status(intent)
+        print('Transaction status:', status)
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
