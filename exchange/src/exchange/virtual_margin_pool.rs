@@ -93,18 +93,18 @@ impl VirtualLiquidityPool {
     }
 
     pub fn add_virtual_balance(&mut self, virtual_balance: Decimal) {
-        self.virtual_balance = virtual_balance;
+        self.virtual_balance += virtual_balance;
     }
 
     pub fn add_unrealized_pool_funding(&mut self, unrealized_pool_funding: Decimal) {
-        self.unrealized_pool_funding = unrealized_pool_funding;
+        self.unrealized_pool_funding += unrealized_pool_funding;
     }
 
     pub fn add_skew_abs_snap(&mut self, skew_abs_snap: Decimal) {
-        self.skew_abs_snap = skew_abs_snap;
+        self.skew_abs_snap += skew_abs_snap;
     }
 
     pub fn add_pnl_snap(&mut self, pnl_snap: Decimal) {
-        self.pnl_snap = pnl_snap;
+        self.pnl_snap += pnl_snap;
     }
 }
