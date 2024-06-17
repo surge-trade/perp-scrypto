@@ -162,7 +162,9 @@ mod exchange_mod {
             update_pair_configs => restrict_to: [OWNER];
             update_collateral_configs => restrict_to: [OWNER];
             remove_collateral_config => restrict_to: [OWNER];
-            collect_treasury => restrict_to: [OWNER];
+            collect_treasury => restrict_to: [OWNER, admin];
+            mint_referral => restrict_to: [OWNER, admin];
+            update_referral => restrict_to: [OWNER, admin];
 
             // Get methods
             get_pairs => PUBLIC;
@@ -370,6 +372,60 @@ mod exchange_mod {
 
                 token
             })
+        }
+
+        pub fn mint_referral(
+            &self,
+            fee_referral: Decimal,
+            fee_rebate: Decimal,
+            max_referrals: u64,
+        ) -> Bucket {
+            let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+            assert!(
+                fee_referral >= dec!(0) && fee_referral <= dec!(0.1) &&
+                fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
+                "{}", ERROR_INVALID_REFERRAL_DATA
+            );
+
+            let referral_data = ReferralData {
+                fee_referral,
+                fee_rebate,
+                referrals: 0,
+                max_referrals,
+                balance: dec!(0),
+                total_rewarded: dec!(0),
+            };
+            let referral = referral_manager.mint_ruid_non_fungible(referral_data);
+
+            referral
+        }
+
+        pub fn update_referral(
+            &self,
+            referral_id: NonFungibleLocalId,
+            fee_referral: Option<Decimal>,
+            fee_rebate: Option<Decimal>,
+            max_referrals: Option<u64>,
+        ) {
+            let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+
+            if let Some(fee_referral) = fee_referral {
+                assert!(
+                    fee_referral >= dec!(0) && fee_referral <= dec!(0.1),
+                    "{}", ERROR_INVALID_REFERRAL_DATA
+                );
+                referral_manager.update_non_fungible_data(&referral_id, "fee_referral", fee_referral);
+            }
+            if let Some(fee_rebate) = fee_rebate {
+                assert!(
+                    fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
+                    "{}", ERROR_INVALID_REFERRAL_DATA
+                );
+                referral_manager.update_non_fungible_data(&referral_id, "fee_rebate", fee_rebate);
+            }
+            if let Some(max_referrals) = max_referrals {
+                referral_manager.update_non_fungible_data(&referral_id, "max_referrals", max_referrals);
+            }
         }
 
         // --- GET METHODS ---

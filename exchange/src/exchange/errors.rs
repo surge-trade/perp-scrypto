@@ -53,5 +53,6 @@ pub const PANIC_NEGATIVE_COLLATERAL: &str = "Negative collateral";
 
 pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";
 
+pub const ERROR_INVALID_REFERRAL_DATA: &str = "Invalid referral data";
 pub const ERROR_INVALID_REFERRAL: &str = "Invalid referral";
 pub const ERROR_REFERRAL_LIMIT_REACHED: &str = "Referral limit reached";
