@@ -70,7 +70,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkmjk5z66ll0pdj9m0c3fnj76v62uzl2zar4t9dgkf66s8rxxfm290",
+        "package_tdx_2_1p5e4y5n4mts903acpt3a0azertvaycx4kdf3u2ey4vp3x6hh8gn269",
         MarginAccount {
             // Constructor
             fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
