@@ -189,12 +189,12 @@ async def main():
 
             pair = elem[0]['value']
             resource = elem[1]['value']
-            size = float(elem[2]['value'])
+            amount = float(elem[2]['value'])
             discount = float(elem[3]['value'])
             margin = float(elem[4]['value'])
 
             mark_price = prices[pair]
-            value = size * mark_price
+            value = amount * mark_price
             value_discounted = value * discount
             margin = margin * mark_price
 
@@ -202,7 +202,7 @@ async def main():
                 'pair': pair,
                 'resource': resource,
                 'mark_price': mark_price,
-                'size': size,
+                'amount': amount,
                 'value': value,
                 'discount': discount,
                 'value_discounted': value_discounted,
