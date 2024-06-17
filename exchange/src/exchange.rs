@@ -51,7 +51,7 @@ mod exchange_mod {
     const REFERRAL_RESOURCE: ResourceAddress = _REFERRAL_RESOURCE;
 
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pk7t7vu7lkg0kn3lkgxfv25s2e3qlu9lg6xnx89ald0ydumnfks0qx",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -70,7 +70,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1pkmjk5z66ll0pdj9m0c3fnj76v62uzl2zar4t9dgkf66s8rxxfm290",
         MarginAccount {
             // Constructor
             fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -91,7 +91,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1phyes3fwd8kl5skav398ucs8c5wyc59l23n35rtt5mym96swkmpng7",
         MarginPool {
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
@@ -105,7 +105,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p4nu5mdxfhxcjngdasydkz0q0c6nsrk2cgaf5cucxzg7a0t4n28533",
         ReferralGenerator {
             // Getter methods
             fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
@@ -116,7 +116,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p569hh277yq52l7hs7pjrq90tnru9u66ystcs9c7mmklmdq9up8w8h",
         PermissionRegistry {
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
@@ -126,7 +126,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p4lq6gexluld50wd3zgmgmm78lnne3dms68hedk802gdjhf77k6sug",
         Oracle {
             // Public methods
             fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
@@ -134,7 +134,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        "package_tdx_2_1p4usndnzqd94gkgzntn3qga2m39kqr950rk2c62a340860ylefn2pd",
         FeeDistributor {
             // Getter methods
             fn get_protocol_virtual_balance(&self) -> Decimal;
