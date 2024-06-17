@@ -243,11 +243,13 @@ impl VirtualMarginAccount {
         self.account.set_role("level_3", rule);
     }
 
-    pub fn push_request(&mut self, request: Request, submission: Instant, expiry_seconds: u64, status: Status, effected_components: Vec<ComponentAddress>) {
+    pub fn push_request(&mut self, request: Request, delay_seconds: u64, expiry_seconds: u64, status: Status, effected_components: Vec<ComponentAddress>) {
         assert!(
             status == STATUS_ACTIVE || status == STATUS_DORMANT,
             "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_ACTIVE, STATUS_DORMANT]
         );
+        let current_time = Clock::current_time_rounded_to_seconds();
+        let submission = current_time.add_seconds(delay_seconds as i64).expect(ERROR_ARITHMETIC);
         let expiry = submission.add_seconds(expiry_seconds as i64).expect(ERROR_ARITHMETIC);
 
         let keeper_request = KeeperRequest {
@@ -263,10 +265,8 @@ impl VirtualMarginAccount {
     }
 
     pub fn try_set_keeper_requests_status(&mut self, indexes: Vec<ListIndex>, status: Status) -> Vec<ListIndex> {
-        let current_time = Clock::current_time_rounded_to_seconds();
-
         let status_phases = self._status_phases(status);
-        let keeper_requests = self.keeper_requests(indexes);
+        let keeper_requests = self.keeper_requests(indexes); // TODO: keeper_requests lite?
         let mut updated = vec![];
         for (index, keeper_request) in keeper_requests.into_iter() {
             if !status_phases.contains(&keeper_request.status) {
@@ -281,7 +281,6 @@ impl VirtualMarginAccount {
                     self._remove_active_request(index);
                 }
                 keeper_request.status = status;
-                keeper_request.submission = current_time;
                 self.request_updates.insert(index, keeper_request);
                 updated.push(index);
             }
@@ -291,7 +290,6 @@ impl VirtualMarginAccount {
     }
 
     pub fn cancel_request(&mut self, index: ListIndex) {
-        let current_time = Clock::current_time_rounded_to_seconds();
         let mut keeper_request = self.keeper_request(index);
         let status_phases = self._status_phases(STATUS_CANCELLED);
         assert!(
@@ -302,8 +300,23 @@ impl VirtualMarginAccount {
             self._remove_active_request(index);
         }
         keeper_request.status = STATUS_CANCELLED;
-        keeper_request.submission = current_time;
         self.request_updates.insert(index, keeper_request);
+    }
+
+    pub fn cancel_requests(&mut self, indexes: Vec<ListIndex>) {
+        let keeper_requests = self.keeper_requests(indexes);
+        for (index, mut keeper_request) in keeper_requests.into_iter() {
+            let status_phases = self._status_phases(STATUS_CANCELLED);
+            assert!(
+                status_phases.contains(&keeper_request.status),
+                "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
+                );
+                if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
+                    self._remove_active_request(index);
+                }
+            keeper_request.status = STATUS_CANCELLED;
+            self.request_updates.insert(index, keeper_request);
+        }
     }
 
     pub fn process_request(&mut self, index: ListIndex) -> (Request, bool) {
@@ -341,11 +354,55 @@ impl VirtualMarginAccount {
         let request = Request::decode(&keeper_request.request);
 
         self._remove_active_request(index);
-        keeper_request.submission = current_time;
         self.request_updates.insert(index, keeper_request);
 
         (request, expired)
     }
+
+    // TODO: consider using
+    // pub fn process_requests(&mut self, indexes: Vec<ListIndex>) -> Vec<(Request, bool)> {
+    //     let current_time = Clock::current_time_rounded_to_seconds();
+    //     let keeper_requests = self.keeper_requests(indexes);
+    //     let mut requests = vec![];
+    //     for (index, mut keeper_request) in keeper_requests.into_iter() {
+    //         assert!(
+    //             index >= self.valid_requests_start(),
+    //             "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_PROCESS_REQUEST_BEFORE_VALID_START, index, self.valid_requests_start()
+    //         );
+            
+    //         let expired = current_time.compare(keeper_request.expiry, TimeComparisonOperator::Gte);
+    //         if expired {
+    //             assert!(
+    //                 keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT,
+    //                 "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, vec![STATUS_ACTIVE, STATUS_DORMANT]
+    //             );
+
+    //             keeper_request.status = STATUS_EXPIRED;
+    //         } else {
+    //             assert!(
+    //                 keeper_request.status == STATUS_ACTIVE,
+    //                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, STATUS_ACTIVE
+    //             );
+                
+    //             keeper_request.status = STATUS_EXECUTED;
+    //         }
+
+    //         let submission = keeper_request.submission;
+    //         assert!(
+    //             current_time.compare(submission, TimeComparisonOperator::Gt),
+    //             "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION, current_time.seconds_since_unix_epoch, submission.seconds_since_unix_epoch
+    //         );
+
+    //         let request = Request::decode(&keeper_request.request);
+
+    //         self._remove_active_request(index);
+    //         self.request_updates.insert(index, keeper_request);
+
+    //         requests.push((request, expired));
+    //     }
+
+    //     requests
+    // }
 
     pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
         for token in tokens.iter() {
