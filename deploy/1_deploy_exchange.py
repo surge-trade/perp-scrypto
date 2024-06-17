@@ -693,11 +693,6 @@ async def main():
                         ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
                     ]
                 )
-                builder = builder.call_method(
-                    ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-                    'signal_upgrade',
-                    [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.NAMED(ret.ManifestBuilderNamedAddress('exchange_component')))]
-                )
 
                 payload, intent = await gateway.build_transaction(builder, public_key, private_key)
                 await gateway.submit_transaction(payload)
