@@ -810,7 +810,7 @@ mod exchange_mod {
         pub fn margin_order_request(
             &self,
             fee_oath: Option<Bucket>,
-            delay_seconds: u64,
+            delay_seconds: Option<u64>,
             expiry_seconds: u64,
             account: ComponentAddress,
             pair_id: PairId,
@@ -836,7 +836,7 @@ mod exchange_mod {
                     cancel_requests,
                 });
 
-                account.push_request(request, delay_seconds, expiry_seconds, status, vec![]);
+                account.push_request(request, 0, expiry_seconds, status, vec![]);
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
