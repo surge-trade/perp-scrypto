@@ -106,6 +106,7 @@ impl VirtualMarginAccount {
     }
 
     pub fn positions_mut(&mut self) -> &mut HashMap<PairId, AccountPosition> {
+        self.positions_updated.extend(self.positions.keys().cloned());
         &mut self.positions
     }
 
