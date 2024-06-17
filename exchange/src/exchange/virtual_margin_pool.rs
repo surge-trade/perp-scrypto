@@ -88,8 +88,9 @@ impl VirtualLiquidityPool {
     }
 
     pub fn withdraw(&mut self, amount: Decimal, withdraw_strategy: WithdrawStrategy) -> Bucket {
-        self.base_tokens_amount -= amount;
-        self.pool.withdraw(amount, withdraw_strategy)
+        let token = self.pool.withdraw(amount, withdraw_strategy);
+        self.base_tokens_amount -= token.amount();
+        token
     }
 
     pub fn add_virtual_balance(&mut self, virtual_balance: Decimal) {

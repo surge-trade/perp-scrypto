@@ -419,22 +419,16 @@ impl VirtualMarginAccount {
     }
 
     pub fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket>  {
-        for (resource, amount) in claims.iter() {
-            let balance = self.collateral_balances
-                .entry(*resource)
-                .and_modify(|balance| *balance -= *amount)
-                .or_insert_with(|| panic!("{}", PANIC_NEGATIVE_COLLATERAL));
-
-            assert!( // TODO: remove
-                !balance.is_negative(),
-                "{}", PANIC_NEGATIVE_COLLATERAL
-            );
-            if *balance == dec!(0) {
-                self.collateral_balances.remove(resource);
-            }
+        let tokens = self.account.withdraw_collateral_batch(claims, withdraw_strategy);
+        for token in tokens.iter() {
+            let amount = token.amount();
+            let resource = token.resource_address();
+            self.collateral_balances
+                .entry(resource)
+                .and_modify(|balance| *balance -= amount);
         }
 
-        self.account.withdraw_collateral_batch(claims, withdraw_strategy)
+        tokens
     }
 
     pub fn add_virtual_balance(&mut self, virtual_balance: Decimal) {
