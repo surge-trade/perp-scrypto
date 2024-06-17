@@ -138,7 +138,7 @@ impl VirtualMarginAccount {
     }
 
     pub fn fee_rebate(&self) -> Decimal {
-        self.referral_data.as_ref().map_or(dec!(0), |referral_data| (dec!(1) - referral_data.fee_rebate))
+        self.referral_data.as_ref().map_or(dec!(1), |referral_data| (dec!(1) - referral_data.fee_rebate))
     }
 
     pub fn reward_referral(&mut self, amount: Decimal) {
