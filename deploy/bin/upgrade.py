@@ -23,12 +23,12 @@ from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_author
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
 def clean(name: str) -> None:
-    path = join(dirname(dirname(realpath(__file__))), name)
+    path = join(dirname(dirname(dirname(realpath(__file__)))), name)
     print(f'Clean: {path}')
     run(['cargo', 'clean'], cwd=path, check=True)
 
 def build(name: str, envs: list, network: str) -> (bytes, bytes):
-    path = join(dirname(dirname(realpath(__file__))), name)
+    path = join(dirname(dirname(dirname(realpath(__file__)))), name)
     print(f'Build: {path}')
     
     env = environ.copy()
@@ -131,7 +131,11 @@ async def main():
         authority_resource = config_data['AUTHORITY_RESOURCE']
         base_authority_resource = config_data['BASE_AUTHORITY_RESOURCE']
         base_resource = config_data['BASE_RESOURCE']
+        lp_resource = config_data['LP_RESOURCE']
+        referral_resource = config_data['REFERRAL_RESOURCE']
+        protocol_resource = config_data['PROTOCOL_RESOURCE']
         keeper_reward_resource = config_data['KEEPER_REWARD_RESOURCE']
+        fee_oath_resource = config_data['FEE_OATH_RESOURCE']
 
         config_package = config_data['CONFIG_PACKAGE']
         account_package = config_data['ACCOUNT_PACKAGE']
@@ -148,7 +152,6 @@ async def main():
         permission_registry_component = config_data['PERMISSION_REGISTRY_COMPONENT']
         oracle_component = config_data['ORACLE_COMPONENT']
         fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
-        fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
         env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
@@ -170,7 +173,11 @@ async def main():
             ('AUTHORITY_RESOURCE', authority_resource),
             ('BASE_AUTHORITY_RESOURCE', base_authority_resource),
             ('BASE_RESOURCE', base_resource),
+            ('LP_RESOURCE', lp_resource),
+            ('REFERRAL_RESOURCE', referral_resource),
+            ('PROTOCOL_RESOURCE', protocol_resource),
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
+            ('FEE_OATH_RESOURCE', fee_oath_resource),
             ('CONFIG_PACKAGE', config_package),
             ('ACCOUNT_PACKAGE', account_package),
             ('POOL_PACKAGE', pool_package),
@@ -231,7 +238,7 @@ async def main():
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_oath_resource))),
                 ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
             ]
         )
