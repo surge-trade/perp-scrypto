@@ -30,11 +30,9 @@ async def main():
             config_data = json.load(config_file)
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
-        account_component = config_data['ACCOUNT_COMPONENT']
+        # account_component = config_data['ACCOUNT_COMPONENT']
+        account_component = "component_tdx_2_1cqlkqptfy6zx63fpw2wfs60dtha7hcldn6a7ksxrxakafrcp5d2htu"
         print(account_component)
-        # account_component = "component_tdx_2_1cpvc34pvpwcl9j984p53zr3s0neh0lxqml8cjrkwlr3n0ak2aks6zv"
-        # account_component = "component_tdx_2_1cr3l32aq6cy7ee8kuz7fxjqe6xvagwmcaek4zpaef7j4dahyg35p3k"
-        # account_component = "component_tdx_2_1cqsdhl3jnx63zvdk9ltxw7vvr5hx74dvr2k7rwmmfm074p04u0ld3e"
 
         result = await gateway.get_component_history(account_component)
 
