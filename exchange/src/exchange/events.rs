@@ -116,6 +116,7 @@ pub struct EventLiquidate {
     pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
     pub collateral_value: Decimal,
     pub collateral_value_discounted: Decimal,
+    pub funding: Decimal,
     pub fee_pool: Decimal,
     pub fee_protocol: Decimal,
     pub fee_treasury: Decimal,

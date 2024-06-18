@@ -72,6 +72,7 @@ pub struct ResultValuePositions {
 pub struct ResultLiquidatePositions {
     pub pnl: Decimal,
     pub margin_positions: Decimal,
+    pub funding_paid: Decimal,
     pub fee_paid: Decimal,
     pub position_amounts: Vec<(PairId, Decimal)>,
     pub position_prices: Vec<(PairId, Decimal)>,
