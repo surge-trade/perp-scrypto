@@ -37,7 +37,6 @@ async def main():
         result = await gateway.get_component_history(account_component)
 
         trade_history = []
-        liquidation_history = []
         
         for transaction in result['items']:
             txid = transaction['intent_hash']
@@ -83,15 +82,15 @@ async def main():
                                 type = 'Unknown'
 
                             trade_history.append({
-                                    'timestamp': timestamp,
-                                    'pair': pair,
                                     'type': type, 
-                                    'price': price,
+                                    'pair': pair,
                                     'size': size,
+                                    'price': price,
                                     'pnl': pnl,
                                     'funding': funding,
                                     'fee': fee, 
-                                    'txid': txid
+                                    'txid': txid,
+                                    'timestamp': timestamp,
                                 }
                             )
                         case 'EventAutoDeleverage':
@@ -112,24 +111,40 @@ async def main():
                             fee = fee_pool + fee_protocol + fee_treasury + fee_referral
 
                             trade_history.append({
-                                'timestamp': timestamp,
-                                'pair': pair,
                                 'type': 'Auto Deleverage',
-                                'price': price,
+                                'pair': pair,
                                 'size': size,
+                                'price': price,
                                 'pnl': pnl,
                                 'funding': funding,
                                 'fee': fee,
-                                'txid': txid
+                                'txid': txid,
+                                'timestamp': timestamp,
                             })
-                        case 'EventLiquidation':
+                        case 'EventLiquidate':
                             account = fields[0]['value']
                             if account != account_component:
                                 continue
 
-                            liquidation_history.append({
+                            pnl = float(fields[7]['value'])
+                            funding = float(fields[11]['value'])
+                            fee_pool = float(fields[12]['value'])
+                            fee_protocol = float(fields[13]['value'])
+                            fee_treasury = float(fields[14]['value'])
+                            fee_referral = float(fields[15]['value'])
+
+                            fee = fee_pool + fee_protocol + fee_treasury + fee_referral
+
+                            trade_history.append({
+                                'type': 'Liquidation',
+                                'pair': None,
+                                'size': None,
+                                'price': None,
+                                'pnl': pnl,
+                                'funding': funding,
+                                'fee': fee,
+                                'txid': txid,
                                 'timestamp': timestamp,
-                                'txid': txid
                             })
                 except:
                     continue
