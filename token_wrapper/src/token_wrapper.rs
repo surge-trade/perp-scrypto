@@ -5,7 +5,7 @@ use common::{ListIndex, List, _BASE_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO,
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
-pub struct ChildToken {
+pub struct Input {
     pub vault: Vault,
     pub wrappable: bool,
 }
@@ -14,7 +14,7 @@ pub struct ChildToken {
 #[types(
     ListIndex,
     ResourceAddress,
-    ChildToken,
+    Input,
 )]
 mod token_wrapper_mod {
     const BASE_AUTHORITY_RESOURCE: ResourceAddress = _BASE_AUTHORITY_RESOURCE;
@@ -22,20 +22,22 @@ mod token_wrapper_mod {
 
     enable_method_auth!(
         roles {
+            admin => updatable_by: [OWNER];
             user => updatable_by: [OWNER];
+            flash_user => updatable_by: [OWNER];
         },
         methods {
             deposit_authority => restrict_to: [OWNER];
             withdraw_authority => restrict_to: [OWNER];
-            add_child => restrict_to: [OWNER];
-            update_wrappable => restrict_to: [OWNER];
+            add_input => restrict_to: [OWNER];
+            update_wrappable => restrict_to: [OWNER, admin];
             
-            get_children => PUBLIC;
+            get_inputs => PUBLIC;
             
             wrap => restrict_to: [user];
             unwrap => restrict_to: [user];
-            flash_loan => restrict_to: [user];
-            repay_flash_loan => restrict_to: [user];
+            flash_loan => restrict_to: [flash_user];
+            repay_flash_loan => restrict_to: [flash_user];
         }
     );
 
@@ -49,8 +51,8 @@ mod token_wrapper_mod {
 
     struct TokenWrapper {
         authority_token: FungibleVault,
-        child_list: List<ResourceAddress>,
-        child_vaults: KeyValueStore<ResourceAddress, ChildToken>,
+        input_list: List<ResourceAddress>,
+        inputs: KeyValueStore<ResourceAddress, Input>,
         flash_oath: ResourceManager,
     }
 
@@ -89,14 +91,16 @@ mod token_wrapper_mod {
 
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
-                child_list: List::new(TokenWrapperKeyValueStore::new_with_registered_type),
-                child_vaults: KeyValueStore::new_with_registered_type(),
+                input_list: List::new(TokenWrapperKeyValueStore::new_with_registered_type),
+                inputs: KeyValueStore::new_with_registered_type(),
                 flash_oath,
             }
             .instantiate()  
             .prepare_to_globalize(owner_role)
-            .roles(roles!  {
+            .roles(roles! {
+                admin => OWNER;
                 user => rule!(allow_all);
+                flash_user => rule!(allow_all);
             })
             .with_address(component_reservation)
             .globalize()
@@ -110,34 +114,35 @@ mod token_wrapper_mod {
             self.authority_token.take_all().into()
         }
 
-        pub fn add_child(&mut self, child_resource: ResourceAddress) {
-            // TODO: Error if already exists
-            self.child_list.push(child_resource);
-            self.child_vaults.insert(
-                child_resource, 
-                ChildToken {
-                    vault: Vault::new(child_resource),
-                    wrappable: true,
-                }
-            );
+        pub fn add_input(&mut self, resource: ResourceAddress) {
+            if self.inputs.get(&resource).is_none() {
+                self.input_list.push(resource);
+                self.inputs.insert(
+                    resource, 
+                    Input {
+                        vault: Vault::new(resource),
+                        wrappable: true,
+                    }
+                );
+            }
         }
 
         pub fn update_wrappable(&mut self, child_resource: ResourceAddress, wrappable: bool) {
-            let mut child_vault = self.child_vaults.get_mut(&child_resource).expect(ERROR_INVALID_CHILD_TOKEN);
+            let mut child_vault = self.inputs.get_mut(&child_resource).expect(ERROR_INVALID_CHILD_TOKEN);
             child_vault.wrappable = wrappable;
         }
 
-        pub fn get_children(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<(ResourceAddress, bool, Decimal)> {
+        pub fn get_inputs(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<(ResourceAddress, bool, Decimal)> {
             let start = start.unwrap_or(0);
-            let end = (start + n).min(self.child_list.len());
-            self.child_list.range(start, end).into_iter().map(|child_resource| {
-                let child_vault = self.child_vaults.get(&child_resource).unwrap();
+            let end = (start + n).min(self.input_list.len());
+            self.input_list.range(start, end).into_iter().map(|child_resource| {
+                let child_vault = self.inputs.get(&child_resource).unwrap();
                 (child_resource, child_vault.wrappable, child_vault.vault.amount())
             }).collect()
         }
 
         pub fn wrap(&mut self, child_token: Bucket) -> Bucket {
-            let mut child_vault = self.child_vaults.get_mut(&child_token.resource_address()).expect(ERROR_INVALID_CHILD_TOKEN);
+            let mut child_vault = self.inputs.get_mut(&child_token.resource_address()).expect(ERROR_INVALID_CHILD_TOKEN);
 
             assert!(
                 child_vault.wrappable, 
@@ -153,7 +158,7 @@ mod token_wrapper_mod {
         }
 
         pub fn unwrap(&mut self, parent_token: Bucket, child_resource: ResourceAddress) -> Bucket {
-            let mut child_vault = self.child_vaults.get_mut(&child_resource).expect(ERROR_INVALID_CHILD_TOKEN);
+            let mut child_vault = self.inputs.get_mut(&child_resource).expect(ERROR_INVALID_CHILD_TOKEN);
 
             let child_token = child_vault.vault.take_advanced(parent_token.amount(), TO_ZERO);
             parent_token.burn();

@@ -57,7 +57,7 @@ async def main():
         )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
-            'add_child',
+            'add_input',
             [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(usd)))]
         )
 
