@@ -75,26 +75,26 @@ async def main():
         print('Transaction status:', status)
 
         pairs = [
-            'BTC/USD', 
+            # 'BTC/USD', 
             'ETH/USD', 
-            'XRD/USD', 
-            'BNB/USD', 
-            'SOL/USD', 
-            'XRP/USD', 
-            'DOGE/USD', 
-            'ADA/USD', 
-            'AVAX/USD', 
-            'LINK/USD', 
-            'DOT/USD', 
-            'NEAR/USD', 
-            'MATIC/USD', 
-            'LTC/USD', 
-            'ATOM/USD', 
-            'SUI/USD', 
-            'APT/USD', 
-            'ARB/USD', 
-            'INJ/USD', 
-            'SEI/USD',
+            # 'XRD/USD', 
+            # 'BNB/USD', 
+            # 'SOL/USD', 
+            # 'XRP/USD', 
+            # 'DOGE/USD', 
+            # 'ADA/USD', 
+            # 'AVAX/USD', 
+            # 'LINK/USD', 
+            # 'DOT/USD', 
+            # 'NEAR/USD', 
+            # 'MATIC/USD', 
+            # 'LTC/USD', 
+            # 'ATOM/USD', 
+            # 'SUI/USD', 
+            # 'APT/USD', 
+            # 'ARB/USD', 
+            # 'INJ/USD', 
+            # 'SEI/USD',
         ]
 
         builder = ret.ManifestBuilder()
@@ -104,30 +104,6 @@ async def main():
             ret.Address(owner_resource),
             ret.Decimal('1')
         )
-        builder = builder.call_method(
-            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-            'update_pair_configs',
-            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
-                ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.STRING_VALUE(pair),  # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
-                ])
-                for pair in pairs
-            ])]
-        )
-
         # builder = builder.call_method(
         #     ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
         #     'update_pair_configs',
@@ -135,22 +111,46 @@ async def main():
         #         ret.ManifestBuilderValue.TUPLE_VALUE([
         #             ret.ManifestBuilderValue.STRING_VALUE(pair),  # pub pair_id: PairId,
         #             ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-        #             ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
+        #             ret.ManifestBuilderValue.I64_VALUE(600), # update_period_seconds
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pub margin_initial: Decimal,
         #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000317')), # pub funding_1: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000317')),  # pub funding_2: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.000000827')),  # pub funding_2_delta: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000159')),  # pub funding_pool_0: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000317')),  # pub funding_pool_1: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0005')),  # pub fee_0: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1'))  # pub fee_1: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub funding_1: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_2_delta: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_0: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_pool_1: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')),  # pub funding_share: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0'))  # pub fee_1: Decimal,
         #         ])
         #         for pair in pairs
         #     ])]
         # )
+
+        builder = builder.call_method(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            'update_pair_configs',
+            [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.STRING_VALUE(pair),  # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.BOOL_VALUE(False), # pub disabled: bool,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000317')), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000317')),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.000000827')),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000159')),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0000000317')),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0005')),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1'))  # pub fee_1: Decimal,
+                ])
+                for pair in pairs
+            ])]
+        )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         print('Transaction id:', intent)
