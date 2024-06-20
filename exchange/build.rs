@@ -15,13 +15,14 @@ fn main() {
 
     // Fetch the addresses from the environment
     let packages = vec![
+        env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("CONFIG_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("ACCOUNT_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("POOL_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("REFERRAL_GENERATOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
-        env::var("PERMISSION_REGISTRY_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
-        env::var("ORACLE_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
         env::var("FEE_DISTRIBUTOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
+        env::var("FEE_DELEGATOR_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
+        env::var("PERMISSION_REGISTRY_PACKAGE").unwrap_or(DEFAULT_PACKAGE.to_string()),
     ];
 
     // Find all matches and replace them sequentially with the new addresses

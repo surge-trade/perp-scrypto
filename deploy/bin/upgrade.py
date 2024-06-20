@@ -146,12 +146,13 @@ async def main():
         fee_distributor_package = config_data['FEE_DISTRIBUTOR_PACKAGE']
         fee_delegator_package = config_data['FEE_DELEGATOR_PACKAGE']
 
+        oracle_component = config_data['ORACLE_COMPONENT']
         config_component = config_data['CONFIG_COMPONENT']
         pool_component = config_data['POOL_COMPONENT']
         referral_generator_component = config_data['REFERRAL_GENERATOR_COMPONENT']
-        permission_registry_component = config_data['PERMISSION_REGISTRY_COMPONENT']
-        oracle_component = config_data['ORACLE_COMPONENT']
         fee_distributor_component = config_data['FEE_DISTRIBUTOR_COMPONENT']
+        fee_delegator_component = config_data['FEE_DELEGATOR_COMPONENT']
+        permission_registry_component = config_data['PERMISSION_REGISTRY_COMPONENT']
         env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
@@ -178,14 +179,23 @@ async def main():
             ('PROTOCOL_RESOURCE', protocol_resource),
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
             ('FEE_OATH_RESOURCE', fee_oath_resource),
+            
+            ('ORACLE_PACKAGE', oracle_package),
             ('CONFIG_PACKAGE', config_package),
             ('ACCOUNT_PACKAGE', account_package),
             ('POOL_PACKAGE', pool_package),
             ('REFERRAL_GENERATOR_PACKAGE', referral_generator_package),
-            ('PERMISSION_REGISTRY_PACKAGE', permission_registry_package),
-            ('ORACLE_PACKAGE', oracle_package),
             ('FEE_DISTRIBUTOR_PACKAGE', fee_distributor_package),
             ('FEE_DELEGATOR_PACKAGE', fee_delegator_package),
+            ('PERMISSION_REGISTRY_PACKAGE', permission_registry_package),
+
+            ('ORACLE_COMPONENT', oracle_component),
+            ('CONFIG_COMPONENT', config_component),
+            ('POOL_COMPONENT', pool_component),
+            ('REFERRAL_GENERATOR_COMPONENT', referral_generator_component),
+            ('FEE_DISTRIBUTOR_COMPONENT', fee_distributor_component),
+            ('FEE_DELEGATOR_COMPONENT', fee_delegator_component),
+            ('PERMISSION_REGISTRY_COMPONENT', permission_registry_component),
         ]
 
         code, definition = build('exchange', envs, network_config['network_name'])
@@ -232,13 +242,14 @@ async def main():
             [
                 manifest_owner_role, 
                 ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
-                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_oath_resource))),
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
                 ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
             ]
         )

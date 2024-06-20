@@ -10,9 +10,10 @@ mod fee_delegator_mod {
 
     enable_method_auth! { 
         roles {
-            user => updatable_by: [OWNER];
+            authority => updatable_by: [];
+            admin => updatable_by: [OWNER];
             depositor => updatable_by: [OWNER];
-            withdrawer => updatable_by: [OWNER];
+            user => updatable_by: [OWNER];
         },
         methods { 
             get_fee_oath_resource => PUBLIC;
@@ -21,11 +22,11 @@ mod fee_delegator_mod {
             get_vault_amount => PUBLIC;
             get_virtual_balance => PUBLIC;
 
-            update_max_lock => restrict_to: [OWNER];
-            update_is_contingent => restrict_to: [OWNER];
-            update_virtual_balance => restrict_to: [OWNER];
+            update_max_lock => restrict_to: [OWNER, admin];
+            update_is_contingent => restrict_to: [OWNER, admin];
+            update_virtual_balance => restrict_to: [authority];
             deposit => restrict_to: [depositor];
-            withdraw => restrict_to: [withdrawer];
+            withdraw => restrict_to: [depositor];
 
             lock_fee => restrict_to: [user];
         }
@@ -77,9 +78,10 @@ mod fee_delegator_mod {
             .instantiate()
             .prepare_to_globalize(owner_role)
             .roles(roles! {
-                user => rule!(allow_all);
+                authority => rule!(require(AUTHORITY_RESOURCE));
+                admin => OWNER;
                 depositor => OWNER;
-                withdrawer => OWNER;
+                user => rule!(allow_all);
             })
             .with_address(component_reservation)
             .globalize()

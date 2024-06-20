@@ -52,6 +52,17 @@ mod exchange_mod {
 
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        Oracle {
+            // Constructor
+            fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
+
+            // Public methods
+            fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
+            fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
+        }
+    }
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -93,6 +104,9 @@ mod exchange_mod {
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
+            // Constructor
+            fn new(owner_role: OwnerRole) -> Global<MarginPool>;
+
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
             fn get_position(&self, pair_id: PairId) -> PoolPosition;
@@ -107,6 +121,9 @@ mod exchange_mod {
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
+            // Constructor
+            fn new(owner_role: OwnerRole) -> Global<ReferralGenerator>;
+
             // Getter methods
             fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
 
@@ -117,25 +134,10 @@ mod exchange_mod {
     }
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        PermissionRegistry {
-            // Getter methods
-            fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
-        
-            // Authority protected methods
-            fn set_permissions(&self, access_rule: AccessRule, permissions: Permissions);
-        }
-    }
-    extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        Oracle {
-            // Public methods
-            fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
-            fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
-        }
-    }
-    extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
+            // Constructor
+            fn new(owner_role: OwnerRole) -> Global<FeeDistributor>;
+
             // Getter methods
             fn get_protocol_virtual_balance(&self) -> Decimal;
             fn get_treasury_virtual_balance(&self) -> Decimal;
@@ -146,6 +148,46 @@ mod exchange_mod {
             fn distribute(&self, amount_protocol: Decimal, amount_treasury: Decimal);
         }
     }
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        FeeDelegator {
+            // Constructor
+            fn new(owner_role: OwnerRole) -> Global<FeeDelegator>;
+
+            // Getter methods
+            fn get_fee_oath_resource(&self) -> ResourceAddress;
+            fn get_max_lock(&self) -> Decimal;
+            fn get_is_contingent(&self) -> bool;
+            fn get_virtual_balance(&self) -> Decimal;
+            fn get_vault_amount(&self) -> Decimal;
+
+            // Authority protected methods
+            fn update_max_lock(&self, max_lock: Decimal);
+            fn update_is_contingent(&self, is_contingent: bool);
+            fn update_virtual_balance(&self, virtual_balance: Decimal);
+
+            // Depositor methods
+            fn deposit(&self, token: Bucket);
+            fn withdraw(&self, amount: Decimal) -> Bucket;
+
+            // User methods
+            fn lock_fee(&self, amount: Decimal) -> Bucket;
+        }
+    }
+    extern_blueprint! {
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        PermissionRegistry {
+            // Constructor
+            fn new(owner_role: OwnerRole) -> Global<PermissionRegistry>;
+
+            // Getter methods
+            fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
+        
+            // Authority protected methods
+            fn set_permissions(&self, access_rule: AccessRule, permissions: Permissions);
+        }
+    }
+    
 
     enable_method_auth! { 
         roles {
@@ -163,6 +205,7 @@ mod exchange_mod {
             update_collateral_configs => restrict_to: [OWNER];
             remove_collateral_config => restrict_to: [OWNER];
             collect_treasury => restrict_to: [OWNER, admin];
+            collect_fee_delegator =>  restrict_to: [OWNER, admin];
             mint_referral => restrict_to: [OWNER, admin];
             update_referral => restrict_to: [OWNER, admin];
 
@@ -224,6 +267,7 @@ mod exchange_mod {
         referral_generator: Global<ReferralGenerator>,
         permission_registry: Global<PermissionRegistry>,
         oracle: Global<Oracle>,
+        fee_delegator: Global<FeeDelegator>,
         fee_distributor: Global<FeeDistributor>,
         fee_oath_resource: ResourceAddress,
     }
@@ -232,13 +276,14 @@ mod exchange_mod {
         pub fn new(
             owner_role: OwnerRole,
             authority_token: Bucket,
+            oracle: ComponentAddress,
             config: ComponentAddress,
             pool: ComponentAddress,
             referral_generator: ComponentAddress,
-            permission_registry: ComponentAddress,
-            oracle: ComponentAddress,
             fee_distributor: ComponentAddress,
+            fee_delegator: ComponentAddress,
             fee_oath_resource: ResourceAddress,
+            permission_registry: ComponentAddress,
             reservation: Option<GlobalAddressReservation>,
         ) -> Global<Exchange> {
             let component_reservation = match reservation {
@@ -256,6 +301,7 @@ mod exchange_mod {
             let referral_generator: Global<ReferralGenerator> = referral_generator.into();
             let permission_registry: Global<PermissionRegistry> = permission_registry.into();
             let oracle: Global<Oracle> = oracle.into();
+            let fee_delegator: Global<FeeDelegator> = fee_delegator.into();
             let fee_distributor: Global<FeeDistributor> = fee_distributor.into();
 
             Self {
@@ -265,6 +311,7 @@ mod exchange_mod {
                 referral_generator,
                 permission_registry,
                 oracle,
+                fee_delegator,
                 fee_distributor,
                 fee_oath_resource
             }
@@ -365,6 +412,23 @@ mod exchange_mod {
                 let amount = self.fee_distributor.get_treasury_virtual_balance();
 
                 self.fee_distributor.update_treasury_virtual_balance(dec!(0));
+                pool.add_virtual_balance(amount);
+                let token = pool.withdraw(amount, TO_ZERO);
+                
+                pool.realize();
+
+                token
+            })
+        }
+
+        pub fn collect_fee_delegator(
+            &self,
+        ) -> Bucket {
+            authorize!(self, {
+                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let amount = self.fee_delegator.get_virtual_balance();
+
+                self.fee_delegator.update_virtual_balance(dec!(0));
                 pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
