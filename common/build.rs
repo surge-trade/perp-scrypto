@@ -5,8 +5,8 @@ use std::path::Path;
 use scrypto::prelude::*;
 
 fn main() {
-    let default_resource: ResourceAddress = ResourceAddress::new_or_panic([0; NodeId::LENGTH]);
-    let default_component: ComponentAddress = ComponentAddress::new_or_panic([0; NodeId::LENGTH]);
+    let default_resource: ResourceAddress = ResourceAddress::try_from_hex("5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6").unwrap();
+    let default_component: ComponentAddress = ComponentAddress::try_from_hex("c169a00e3637d04099d059cb22912aaae58f08cdaf03139a3e10f40ac8cd").unwrap();
 
     // Determine the network to use
     let network = match env::var("NETWORK_ID").unwrap_or_default().as_str() {
