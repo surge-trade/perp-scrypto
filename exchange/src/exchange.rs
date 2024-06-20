@@ -8,7 +8,7 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use common::{PairId, ListIndex, ReferralData, _AUTHORITY_RESOURCE, _BASE_RESOURCE, _LP_RESOURCE, _PROTOCOL_RESOURCE, _KEEPER_REWARD_RESOURCE, _REFERRAL_RESOURCE, TO_ZERO, TO_INFINITY};
+use common::*;
 use account::*;
 use config::*;
 use permission_registry::*;
@@ -49,6 +49,15 @@ mod exchange_mod {
     const PROTOCOL_RESOURCE: ResourceAddress = _PROTOCOL_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
     const REFERRAL_RESOURCE: ResourceAddress = _REFERRAL_RESOURCE;
+    const FEE_OATH_RESOURCE: ResourceAddress = _FEE_OATH_RESOURCE;
+
+    const ORACLE_COMPONENT: ComponentAddress = _ORACLE_COMPONENT;
+    const CONFIG_COMPONENT: ComponentAddress = _CONFIG_COMPONENT;
+    const POOL_COMPONENT: ComponentAddress = _POOL_COMPONENT;
+    const REFERRAL_GENERATOR_COMPONENT: ComponentAddress = _REFERRAL_GENERATOR_COMPONENT;
+    const FEE_DELEGATOR_COMPONENT: ComponentAddress = _FEE_DELEGATOR_COMPONENT;
+    const FEE_DISTRIBUTOR_COMPONENT: ComponentAddress = _FEE_DISTRIBUTOR_COMPONENT;
+    const PERMISSION_REGISTRY_COMPONENT: ComponentAddress = _PERMISSION_REGISTRY_COMPONENT;
 
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
@@ -262,28 +271,12 @@ mod exchange_mod {
 
     struct Exchange {
         authority_token: FungibleVault,
-        config: Global<Config>,
-        pool: Global<MarginPool>,
-        referral_generator: Global<ReferralGenerator>,
-        permission_registry: Global<PermissionRegistry>,
-        oracle: Global<Oracle>,
-        fee_delegator: Global<FeeDelegator>,
-        fee_distributor: Global<FeeDistributor>,
-        fee_oath_resource: ResourceAddress,
     }
     
     impl Exchange {
         pub fn new(
             owner_role: OwnerRole,
             authority_token: Bucket,
-            oracle: ComponentAddress,
-            config: ComponentAddress,
-            pool: ComponentAddress,
-            referral_generator: ComponentAddress,
-            fee_distributor: ComponentAddress,
-            fee_delegator: ComponentAddress,
-            fee_oath_resource: ResourceAddress,
-            permission_registry: ComponentAddress,
             reservation: Option<GlobalAddressReservation>,
         ) -> Global<Exchange> {
             let component_reservation = match reservation {
@@ -296,24 +289,16 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_AUTHORITY, Runtime::bech32_encode_address(authority_token.resource_address()), Runtime::bech32_encode_address(AUTHORITY_RESOURCE)
             );
 
-            let config: Global<Config> = config.into();
-            let pool: Global<MarginPool> = pool.into();
-            let referral_generator: Global<ReferralGenerator> = referral_generator.into();
-            let permission_registry: Global<PermissionRegistry> = permission_registry.into();
-            let oracle: Global<Oracle> = oracle.into();
-            let fee_delegator: Global<FeeDelegator> = fee_delegator.into();
-            let fee_distributor: Global<FeeDistributor> = fee_distributor.into();
+            Global::<Oracle>::try_from(ORACLE_COMPONENT).expect("Oracle component is not a valid Oracle");
+            Global::<Config>::try_from(CONFIG_COMPONENT).expect("Config component is not a valid Config");
+            Global::<MarginPool>::try_from(POOL_COMPONENT).expect("Pool component is not a valid MarginPool");
+            Global::<ReferralGenerator>::try_from(REFERRAL_GENERATOR_COMPONENT).expect("ReferralGenerator component is not a valid ReferralGenerator");
+            Global::<FeeDelegator>::try_from(FEE_DELEGATOR_COMPONENT).expect("FeeDelegator component is not a valid FeeDelegator");
+            Global::<FeeDistributor>::try_from(FEE_DISTRIBUTOR_COMPONENT).expect("FeeDistributor component is not a valid FeeDistributor");
+            Global::<PermissionRegistry>::try_from(PERMISSION_REGISTRY_COMPONENT).expect("PermissionRegistry component is not a valid PermissionRegistry");
 
             Self {
                 authority_token: FungibleVault::with_bucket(authority_token.as_fungible()),
-                config,
-                pool,
-                referral_generator,
-                permission_registry,
-                oracle,
-                fee_delegator,
-                fee_distributor,
-                fee_oath_resource
             }
             .instantiate()
             .prepare_to_globalize(owner_role)
@@ -357,7 +342,7 @@ mod exchange_mod {
             config: ExchangeConfig,
         ) {
             authorize!(self, {
-                self.config.update_exchange_config(config.clone());
+                Global::<Config>::from(CONFIG_COMPONENT).update_exchange_config(config.clone());
             });
                 
             Runtime::emit_event(EventExchangeConfigUpdate {
@@ -370,7 +355,7 @@ mod exchange_mod {
             configs: Vec<PairConfig>,
         ) {
             authorize!(self, {
-                self.config.update_pair_configs(configs.clone());
+                Global::<Config>::from(CONFIG_COMPONENT).update_pair_configs(configs.clone());
             });
 
             Runtime::emit_event(EventPairConfigUpdates {
@@ -383,7 +368,7 @@ mod exchange_mod {
             configs: Vec<(ResourceAddress, CollateralConfig)>,
         ) {
             authorize!(self, {
-                self.config.update_collateral_configs(configs.clone());
+                Global::<Config>::from(CONFIG_COMPONENT).update_collateral_configs(configs.clone());
             });
 
             Runtime::emit_event(EventCollateralConfigUpdates {
@@ -396,7 +381,7 @@ mod exchange_mod {
             resource: ResourceAddress,
         ) {
             authorize!(self, {
-                self.config.remove_collateral_config(resource);
+                Global::<Config>::from(CONFIG_COMPONENT).remove_collateral_config(resource);
             });
 
             Runtime::emit_event(EventCollateralConfigRemoval {
@@ -408,10 +393,11 @@ mod exchange_mod {
             &self, 
         ) -> Bucket {
             authorize!(self, {
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-                let amount = self.fee_distributor.get_treasury_virtual_balance();
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+                let fee_distributor = Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT);
+                let amount = fee_distributor.get_treasury_virtual_balance();
 
-                self.fee_distributor.update_treasury_virtual_balance(dec!(0));
+                fee_distributor.update_treasury_virtual_balance(dec!(0));
                 pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
@@ -425,10 +411,11 @@ mod exchange_mod {
             &self,
         ) -> Bucket {
             authorize!(self, {
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-                let amount = self.fee_delegator.get_virtual_balance();
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+                let fee_delegator = Global::<FeeDelegator>::from(FEE_DELEGATOR_COMPONENT);
+                let amount = fee_delegator.get_virtual_balance();
 
-                self.fee_delegator.update_virtual_balance(dec!(0));
+                fee_delegator.update_virtual_balance(dec!(0));
                 pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
@@ -499,14 +486,14 @@ mod exchange_mod {
             n: ListIndex,
             start: Option<ListIndex>,
         ) -> Vec<PairId> {
-            self.config.get_pair_configs(n, start).into_iter().map(|v| v.pair_id).collect()
+            Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs(n, start).into_iter().map(|v| v.pair_id).collect()
         }
 
         pub fn get_permissions(
             &self, 
             access_rule: AccessRule,
         ) -> Permissions {
-            self.permission_registry.get_permissions(access_rule)
+            Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT).get_permissions(access_rule)
         }
 
         pub fn get_account_details(
@@ -515,11 +502,11 @@ mod exchange_mod {
             history_len: ListIndex,
             history_start: Option<ListIndex>,
         ) -> AccountDetails {
-            let mut config = VirtualConfig::new(self.config);
+            let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
             let account = VirtualMarginAccount::new(account, config.collaterals());
             let pair_ids = account.position_ids();
             config.load_pair_configs(pair_ids.clone());
-            let pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
             self._account_details(&config, &pool, &account, history_len, history_start)
         }
@@ -527,8 +514,8 @@ mod exchange_mod {
         pub fn get_pool_details(
             &self,
         ) -> PoolDetails {
-            let config = VirtualConfig::new(self.config);
-            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+            let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
 
             self._pool_details(&config, &pool)
         }
@@ -537,17 +524,17 @@ mod exchange_mod {
             &self, 
             pair_ids: Vec<PairId>,
         ) -> Vec<PairDetails> {
-            let mut config = VirtualConfig::new(self.config);
+            let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
             let pair_ids_set: HashSet<PairId> = pair_ids.iter().cloned().collect();
             config.load_pair_configs(pair_ids_set.clone());
-            let pool = VirtualLiquidityPool::new(self.pool, pair_ids_set);
+            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids_set);
             pair_ids.into_iter().map(|pair_id| self._pair_details(&config, &pool, &pair_id)).collect()
         }
 
         pub fn get_exchange_config(
             &self
         ) -> ExchangeConfig {
-            self.config.get_info().exchange.decompress()
+            Global::<Config>::from(CONFIG_COMPONENT).get_info().exchange.decompress()
         }
 
         pub fn get_pair_configs(
@@ -555,62 +542,62 @@ mod exchange_mod {
             n: ListIndex, 
             start: Option<ListIndex>,
         ) -> Vec<PairConfig> {
-            self.config.get_pair_configs(n, start).into_iter().map(|v| v.decompress()).collect()
+            Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs(n, start).into_iter().map(|v| v.decompress()).collect()
         }
         
         pub fn get_pair_configs_by_ids(
             &self, 
             pair_ids: HashSet<PairId>,
         ) -> HashMap<PairId, PairConfig> {
-            self.config.get_pair_configs_by_ids(pair_ids).into_iter()
+            Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs_by_ids(pair_ids).into_iter()
             .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect()
         }
         
         pub fn get_pair_configs_len(
             &self,
         ) -> ListIndex {
-            self.config.get_pair_configs_len()
+            Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs_len()
         }
 
         pub fn get_collateral_config(
             &self, 
             resource: ResourceAddress,
         ) -> CollateralConfig {
-            self.config.get_info().collaterals.into_iter()
+            Global::<Config>::from(CONFIG_COMPONENT).get_info().collaterals.into_iter()
                 .find(|(k, _)| *k == resource).expect(ERROR_COLLATERAL_INVALID).1.decompress()
         }
 
         pub fn get_collateral_configs(
             &self, 
         ) -> HashMap<ResourceAddress, CollateralConfig> {
-            self.config.get_info().collaterals.into_iter()
+            Global::<Config>::from(CONFIG_COMPONENT).get_info().collaterals.into_iter()
                 .map(|(k, v)| (k, v.decompress())).collect()
         }
 
         pub fn get_collaterals(
             &self,
         ) -> Vec<ResourceAddress> {
-            self.config.get_info().collaterals.keys().cloned().collect()
+            Global::<Config>::from(CONFIG_COMPONENT).get_info().collaterals.keys().cloned().collect()
         }
 
         pub fn get_pool_value(
             &self,
         ) -> Decimal {
-            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
             self._pool_value(&pool)
         }
 
         pub fn get_skew_ratio(
             &self,
         ) -> Decimal {
-            let pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
             self._skew_ratio(&pool)
         }
 
         pub fn get_protocol_balance(
             &self,
         ) -> Decimal {
-            self.fee_distributor.get_protocol_virtual_balance()
+            Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).get_protocol_virtual_balance()
         }
 
         // --- USER METHODS ---
@@ -634,7 +621,7 @@ mod exchange_mod {
                 );
 
                 referral_manager.update_non_fungible_data(referral_id, "referrals", referral_data.referrals + count);
-                self.referral_generator.create_referral_codes(tokens, referral_id.clone(), referrals);
+                Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT).create_referral_codes(tokens, referral_id.clone(), referrals);
             })
         }
 
@@ -648,7 +635,7 @@ mod exchange_mod {
                 let referral_id = checked_referral.local_id();
                 let referral_data = checked_referral.data();
 
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 let amount = referral_data.balance;
 
                 referral_manager.update_non_fungible_data(referral_id, "balance", dec!(0));
@@ -672,7 +659,7 @@ mod exchange_mod {
             authorize!(self, {
                 let referral_id = if let Some(referral_code) = referral_code {
                     let referral_code_hash = CryptoUtils::keccak256_hash(referral_code.into_bytes());
-                    let (referral_id, referral_tokens) = self.referral_generator.claim_referral_code(referral_code_hash);
+                    let (referral_id, referral_tokens) = Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT).claim_referral_code(referral_code_hash);
                     tokens.extend(referral_tokens);
                     Some(referral_id)
                 } else {
@@ -688,20 +675,21 @@ mod exchange_mod {
                 );
                 let account_component = account_global.address();
 
-                let mut permissions = self.permission_registry.get_permissions(initial_rule.clone());
+                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
+                let mut permissions = permission_registry.get_permissions(initial_rule.clone());
                 permissions.level_1.insert(account_component);
                 permissions.level_2.insert(account_component);
                 permissions.level_3.insert(account_component);
-                self.permission_registry.set_permissions(initial_rule, permissions);
+                permission_registry.set_permissions(initial_rule, permissions);
 
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = VirtualMarginAccount::new(account_component, config.collaterals());
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
 
                 self._add_collateral(&config, &mut pool, &mut account, tokens);
 
                 if let Some(fee_oath) = fee_oath {
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
                     self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
                 }
 
@@ -723,20 +711,21 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
+                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
                 let old_rule = account.get_level_1_auth();
-                let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
+                let mut permissions = permission_registry.get_permissions(old_rule.clone());
                 permissions.level_1.shift_remove(&account.address());
-                self.permission_registry.set_permissions(old_rule, permissions);
+                permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_1_auth(rule.clone());
 
-                let mut permissions = self.permission_registry.get_permissions(rule.clone());
+                let mut permissions = permission_registry.get_permissions(rule.clone());
                 permissions.level_1.insert(account.address());
-                self.permission_registry.set_permissions(rule, permissions);
+                permission_registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -749,20 +738,21 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
+                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
                 let old_rule = account.get_level_2_auth();
-                let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
+                let mut permissions = permission_registry.get_permissions(old_rule.clone());
                 permissions.level_2.shift_remove(&account.address());
-                self.permission_registry.set_permissions(old_rule, permissions);
+                permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_2_auth(rule.clone());
 
-                let mut permissions = self.permission_registry.get_permissions(rule.clone());
+                let mut permissions = permission_registry.get_permissions(rule.clone());
                 permissions.level_2.insert(account.address());
-                self.permission_registry.set_permissions(rule, permissions);
+                permission_registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -775,20 +765,21 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
                 account.verify_level_1_auth();
+                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
                 let old_rule = account.get_level_3_auth();
-                let mut permissions = self.permission_registry.get_permissions(old_rule.clone());
+                let mut permissions = permission_registry.get_permissions(old_rule.clone());
                 permissions.level_3.shift_remove(&account.address());
-                self.permission_registry.set_permissions(old_rule, permissions);
+                permission_registry.set_permissions(old_rule, permissions);
 
                 account.set_level_3_auth(rule.clone());
 
-                let mut permissions = self.permission_registry.get_permissions(rule.clone());
+                let mut permissions = permission_registry.get_permissions(rule.clone());
                 permissions.level_3.insert(account.address());
-                self.permission_registry.set_permissions(rule, permissions);
+                permission_registry.set_permissions(rule, permissions);
 
                 account.realize();
             })
@@ -799,8 +790,8 @@ mod exchange_mod {
             payment: Bucket,
         ) -> Bucket {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 let lp_token = self._add_liquidity(&config, &mut pool, payment);
                 pool.realize();
 
@@ -813,8 +804,8 @@ mod exchange_mod {
             lp_token: Bucket,
         ) -> Bucket {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 let token = self._remove_liquidity(&config, &mut pool, lp_token);
                 pool.realize();
 
@@ -829,14 +820,14 @@ mod exchange_mod {
             tokens: Vec<Bucket>,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
 
                 self._add_collateral(&config, &mut pool, &mut account, tokens);
 
                 if let Some(fee_oath) = fee_oath {
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
                     self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
                 }
 
@@ -854,7 +845,7 @@ mod exchange_mod {
             claims: Vec<(ResourceAddress, Decimal)>,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_2_auth();
@@ -886,7 +877,7 @@ mod exchange_mod {
             status: Status,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
@@ -914,7 +905,7 @@ mod exchange_mod {
             index: ListIndex,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
@@ -930,7 +921,7 @@ mod exchange_mod {
             indexes: Vec<ListIndex>,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
@@ -945,7 +936,7 @@ mod exchange_mod {
             account: ComponentAddress, 
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
@@ -964,7 +955,7 @@ mod exchange_mod {
             price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> Bucket {
             authorize!(self, {
-                let mut config = VirtualConfig::new(self.config);
+                let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
                 let (request, expired) = account.process_request(index);
                 
@@ -974,10 +965,10 @@ mod exchange_mod {
                         pair_ids.insert(request.pair_id.clone());
                     }
                     config.load_pair_configs(pair_ids.clone());
-                    let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+                    let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
                     let max_age = self._max_age(&config);
-                    let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                     match request {
                         Request::RemoveCollateral(request) => {
@@ -1006,15 +997,15 @@ mod exchange_mod {
             price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> (Bucket, Bucket) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 self._assert_valid_collateral(&config, resource);
                 let collaterals = vec![resource];
                 let mut account = VirtualMarginAccount::new(account, collaterals);
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 
                 let max_age = self._max_age(&config);
                 let collateral_feeds = HashMap::from([(resource, config.collateral_feeds().get(&resource).unwrap().clone())]);
-                let oracle = VirtualOracle::new(self.oracle, collateral_feeds, HashSet::new(), max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), collateral_feeds, HashSet::new(), max_age, price_updates);
 
                 let (token, remainder) = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
     
@@ -1032,15 +1023,15 @@ mod exchange_mod {
             price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> (Vec<Bucket>, Bucket) {
             authorize!(self, {
-                let mut config = VirtualConfig::new(self.config);
+                let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
 
                 let pair_ids = account.position_ids();
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                 let tokens = self._liquidate(&config, &mut pool, &mut account, &oracle, payment);
 
@@ -1059,16 +1050,16 @@ mod exchange_mod {
             price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> Bucket {
             authorize!(self, {
-                let mut config = VirtualConfig::new(self.config);
+                let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
 
                 let mut pair_ids = account.position_ids();
                 pair_ids.insert(pair_id.clone());
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids, max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, max_age, price_updates);
 
                 self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
 
@@ -1086,14 +1077,14 @@ mod exchange_mod {
             price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> (Bucket, Vec<bool>) {
             authorize!(self, {
-                let mut config = VirtualConfig::new(self.config);
+                let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 
                 let pair_ids: HashSet<PairId> = pair_ids.into_iter().collect();
                 config.load_pair_configs(pair_ids.clone());
-                let mut pool = VirtualLiquidityPool::new(self.pool, pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
                 let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), pair_ids.clone(), max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids.clone(), max_age, price_updates);
 
                 let rewarded: Vec<bool> = pair_ids.iter().map(|pair_id| {
                     self._update_pair(&config, &mut pool, &oracle, pair_id)
@@ -1110,7 +1101,7 @@ mod exchange_mod {
 
         pub fn swap_protocol_fee(&self, mut payment: Bucket) -> (Bucket, Bucket) {
             authorize!(self, {
-                let config = VirtualConfig::new(self.config);
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
 
                 assert!(
                     payment.resource_address() == PROTOCOL_RESOURCE,
@@ -1120,10 +1111,10 @@ mod exchange_mod {
                 let burn_amount = config.exchange_config().protocol_burn_amount;
                 payment.take_advanced(burn_amount, TO_INFINITY).burn();
                 
-                let mut pool = VirtualLiquidityPool::new(self.pool, HashSet::new());
-                let amount = self.fee_distributor.get_protocol_virtual_balance();
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+                let amount = Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).get_protocol_virtual_balance();
 
-                self.fee_distributor.update_protocol_virtual_balance(dec!(0));
+                Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).update_protocol_virtual_balance(dec!(0));
                 pool.add_virtual_balance(amount);
                 let token = pool.withdraw(amount, TO_ZERO);
                 
@@ -1395,7 +1386,7 @@ mod exchange_mod {
         ) -> VirtualMarginAccount {
             if let Some(fee_oath) = fee_oath {
                 let mut account = VirtualMarginAccount::new(account, config.collaterals());
-                let oracle = VirtualOracle::new(self.oracle, config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
                 self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
                 account
             } else {
@@ -1412,8 +1403,8 @@ mod exchange_mod {
         ) {
             let resource = fee_oath.resource_address();
             assert!(
-                fee_oath.resource_address() == self.fee_oath_resource,
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FEE_OATH, Runtime::bech32_encode_address(resource), Runtime::bech32_encode_address(self.fee_oath_resource)
+                fee_oath.resource_address() == FEE_OATH_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FEE_OATH, Runtime::bech32_encode_address(resource), Runtime::bech32_encode_address(FEE_OATH_RESOURCE)
             );
 
             let fee_value = fee_oath.amount();
@@ -2251,7 +2242,7 @@ mod exchange_mod {
             let fee_pool = fee_paid - fee_protocol - fee_treasury;
 
             pool.add_virtual_balance(-fee_protocol -fee_treasury);
-            self.fee_distributor.distribute(fee_protocol, fee_treasury);
+            Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).distribute(fee_protocol, fee_treasury);
 
             (fee_pool, fee_protocol, fee_treasury)
         }
@@ -2270,7 +2261,7 @@ mod exchange_mod {
             let fee_pool = fee_paid - fee_protocol - fee_treasury - fee_referral;
 
             pool.add_virtual_balance(-fee_protocol -fee_treasury -fee_referral);
-            self.fee_distributor.distribute(fee_protocol, fee_treasury);
+            Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).distribute(fee_protocol, fee_treasury);
             account.reward_referral(fee_referral);
 
             (fee_pool, fee_protocol, fee_treasury, fee_referral)
