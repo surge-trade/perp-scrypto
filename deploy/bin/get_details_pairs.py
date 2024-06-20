@@ -39,9 +39,7 @@ async def main():
                 Address("{exchange_component}")
                 "get_pair_details"
                 Array<String>(
-                    "BTC/USD",
                     "ETH/USD",
-                    "XRD/USD",
                 )
             ;
         '''
@@ -103,8 +101,8 @@ async def main():
             funding_pool = funding_pool_0 + funding_pool_1
             funding_pool_index = funding_pool / oi_net
 
-            funding_long = funding_long_index + funding_pool_index
-            funding_short = funding_short_index + funding_pool_index
+            funding_long = (funding_long_index + funding_pool_index) / price
+            funding_short = (funding_short_index + funding_pool_index) / price
             funding_pool += funding_share
 
             pairs.append({
