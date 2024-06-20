@@ -694,13 +694,6 @@ async def main():
                     [
                         manifest_owner_role, 
                         ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_oath_resource))),
                         ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
                     ]
                 )
