@@ -133,29 +133,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-<<<<<<< HEAD
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-=======
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        PermissionRegistry {
-            // Getter methods
-            fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
-        
-            // Authority protected methods
-            fn set_permissions(&self, access_rule: AccessRule, permissions: Permissions);
-        }
-    }
-    extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
-        Oracle {
-            // Public methods
-            fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
-            fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
-        }
-    }
-    extern_blueprint! {
-        "package_tdx_2_1p4usndnzqd94gkgzntn3qga2m39kqr950rk2c62a340860ylefn2pd",
->>>>>>> a88ec1872308f9fbfb3178165ec7b14befa1ee79
         FeeDistributor {
             // Constructor
             fn new(owner_role: OwnerRole) -> Global<FeeDistributor>;
