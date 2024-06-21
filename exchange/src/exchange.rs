@@ -60,7 +60,7 @@ mod exchange_mod {
     const PERMISSION_REGISTRY_COMPONENT: ComponentAddress = _PERMISSION_REGISTRY_COMPONENT;
 
     extern_blueprint! {
-        "package_tdx_2_1p4lq6gexluld50wd3zgmgmm78lnne3dms68hedk802gdjhf77k6sug",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Constructor
             fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
@@ -71,7 +71,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pk7t7vu7lkg0kn3lkgxfv25s2e3qlu9lg6xnx89ald0ydumnfks0qx",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
             fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -90,7 +90,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p5e4y5n4mts903acpt3a0azertvaycx4kdf3u2ey4vp3x6hh8gn269",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginAccount {
             // Constructor
             fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -111,7 +111,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1phyes3fwd8kl5skav398ucs8c5wyc59l23n35rtt5mym96swkmpng7",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Constructor
             fn new(owner_role: OwnerRole) -> Global<MarginPool>;
@@ -128,7 +128,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4nu5mdxfhxcjngdasydkz0q0c6nsrk2cgaf5cucxzg7a0t4n28533",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Constructor
             fn new(owner_role: OwnerRole) -> Global<ReferralGenerator>;
@@ -142,7 +142,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p4usndnzqd94gkgzntn3qga2m39kqr950rk2c62a340860ylefn2pd",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Constructor
             fn new(owner_role: OwnerRole) -> Global<FeeDistributor>;
@@ -158,7 +158,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1pkcnlc26mehlyjmn8p92vy6jdahy0r3a0w7p88swlr5kxapf8ngpkk",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Constructor
             fn new(owner_role: OwnerRole) -> Global<FeeDelegator>;
@@ -184,7 +184,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_tdx_2_1p569hh277yq52l7hs7pjrq90tnru9u66ystcs9c7mmklmdq9up8w8h",
+        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         PermissionRegistry {
             // Constructor
             fn new(owner_role: OwnerRole) -> Global<PermissionRegistry>;
@@ -1940,7 +1940,7 @@ mod exchange_mod {
             let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
             pool_position.skew_abs_snap = skew_abs;
 
-            let pnl = skew - pool_position.cost;
+            let pnl = pool_position.cost - skew;
             let pnl_snap_delta = pnl - pool_position.pnl_snap;
             pool_position.pnl_snap = pnl;
             
@@ -2025,7 +2025,7 @@ mod exchange_mod {
             let skew_abs_snap_delta = skew_abs - pool_position.skew_abs_snap;
             pool_position.skew_abs_snap = skew_abs;
             
-            let pnl = skew - pool_position.cost;
+            let pnl = pool_position.cost - skew;
             let pnl_snap_delta = pnl - pool_position.pnl_snap;
             pool_position.pnl_snap = pnl;
 
