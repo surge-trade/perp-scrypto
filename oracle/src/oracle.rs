@@ -18,11 +18,15 @@ mod oracle_mod {
     enable_method_auth!(
         roles {
             authority => updatable_by: [];
+            push_user => updatable_by: [];
+            get_user => updatable_by: [];
         },
         methods {
             update_pairs => restrict_to: [OWNER];
-            push_and_get_prices => restrict_to: [authority];
-            get_prices => PUBLIC;
+            push_and_get_prices_with_auth => restrict_to: [authority];
+            get_prices_with_auth => restrict_to: [authority];
+            push_and_get_prices => restrict_to: [push_user];
+            get_prices => restrict_to: [get_user];
         }
     );
 
@@ -41,6 +45,8 @@ mod oracle_mod {
             .prepare_to_globalize(owner_role)
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
+                push_user => rule!(allow_all);
+                get_user => rule!(allow_all);
             })
             .enable_component_royalties(component_royalties! {
                 roles {
@@ -53,7 +59,9 @@ mod oracle_mod {
                 },
                 init {
                     update_pairs => Free, locked;
-                    push_and_get_prices => Free, locked;
+                    push_and_get_prices_with_auth => Free, locked;
+                    get_prices_with_auth => Free, locked;
+                    push_and_get_prices => Usd(dec!(0.1)), updatable;
                     get_prices => Usd(dec!(0.1)), updatable;
                 }
             })
@@ -80,7 +88,23 @@ mod oracle_mod {
             });
         }
 
+        pub fn push_and_get_prices_with_auth(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
+            self._push_and_get_prices(pair_ids, max_age, data, signature)
+        }
+
+        pub fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
+            self._get_prices(pair_ids, max_age)
+        }
+
         pub fn push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
+            self._push_and_get_prices(pair_ids, max_age, data, signature)
+        }
+
+        pub fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
+            self._get_prices(pair_ids, max_age)
+        }
+
+        fn _push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
             let prices: Vec<Price> = scrypto_decode(&data).expect(ERROR_INVALID_DATA);
 
             let hash = CryptoUtils::keccak256_hash(data).to_vec();
@@ -99,7 +123,7 @@ mod oracle_mod {
             self.get_prices(pair_ids, max_age)
         }
 
-        pub fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
+        fn _get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
             pair_ids.into_iter().map(|pair_id| {
                 let (quote, timestamp) = *self.prices.get(&pair_id).expect(ERROR_MISSING_PAIR);
                 assert!(

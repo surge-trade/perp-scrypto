@@ -13,7 +13,6 @@ use account::*;
 use config::*;
 use permission_registry::*;
 use pool::*;
-use referral_generator::*;
 use self::errors::*;
 use self::events::*;
 use self::requests::*;
@@ -63,18 +62,22 @@ mod exchange_mod {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Oracle {
             // Constructor
-            fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
+            // fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
 
-            // Public methods
-            fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
-            fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
+            // Authority protected methods
+            fn push_and_get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
+            fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
+
+            // User methods
+            // fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
+            // fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
         }
     }
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         Config {
             // Constructor
-            fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
+            // fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
 
             // Getter methods
             fn get_info(&self) -> ConfigInfoCompressed;
@@ -98,10 +101,10 @@ mod exchange_mod {
             // Getter methods
             fn get_info(&self, collateral_resources: Vec<ResourceAddress>) -> MarginAccountInfo;
             fn get_request(&self, index: ListIndex) -> Option<KeeperRequest>;
-            fn get_requests(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)>;
+            // fn get_requests(&self, n: ListIndex, start: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)>;
             fn get_requests_tail(&self, n: ListIndex, end: Option<ListIndex>) -> Vec<(ListIndex, KeeperRequest)>;
             fn get_requests_by_indexes(&self, indexes: Vec<ListIndex>) -> HashMap<ListIndex, Option<KeeperRequest>>;
-            fn get_requests_len(&self) -> ListIndex;
+            // fn get_requests_len(&self) -> ListIndex;
             fn get_active_requests(&self) -> HashMap<ListIndex, KeeperRequest>;
 
             // Authority protected methods
@@ -114,11 +117,11 @@ mod exchange_mod {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         MarginPool {
             // Constructor
-            fn new(owner_role: OwnerRole) -> Global<MarginPool>;
+            // fn new(owner_role: OwnerRole) -> Global<MarginPool>;
 
             // Getter methods
             fn get_info(&self, pair_ids: HashSet<PairId>) -> MarginPoolInfo;
-            fn get_position(&self, pair_id: PairId) -> PoolPosition;
+            // fn get_position(&self, pair_id: PairId) -> PoolPosition;
             fn get_positions(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, PoolPosition>;     
 
             // Authority protected methods
@@ -131,10 +134,10 @@ mod exchange_mod {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         ReferralGenerator {
             // Constructor
-            fn new(owner_role: OwnerRole) -> Global<ReferralGenerator>;
+            // fn new(owner_role: OwnerRole) -> Global<ReferralGenerator>;
 
             // Getter methods
-            fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
+            // fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
 
             // Authority protected methods
             fn create_referral_codes(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>);
@@ -145,7 +148,7 @@ mod exchange_mod {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDistributor {
             // Constructor
-            fn new(owner_role: OwnerRole) -> Global<FeeDistributor>;
+            // fn new(owner_role: OwnerRole) -> Global<FeeDistributor>;
 
             // Getter methods
             fn get_protocol_virtual_balance(&self) -> Decimal;
@@ -161,33 +164,35 @@ mod exchange_mod {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         FeeDelegator {
             // Constructor
-            fn new(owner_role: OwnerRole) -> Global<FeeDelegator>;
+            // fn new(owner_role: OwnerRole) -> Global<FeeDelegator>;
 
             // Getter methods
-            fn get_fee_oath_resource(&self) -> ResourceAddress;
-            fn get_max_lock(&self) -> Decimal;
-            fn get_is_contingent(&self) -> bool;
+            // fn get_fee_oath_resource(&self) -> ResourceAddress;
+            // fn get_max_lock(&self) -> Decimal;
+            // fn get_is_contingent(&self) -> bool;
             fn get_virtual_balance(&self) -> Decimal;
-            fn get_vault_amount(&self) -> Decimal;
+            // fn get_vault_amount(&self) -> Decimal;
+
+            // Owner protected methods
+            // fn update_max_lock(&self, max_lock: Decimal);
+            // fn update_is_contingent(&self, is_contingent: bool);
 
             // Authority protected methods
-            fn update_max_lock(&self, max_lock: Decimal);
-            fn update_is_contingent(&self, is_contingent: bool);
             fn update_virtual_balance(&self, virtual_balance: Decimal);
 
             // Depositor methods
-            fn deposit(&self, token: Bucket);
-            fn withdraw(&self, amount: Decimal) -> Bucket;
+            // fn deposit(&self, token: Bucket);
+            // fn withdraw(&self, amount: Decimal) -> Bucket;
 
             // User methods
-            fn lock_fee(&self, amount: Decimal) -> Bucket;
+            // fn lock_fee(&self, amount: Decimal) -> Bucket;
         }
     }
     extern_blueprint! {
         "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
         PermissionRegistry {
             // Constructor
-            fn new(owner_role: OwnerRole) -> Global<PermissionRegistry>;
+            // fn new(owner_role: OwnerRole) -> Global<PermissionRegistry>;
 
             // Getter methods
             fn get_permissions(&self, access_rule: AccessRule) -> Permissions;
