@@ -23,7 +23,8 @@ mod token_wrapper_mod {
     enable_method_auth!(
         roles {
             admin => updatable_by: [OWNER];
-            user => updatable_by: [OWNER];
+            wrap_user => updatable_by: [OWNER];
+            unwrap_user => updatable_by: [OWNER];
             flash_user => updatable_by: [OWNER];
         },
         methods {
@@ -34,8 +35,8 @@ mod token_wrapper_mod {
             
             get_inputs => PUBLIC;
             
-            wrap => restrict_to: [user];
-            unwrap => restrict_to: [user];
+            wrap => restrict_to: [wrap_user];
+            unwrap => restrict_to: [unwrap_user];
             flash_loan => restrict_to: [flash_user];
             repay_flash_loan => restrict_to: [flash_user];
         }
@@ -99,7 +100,8 @@ mod token_wrapper_mod {
             .prepare_to_globalize(owner_role)
             .roles(roles! {
                 admin => OWNER;
-                user => rule!(allow_all);
+                wrap_user => rule!(allow_all);
+                unwrap_user => rule!(allow_all);
                 flash_user => rule!(allow_all);
             })
             .with_address(component_reservation)
