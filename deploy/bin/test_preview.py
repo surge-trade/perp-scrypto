@@ -109,8 +109,13 @@ async def main():
             print(result['receipt']['error_message'])
             return 
         
-        result = result['receipt']['output'][4]
-        print(result)
+        data = result['receipt']['output'][4]['programmatic_json']['fields']
+        lock_amount = data[0]['fields'][4]['value']
+        bonus_amount = data[1]['value']
+        unlock_time = data[0]['fields'][9]['fields'][0]['value']
+        print(lock_amount)
+        print(bonus_amount)
+        print(unlock_time)
 
 if __name__ == '__main__':
     asyncio.run(main())
