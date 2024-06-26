@@ -15,7 +15,7 @@ async def get_feeds(session, pair_ids) -> dict:
         data = await response.json()
         for pair_id in pair_ids:
             for feed in data:
-                if pair_id in feed['attributes']['symbol']:
+                if pair_id == feed['attributes']['symbol'][7:]:
                     feeds[pair_id] = feed
                     break
 
