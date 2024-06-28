@@ -1,16 +1,10 @@
 mod errors;
+mod structs;
 
 use scrypto::prelude::*;
 use common::{Vaults, _AUTHORITY_RESOURCE, TO_ZERO};
 use self::errors::*;
-
-#[derive(ScryptoSbor, Clone)]
-pub struct ReferralCode {
-    referral_id: NonFungibleLocalId,
-    claims: Vec<(ResourceAddress, Decimal)>,
-    count: u64,
-    max_count: u64,
-}
+pub use self::structs::*;
 
 #[blueprint]
 #[types(

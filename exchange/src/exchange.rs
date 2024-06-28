@@ -9,10 +9,11 @@ mod virtual_oracle;
 
 use scrypto::prelude::*;
 use common::*;
-use account::*;
 use config::*;
-use permission_registry::*;
+use account::*;
 use pool::*;
+use referral_generator::*;
+use permission_registry::*;
 use self::errors::*;
 use self::events::*;
 use self::requests::*;
@@ -59,7 +60,7 @@ mod exchange_mod {
     const PERMISSION_REGISTRY_COMPONENT: ComponentAddress = _PERMISSION_REGISTRY_COMPONENT;
 
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        ORACLE_PACKAGE,
         Oracle {
             // Constructor
             // fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
@@ -74,7 +75,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        CONFIG_PACKAGE,
         Config {
             // Constructor
             // fn new(initial_rule: AccessRule) -> Global<MarginAccount>;
@@ -93,7 +94,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        MARGIN_ACCOUNT_PACKAGE,
         MarginAccount {
             // Constructor
             fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
@@ -114,7 +115,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        MARGIN_POOL_PACKAGE,
         MarginPool {
             // Constructor
             // fn new(owner_role: OwnerRole) -> Global<MarginPool>;
@@ -131,7 +132,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        REFERRAL_GENERATOR_PACKAGE,
         ReferralGenerator {
             // Constructor
             // fn new(owner_role: OwnerRole) -> Global<ReferralGenerator>;
@@ -145,7 +146,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        FEE_DISTRIBUTOR_PACKAGE,
         FeeDistributor {
             // Constructor
             // fn new(owner_role: OwnerRole) -> Global<FeeDistributor>;
@@ -161,7 +162,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        FEE_DELEGATOR_PACKAGE,
         FeeDelegator {
             // Constructor
             // fn new(owner_role: OwnerRole) -> Global<FeeDelegator>;
@@ -189,7 +190,7 @@ mod exchange_mod {
         }
     }
     extern_blueprint! {
-        "package_sim1pkyls09c258rasrvaee89dnapp2male6v6lmh7en5ynmtnavqdsvk9",
+        PERMISSION_REGISTRY_PACKAGE,
         PermissionRegistry {
             // Constructor
             // fn new(owner_role: OwnerRole) -> Global<PermissionRegistry>;

@@ -7,6 +7,7 @@ use scrypto::prelude::*;
 fn main() {
     let default_resource: ResourceAddress = ResourceAddress::try_from_hex("5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6").unwrap();
     let default_component: ComponentAddress = ComponentAddress::try_from_hex("c169a00e3637d04099d059cb22912aaae58f08cdaf03139a3e10f40ac8cd").unwrap();
+    let default_package: PackageAddress = PackageAddress::try_from_hex("0d89f83cb8550e3ec06cee7272b67d0855beff3a66bfbbfb33a127b5cfac").unwrap();
 
     // Determine the network to use
     let network = match env::var("NETWORK_ID").unwrap_or_default().as_str() {
@@ -83,6 +84,72 @@ fn main() {
             ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
         }).unwrap_or_else(|_| {
             default_resource
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const ORACLE_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("ORACLE_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const CONFIG_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("CONFIG_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const MARGIN_ACCOUNT_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("MARGIN_ACCOUNT_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+
+    writeln!(f, "pub const MARGIN_POOL_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("MARGIN_POOL_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+
+    writeln!(f, "pub const REFERRAL_GENERATOR_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("REFERRAL_GENERATOR_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const FEE_DISTRIBUTOR_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("FEE_DISTRIBUTOR_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const FEE_DELEGATOR_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("FEE_DELEGATOR_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
+        }).into_node_id().to_vec()
+    ).unwrap();
+
+    writeln!(f, "pub const PERMISSION_REGISTRY_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
+        env::var("PERMISSION_REGISTRY_PACKAGE").map(|var| {
+            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
+        }).unwrap_or_else(|_| {
+            default_package
         }).into_node_id().to_vec()
     ).unwrap();
 

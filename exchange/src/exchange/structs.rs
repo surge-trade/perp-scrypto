@@ -3,6 +3,7 @@ use super::requests::*;
 use common::*;
 use config::*;
 use account::*;
+use referral_generator::ReferralData;
 
 #[derive(ScryptoSbor, Clone)]
 pub struct PositionDetails {

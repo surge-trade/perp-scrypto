@@ -1,5 +1,4 @@
 [package]
-build = "build.rs"
 name = "exchange"
 version = "1.0.0"
 edition = "2021"
@@ -11,6 +10,7 @@ common = { path = "../common" }
 account = { path = "../account" }
 config = { path = "../config" }
 pool = { path = "../pool" }
+referral_generator = { path = "../referral_generator" }
 permission_registry = { path = "../permission_registry" }
 
 [build-dependencies]

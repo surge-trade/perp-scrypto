@@ -118,7 +118,7 @@ def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resou
     )
     metadata = MetadataModuleConfig(
         init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('sUSD'), True),
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge USD'), True),
             'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('sUSD'), True),
             'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge wrapped USD.'), True),
             'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/susd_token.png'), True),
@@ -157,7 +157,7 @@ def create_lp(builder: ManifestBuilder, owner_role: OwnerRole, authority_resourc
             'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge LP'), True),
             'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SLP'), True),
             'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge liquidity pool LP token.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/lp_token.png'), True),
+            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/surge_lp_token.png'), True),
             'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
         },
         roles={},
@@ -355,14 +355,11 @@ CREATE_NON_FUNGIBLE_RESOURCE
 ;
 '''
 
-def create_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole, authority_resource: str) -> ManifestBuilder:
+def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole) -> ManifestBuilder:
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
-        mint_roles=ResourceManagerRole(
-            role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
-            role_updater=None
-        ),
+        mint_roles=None,
         burn_roles=ResourceManagerRole(
-            role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
+            role=AccessRule.allow_all, 
             role_updater=None
         ),
         freeze_roles=None,
@@ -385,7 +382,7 @@ def create_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole, au
         owner_role=owner_role,
         track_total_supply=True,
         divisibility=18,
-        initial_supply=None,
+        initial_supply=Decimal('100000000'),
         resource_roles=resource_roles,
         metadata=metadata,
         address_reservation=None,
@@ -409,9 +406,9 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
     metadata = MetadataModuleConfig(
         init={
             'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge Keeper Reward'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SRWD'), True),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SKR'), True),
             'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge keeper reward token.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/keeper_reward_token.png'), True),
+            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/surge_keeper_reward_token.png'), True),
             'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
         },
         roles={},

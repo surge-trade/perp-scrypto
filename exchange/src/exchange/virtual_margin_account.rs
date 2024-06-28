@@ -1,7 +1,8 @@
 use scrypto::prelude::*;
 use std::cmp::Reverse;
+use common::{PairId, ListIndex, _REFERRAL_RESOURCE};
 use account::*;
-use common::{PairId, ListIndex, ReferralData, _REFERRAL_RESOURCE};
+use referral_generator::ReferralData;
 use super::errors::*;
 use super::events::*;
 use super::exchange_mod::MarginAccount;
