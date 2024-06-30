@@ -6,9 +6,9 @@ use self::errors::*;
 
 #[derive(ScryptoSbor)]
 pub struct Price {
-    pair: String,
-    quote: Decimal,
-    timestamp: Instant,
+    pub pair: String,
+    pub quote: Decimal,
+    pub timestamp: Instant,
 }
 
 #[blueprint]

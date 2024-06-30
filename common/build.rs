@@ -4,11 +4,52 @@ use std::io::Write;
 use std::path::Path;
 use scrypto::prelude::*;
 
-fn main() {
-    let default_resource: ResourceAddress = ResourceAddress::try_from_hex("5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6").unwrap();
-    let default_component: ComponentAddress = ComponentAddress::try_from_hex("c169a00e3637d04099d059cb22912aaae58f08cdaf03139a3e10f40ac8cd").unwrap();
-    let default_package: PackageAddress = PackageAddress::try_from_hex("0d89f83cb8550e3ec06cee7272b67d0855beff3a66bfbbfb33a127b5cfac").unwrap();
+fn write_resource(var_name: &str, const_name: &str, decoder: &AddressBech32Decoder, file: &mut File) {
+    let (var, resource) = env::var(var_name).map(|var| {
+        let resource = ResourceAddress::try_from_bech32(&decoder, &var).unwrap();
+        (Some(var), resource)
+    }).unwrap_or_else(|_| {
+        let resource = ResourceAddress::try_from_hex("5da66318c6318c61f5a61b4c6318c6318cf794aa8d295f14e6318c6318c6").unwrap();
+        (None, resource)
+    });
+    writeln!(file, "pub const {}: ResourceAddress = ResourceAddress::new_or_panic({:?});", const_name, resource.into_node_id().to_vec()).unwrap();
+    
+    if let Some(var) = var {
+        println!("cargo:warning={}: {}", var_name, var);
+    }
+}
 
+fn write_package(var_name: &str, const_name: &str, decoder: &AddressBech32Decoder, file: &mut File) {
+    let (var, package) = env::var(var_name).map(|var| {
+        let package = PackageAddress::try_from_bech32(&decoder, &var).unwrap();
+        (Some(var), package)
+    }).unwrap_or_else(|_| {
+        let package = PackageAddress::try_from_hex("0d89f83cb8550e3ec06cee7272b67d0855beff3a66bfbbfb33a127b5cfac").unwrap();
+        (None, package)
+    });
+    writeln!(file, "pub const {}: PackageAddress = PackageAddress::new_or_panic({:?});", const_name, package.into_node_id().to_vec()).unwrap();
+    
+    if let Some(var) = var {
+        println!("cargo:warning={}: {}", var_name, var);
+    }
+}
+
+fn write_component(var_name: &str, const_name: &str, decoder: &AddressBech32Decoder, file: &mut File) {
+    let (var, component) = env::var(var_name).map(|var| {
+        let component = ComponentAddress::try_from_bech32(&decoder, &var).unwrap();
+        (Some(var), component)
+    }).unwrap_or_else(|_| {
+        let component = ComponentAddress::try_from_hex("c169a00e3637d04099d059cb22912aaae58f08cdaf03139a3e10f40ac8cd").unwrap();
+        (None, component)
+    });
+    writeln!(file, "pub const {}: ComponentAddress = ComponentAddress::new_or_panic({:?});", const_name, component.into_node_id().to_vec()).unwrap();
+    
+    if let Some(var) = var {
+        println!("cargo:warning={}: {}", var_name, var);
+    }
+}
+
+fn main() {
     // Determine the network to use
     let network = match env::var("NETWORK_ID").unwrap_or_default().as_str() {
         "1" => NetworkDefinition::mainnet(),
@@ -23,189 +64,29 @@ fn main() {
     let mut f = File::create(&dest_path).unwrap();
 
     // Write constants to the output file
-    writeln!(f, "pub const _AUTHORITY_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("AUTHORITY_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
+    write_resource("AUTHORITY_RESOURCE", "_AUTHORITY_RESOURCE", &decoder, &mut f);
+    write_resource("BASE_AUTHORITY_RESOURCE", "_BASE_AUTHORITY_RESOURCE", &decoder, &mut f);
+    write_resource("BASE_RESOURCE", "_BASE_RESOURCE", &decoder, &mut f);
+    write_resource("LP_RESOURCE", "_LP_RESOURCE", &decoder, &mut f);
+    write_resource("REFERRAL_RESOURCE", "_REFERRAL_RESOURCE", &decoder, &mut f);
+    write_resource("PROTOCOL_RESOURCE", "_PROTOCOL_RESOURCE", &decoder, &mut f);
+    write_resource("KEEPER_REWARD_RESOURCE", "_KEEPER_REWARD_RESOURCE", &decoder, &mut f);
+    write_resource("FEE_OATH_RESOURCE", "_FEE_OATH_RESOURCE", &decoder, &mut f);
 
-    writeln!(f, "pub const _BASE_AUTHORITY_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("BASE_AUTHORITY_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
+    write_package("ORACLE_PACKAGE", "ORACLE_PACKAGE", &decoder, &mut f);
+    write_package("CONFIG_PACKAGE", "CONFIG_PACKAGE", &decoder, &mut f);
+    write_package("ACCOUNT_PACKAGE", "MARGIN_ACCOUNT_PACKAGE", &decoder, &mut f);
+    write_package("POOL_PACKAGE", "MARGIN_POOL_PACKAGE", &decoder, &mut f);
+    write_package("REFERRAL_GENERATOR_PACKAGE", "REFERRAL_GENERATOR_PACKAGE", &decoder, &mut f);
+    write_package("FEE_DISTRIBUTOR_PACKAGE", "FEE_DISTRIBUTOR_PACKAGE", &decoder, &mut f);
+    write_package("FEE_DELEGATOR_PACKAGE", "FEE_DELEGATOR_PACKAGE", &decoder, &mut f);
+    write_package("PERMISSION_REGISTRY_PACKAGE", "PERMISSION_REGISTRY_PACKAGE", &decoder, &mut f);
 
-    writeln!(f, "pub const _BASE_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("BASE_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _LP_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("LP_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _REFERRAL_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("REFERRAL_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _PROTOCOL_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("PROTOCOL_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _KEEPER_REWARD_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("KEEPER_REWARD_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _FEE_OATH_RESOURCE: ResourceAddress = ResourceAddress::new_or_panic({:?});", 
-        env::var("_FEE_OATH_RESOURCE").map(|var| {
-            ResourceAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_resource
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const ORACLE_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("ORACLE_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const CONFIG_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("CONFIG_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const MARGIN_ACCOUNT_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("MARGIN_ACCOUNT_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-
-    writeln!(f, "pub const MARGIN_POOL_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("MARGIN_POOL_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-
-    writeln!(f, "pub const REFERRAL_GENERATOR_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("REFERRAL_GENERATOR_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const FEE_DISTRIBUTOR_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("FEE_DISTRIBUTOR_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const FEE_DELEGATOR_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("FEE_DELEGATOR_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const PERMISSION_REGISTRY_PACKAGE: PackageAddress = PackageAddress::new_or_panic({:?});", 
-        env::var("PERMISSION_REGISTRY_PACKAGE").map(|var| {
-            PackageAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_package
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _ORACLE_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("ORACLE_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _CONFIG_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("CONFIG_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _POOL_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("POOL_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _REFERRAL_GENERATOR_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("REFERRAL_GENERATOR_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _FEE_DISTRIBUTOR_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("FEE_DISTRIBUTOR_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _FEE_DELEGATOR_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("FEE_DELEGATOR_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
-
-    writeln!(f, "pub const _PERMISSION_REGISTRY_COMPONENT: ComponentAddress = ComponentAddress::new_or_panic({:?});", 
-        env::var("PERMISSION_REGISTRY_COMPONENT").map(|var| {
-            ComponentAddress::try_from_bech32(&decoder, &var).unwrap()
-        }).unwrap_or_else(|_| {
-            default_component
-        }).into_node_id().to_vec()
-    ).unwrap();
+    write_component("ORACLE_COMPONENT", "_ORACLE_COMPONENT", &decoder, &mut f);
+    write_component("CONFIG_COMPONENT", "_CONFIG_COMPONENT", &decoder, &mut f);
+    write_component("POOL_COMPONENT", "_POOL_COMPONENT", &decoder, &mut f);
+    write_component("REFERRAL_GENERATOR_COMPONENT", "_REFERRAL_GENERATOR_COMPONENT", &decoder, &mut f);
+    write_component("FEE_DISTRIBUTOR_COMPONENT", "_FEE_DISTRIBUTOR_COMPONENT", &decoder, &mut f);
+    write_component("FEE_DELEGATOR_COMPONENT", "_FEE_DELEGATOR_COMPONENT", &decoder, &mut f);
+    write_component("PERMISSION_REGISTRY_COMPONENT", "_PERMISSION_REGISTRY_COMPONENT", &decoder, &mut f);
 }
