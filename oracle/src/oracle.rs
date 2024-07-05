@@ -22,7 +22,7 @@ mod oracle_mod {
             get_user => updatable_by: [];
         },
         methods {
-            update_pairs => restrict_to: [OWNER];
+            remove_price => restrict_to: [OWNER];
             push_and_get_prices_with_auth => restrict_to: [authority];
             get_prices_with_auth => restrict_to: [authority];
             push_and_get_prices => restrict_to: [push_user];
@@ -58,7 +58,7 @@ mod oracle_mod {
                     royalty_claimer_updater => OWNER;
                 },
                 init {
-                    update_pairs => Free, locked;
+                    remove_price => Free, locked;
                     push_and_get_prices_with_auth => Free, locked;
                     get_prices_with_auth => Free, locked;
                     push_and_get_prices => Usd(dec!(0.1)), updatable;
@@ -68,24 +68,8 @@ mod oracle_mod {
             .globalize()
         }
 
-        pub fn update_pairs(&mut self, data: Vec<u8>, signature: Bls12381G2Signature) {
-            let prices: Vec<Price> = scrypto_decode(&data).expect(ERROR_INVALID_DATA);
-
-            let hash = CryptoUtils::keccak256_hash(data).to_vec();
-            assert!(
-                CryptoUtils::bls12381_v1_verify(hash.clone(), self.public_key, signature),
-                "{}", ERROR_INVALID_SIGNATURE
-            );
-
-            prices.into_iter().for_each(|p1| {
-                if let Some(p) = self.prices.get_mut(&p1.pair) {
-                    if p1.timestamp.compare(p.1, TimeComparisonOperator::Gt) {
-                        *p = (p1.quote, p1.timestamp);
-                    }
-                } else{
-                    self.prices.insert(p1.pair, (p1.quote, p1.timestamp));
-                }
-            });
+        pub fn remove_price(&mut self, pair_id: PairId) {
+            self.prices.remove(&pair_id);
         }
 
         pub fn push_and_get_prices_with_auth(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
@@ -114,10 +98,13 @@ mod oracle_mod {
             );
 
             prices.into_iter().for_each(|p1| {
-                let p = self.prices.get_mut(&p1.pair).expect(ERROR_MISSING_PAIR);
-                if p1.timestamp.compare(p.1, TimeComparisonOperator::Gt) {
-                    *p = (p1.quote, p1.timestamp);
-                }
+                self.prices.entry(p1.pair)
+                    .and_modify(|p| {
+                        if p1.timestamp.compare(p.1, TimeComparisonOperator::Gt) {
+                            *p = (p1.quote, p1.timestamp);
+                        }
+                    })
+                    .or_insert((p1.quote, p1.timestamp));
             });
 
             self.get_prices(pair_ids, max_age)
