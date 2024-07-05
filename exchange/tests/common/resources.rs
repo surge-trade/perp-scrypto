@@ -2,6 +2,7 @@ use referral_generator::ReferralData;
 use scrypto::prelude::Url;
 use scrypto_test::prelude::*;
 
+#[derive(Clone)]
 pub struct Resources {
     pub owner_resource: ResourceAddress,
     pub owner_role: OwnerRole,
@@ -236,7 +237,7 @@ fn create_keeper_reward_resource(
             minter_updater => rule!(deny_all);
         },
         burn_roles: burn_roles! {
-            burner => rule!(require(authority_resource));
+            burner => rule!(allow_all);
             burner_updater => rule!(deny_all);
         },
         ..Default::default()

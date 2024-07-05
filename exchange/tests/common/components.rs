@@ -1,9 +1,11 @@
 use scrypto_test::prelude::*;
 use super::Resources;
 
+#[derive(Clone)]
 pub struct Components {
     pub token_wrapper_package: PackageAddress,
     pub token_wrapper_component: ComponentAddress,
+    pub oracle_key_seed: u64,
     pub oracle_package: PackageAddress,
     pub oracle_component: ComponentAddress,
     pub config_package: PackageAddress,
@@ -45,7 +47,8 @@ pub fn create_components(
         "KEEPER_REWARD_RESOURCE".to_owned() => resources.keeper_reward_resource.to_string(encoder),
     };
 
-    let oracle_key = Bls12381G1PrivateKey::from_u64(1).unwrap().public_key();
+    let oracle_key_seed = 1;
+    let oracle_key = Bls12381G1PrivateKey::from_u64(oracle_key_seed).unwrap().public_key();
 
     let (token_wrapper_package, token_wrapper_component) = create_token_wrapper(account, public_key, resources, envs, use_coverage, encoder, ledger);
     let (oracle_package, oracle_component) = create_oracle(oracle_key, resources, envs, use_coverage, encoder, ledger);
@@ -61,6 +64,7 @@ pub fn create_components(
     Components {
         token_wrapper_package,
         token_wrapper_component,
+        oracle_key_seed,
         oracle_package,
         oracle_component,
         config_package,

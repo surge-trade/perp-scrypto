@@ -18,7 +18,10 @@ scrypto = { path = "../radixdlt-scrypto/scrypto" }
 regex = "1.5.4"
 
 [dev-dependencies]
+once_cell = "1.19.0"
 scrypto-test = { path = "../radixdlt-scrypto/scrypto-test" }
+radix-engine = { path = "../radixdlt-scrypto/radix-engine" }
+oracle = { path = "../oracle" }
 
 [profile.release]
 opt-level = 'z'        # Optimize for size.
