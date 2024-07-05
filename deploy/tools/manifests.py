@@ -395,7 +395,7 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
             role_updater=None
         ),
         burn_roles=ResourceManagerRole(
-            role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
+            role=AccessRule.allow_all, 
             role_updater=None
         ),
         freeze_roles=None,
