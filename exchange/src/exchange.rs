@@ -232,30 +232,26 @@ mod exchange_mod {
             get_pair_details => PUBLIC;
             get_exchange_config => PUBLIC;
             get_pair_configs => PUBLIC;
-            get_pair_configs_by_ids => PUBLIC;
             get_pair_configs_len => PUBLIC;
-            get_collateral_config => PUBLIC;
             get_collateral_configs => PUBLIC;
             get_collaterals => PUBLIC;
-            get_pool_value => PUBLIC;
-            get_skew_ratio => PUBLIC;
             get_protocol_balance => PUBLIC;
+            get_treasury_balance => PUBLIC;
 
             // User methods
-            create_referrals => restrict_to: [user];
+            add_liquidity => restrict_to: [user];
+            remove_liquidity => restrict_to: [user];
+            create_referral_codes => restrict_to: [user];
             create_account => restrict_to: [user];
             set_level_1_auth => restrict_to: [user];
             set_level_2_auth => restrict_to: [user];
             set_level_3_auth => restrict_to: [user];
             collect_referral_rewards => restrict_to: [user];
-            add_liquidity => restrict_to: [user];
-            remove_liquidity => restrict_to: [user];
             add_collateral => restrict_to: [user];
             remove_collateral_request => restrict_to: [user];
             margin_order_request => restrict_to: [user];
             cancel_request => restrict_to: [user];
             cancel_requests => restrict_to: [user];
-            cancel_all_requests => restrict_to: [user];
 
             // Keeper methods
             process_request => restrict_to: [keeper];
@@ -413,6 +409,8 @@ mod exchange_mod {
             })
         }
 
+        // TODO: deposit and withdraw fee delegator? change to credit fee delegator?
+
         pub fn collect_fee_delegator(
             &self,
         ) -> Bucket {
@@ -505,7 +503,7 @@ mod exchange_mod {
         pub fn get_account_details(
             &self, 
             account: ComponentAddress,
-            history_len: ListIndex,
+            history_n: ListIndex,
             history_start: Option<ListIndex>,
         ) -> AccountDetails {
             let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
@@ -514,7 +512,7 @@ mod exchange_mod {
             config.load_pair_configs(pair_ids.clone());
             let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
-            self._account_details(&config, &pool, &account, history_len, history_start)
+            self._account_details(&config, &pool, &account, history_n, history_start)
         }
 
         pub fn get_pool_details(
@@ -551,26 +549,10 @@ mod exchange_mod {
             Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs(n, start).into_iter().map(|v| v.decompress()).collect()
         }
         
-        pub fn get_pair_configs_by_ids(
-            &self, 
-            pair_ids: HashSet<PairId>,
-        ) -> HashMap<PairId, PairConfig> {
-            Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs_by_ids(pair_ids).into_iter()
-            .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect()
-        }
-        
         pub fn get_pair_configs_len(
             &self,
         ) -> ListIndex {
             Global::<Config>::from(CONFIG_COMPONENT).get_pair_configs_len()
-        }
-
-        pub fn get_collateral_config(
-            &self, 
-            resource: ResourceAddress,
-        ) -> CollateralConfig {
-            Global::<Config>::from(CONFIG_COMPONENT).get_info().collaterals.into_iter()
-                .find(|(k, _)| *k == resource).expect(ERROR_COLLATERAL_INVALID).1.decompress()
         }
 
         pub fn get_collateral_configs(
@@ -586,40 +568,60 @@ mod exchange_mod {
             Global::<Config>::from(CONFIG_COMPONENT).get_info().collaterals.keys().cloned().collect()
         }
 
-        pub fn get_pool_value(
-            &self,
-        ) -> Decimal {
-            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-            self._pool_value(&pool)
-        }
-
-        pub fn get_skew_ratio(
-            &self,
-        ) -> Decimal {
-            let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-            self._skew_ratio(&pool)
-        }
-
         pub fn get_protocol_balance(
             &self,
         ) -> Decimal {
             Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).get_protocol_virtual_balance()
         }
 
+        pub fn get_treasury_balance(
+            &self,
+        ) -> Decimal {
+            Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).get_treasury_virtual_balance()
+        }
+
         // --- USER METHODS ---
 
-        pub fn create_referrals(
+        pub fn add_liquidity(
+            &self,
+            payment: Bucket,
+        ) -> Bucket {
+            authorize!(self, {
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+                let lp_token = self._add_liquidity(&config, &mut pool, payment);
+                pool.realize();
+
+                lp_token
+            })
+        }
+
+        pub fn remove_liquidity(
+            &self,
+            lp_token: Bucket,
+        ) -> Bucket {
+            authorize!(self, {
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+                let token = self._remove_liquidity(&config, &mut pool, lp_token);
+                pool.realize();
+
+                token
+            })
+        }
+
+        pub fn create_referral_codes(
             &self, 
             referral_proof: Proof,
             tokens: Vec<Bucket>, 
-            referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>,
+            referral_hashes: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>, // TODO: hashmap?
         ) {
             authorize!(self, {
                 let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL).as_non_fungible().non_fungible();
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 let referral_id = checked_referral.local_id();
                 let referral_data = checked_referral.data();
-                let count: u64 = referrals.iter().map(|(_, _, count)| *count).sum();
+                let count: u64 = referral_hashes.iter().map(|(_, _, count)| *count).sum();
 
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
@@ -627,7 +629,7 @@ mod exchange_mod {
                 );
 
                 referral_manager.update_non_fungible_data(referral_id, "referrals", referral_data.referrals + count);
-                Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT).create_referral_codes(tokens, referral_id.clone(), referrals);
+                Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT).create_referral_codes(tokens, referral_id.clone(), referral_hashes);
             })
         }
 
@@ -657,7 +659,7 @@ mod exchange_mod {
         pub fn create_account(
             &self, 
             fee_oath: Option<Bucket>,
-            initial_rule: AccessRule,
+            initial_rule: AccessRule, // TODO: split to level 1, 2, 3?
             mut tokens: Vec<Bucket>,
             referral_code: Option<String>,
             reservation: Option<GlobalAddressReservation>,
@@ -791,34 +793,6 @@ mod exchange_mod {
             })
         }
 
-        pub fn add_liquidity(
-            &self,
-            payment: Bucket,
-        ) -> Bucket {
-            authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
-                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-                let lp_token = self._add_liquidity(&config, &mut pool, payment);
-                pool.realize();
-
-                lp_token
-            })
-        }
-
-        pub fn remove_liquidity(
-            &self,
-            lp_token: Bucket,
-        ) -> Bucket {
-            authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
-                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-                let token = self._remove_liquidity(&config, &mut pool, lp_token);
-                pool.realize();
-
-                token
-            })
-        }
-
         pub fn add_collateral(
             &self, 
             fee_oath: Option<Bucket>,
@@ -936,21 +910,21 @@ mod exchange_mod {
             })
         }
 
-        pub fn cancel_all_requests(
-            &self, 
-            fee_oath: Option<Bucket>,
-            account: ComponentAddress, 
-        ) {
-            authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+        // pub fn cancel_all_requests(
+        //     &self, 
+        //     fee_oath: Option<Bucket>,
+        //     account: ComponentAddress, 
+        // ) {
+        //     authorize!(self, {
+        //         let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+        //         let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
-                account.verify_level_3_auth();
-                account.update_valid_requests_start();
+        //         account.verify_level_3_auth();
+        //         account.update_valid_requests_start();
 
-                account.realize();
-            })
-        }
+        //         account.realize();
+        //     })
+        // }
 
         // --- KEEPER METHODS ---
 
@@ -998,7 +972,7 @@ mod exchange_mod {
         pub fn swap_debt(
             &self, 
             account: ComponentAddress, 
-            resource: ResourceAddress, // TODO: make list of resources
+            resource: ResourceAddress, // TODO: make list of resources?
             payment: Bucket, 
             price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
         ) -> (Bucket, Bucket) {
