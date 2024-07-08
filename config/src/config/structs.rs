@@ -286,7 +286,7 @@ impl PairConfigCompressed {
     }
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone)]
 pub struct CollateralConfig {
     /// Price feed id
     pub pair_id: PairId,
