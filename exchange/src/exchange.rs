@@ -250,6 +250,7 @@ mod exchange_mod {
             add_collateral => restrict_to: [user];
             remove_collateral_request => restrict_to: [user];
             margin_order_request => restrict_to: [user];
+            margin_order_tp_sl_request => restrict_to: [user];
             cancel_request => restrict_to: [user];
             cancel_requests => restrict_to: [user];
 
@@ -872,6 +873,83 @@ mod exchange_mod {
                 });
 
                 account.push_request(request, delay_seconds, expiry_seconds, status, vec![]);
+                self._assert_active_requests_limit(&config, &account);
+
+                account.realize();
+            })
+        }
+
+        pub fn margin_order_tp_sl_request(
+            &self,
+            fee_oath: Option<Bucket>,
+            delay_seconds: u64,
+            expiry_seconds: u64,
+            account: ComponentAddress,
+            pair_id: PairId,
+            amount: Decimal,
+            reduce_only: bool,
+            price_limit: Limit,
+            price_limit_tp: Limit,
+            price_limit_sl: Limit,
+        ) {
+            authorize!(self, {
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+
+                account.verify_level_3_auth();
+
+                let mut request_index = account.requests_len();
+                let mut activate_requests_order = vec![];
+                let mut cancel_requests_tp = vec![];
+                let mut cancel_requests_sl = vec![];
+                if price_limit_tp.is_some() {
+                    let index_tp = request_index + 1;
+                    request_index += 1;
+                    activate_requests_order.push(index_tp);
+                    cancel_requests_sl.push(index_tp);
+                }
+                if price_limit_tp.is_some() {
+                    let index_sl = request_index + 1;
+                    activate_requests_order.push(index_sl);
+                    cancel_requests_tp.push(index_sl);
+                }
+
+                let request_order = Request::MarginOrder(RequestMarginOrder {
+                    pair_id: pair_id.clone(),
+                    amount,
+                    reduce_only,
+                    price_limit,
+                    activate_requests: activate_requests_order,
+                    cancel_requests: vec![],
+                });
+
+                account.push_request(request_order, delay_seconds, expiry_seconds, STATUS_ACTIVE, vec![]);
+
+                if price_limit_tp.is_some() {
+                    let request_tp = Request::MarginOrder(RequestMarginOrder {
+                        pair_id: pair_id.clone(),
+                        amount,
+                        reduce_only: true,
+                        price_limit: price_limit_tp,
+                        activate_requests: vec![],
+                        cancel_requests: cancel_requests_tp,
+                    });
+
+                    account.push_request(request_tp, delay_seconds, expiry_seconds, STATUS_DORMANT, vec![]);
+                }
+                if price_limit_sl.is_some() {
+                    let request_sl = Request::MarginOrder(RequestMarginOrder {
+                        pair_id: pair_id.clone(),
+                        amount,
+                        reduce_only: true,
+                        price_limit: price_limit_sl,
+                        activate_requests: vec![],
+                        cancel_requests: cancel_requests_sl,
+                    });
+
+                    account.push_request(request_sl, delay_seconds, expiry_seconds, STATUS_DORMANT, vec![]);
+                }
+
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();

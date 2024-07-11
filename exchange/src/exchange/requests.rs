@@ -19,6 +19,13 @@ impl Limit {
         }
     }
 
+    pub fn is_some(&self) -> bool {
+        match self {
+            Limit::None => false,
+            _ => true,
+        }
+    }
+
     pub fn price(&self) -> Decimal {
         match self {
             Limit::Gte(limit) => *limit,

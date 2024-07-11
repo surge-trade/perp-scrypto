@@ -150,6 +150,10 @@ impl VirtualMarginAccount {
         }
     }
 
+    pub fn requests_len(&self) -> ListIndex {
+        self.requests_len
+    }
+
     pub fn keeper_request(&self, index: ListIndex) -> KeeperRequest {
         if let Some(request) = self.request_updates.get(&index) {
             request.clone()
@@ -261,7 +265,8 @@ impl VirtualMarginAccount {
             status,
             effected_components,
         };
-        self._add_active_request(self.requests_len);
+        let index = self.requests_len + self.request_additions.len() as ListIndex;
+        self._add_active_request(index);
 
         self.request_additions.push(keeper_request);
     }
