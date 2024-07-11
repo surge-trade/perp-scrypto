@@ -2316,7 +2316,7 @@ mod exchange_mod {
             pool.add_virtual_balance(-fee_protocol -fee_treasury);
             Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).distribute(fee_protocol, fee_treasury);
 
-            (fee_pool, fee_protocol, fee_treasury)
+            (-fee_pool, -fee_protocol, -fee_treasury)
         }
 
         fn _settle_fees_referral(
@@ -2336,7 +2336,7 @@ mod exchange_mod {
             Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).distribute(fee_protocol, fee_treasury);
             account.reward_referral(fee_referral);
 
-            (fee_pool, fee_protocol, fee_treasury, fee_referral)
+            (-fee_pool, -fee_protocol, -fee_treasury, -fee_referral)
         }
         
         fn _save_funding_index(
