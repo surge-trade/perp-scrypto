@@ -44,7 +44,7 @@ fn test_hello() {
     exchange.update_pair_configs(vec![
         PairConfig {
             pair_id: "BTC/USD".into(),
-            disabled: false,
+            oi_max: dec!(10000),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),

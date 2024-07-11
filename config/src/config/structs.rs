@@ -169,8 +169,8 @@ impl ExchangeConfigCompressed {
 pub struct PairConfig {
     /// Price feed id
     pub pair_id: PairId,
-    /// If the pair is disabled
-    pub disabled: bool,
+    /// Maximum allowed combined oi for the pair
+    pub oi_max: Decimal,
     /// Price delta ratio before updating a pair will be rewarded
     pub update_price_delta_ratio: Decimal,
     /// Time before updating a pair will be rewarded
@@ -201,8 +201,8 @@ pub struct PairConfig {
 pub struct PairConfigCompressed {
     /// Price feed id
     pub pair_id: PairId,
-    /// If the pair is disabled
-    pub disabled: bool,
+    /// Maximum allowed combined oi for the pair
+    pub oi_max: DFloat16,
     /// Price delta ratio before updating a pair will be rewarded
     pub update_price_delta_ratio: DFloat16,
     /// Time before updating a pair will be rewarded
@@ -231,6 +231,7 @@ pub struct PairConfigCompressed {
 
 impl PairConfig {
     pub fn validate(&self) {
+        assert!(self.oi_max >= dec!(0), "Invalid oi max");
         assert!(self.update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
         assert!(self.update_period_seconds >= 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0), "Invalid initial margin");
@@ -248,7 +249,7 @@ impl PairConfig {
     pub fn compress(&self) -> PairConfigCompressed {
         PairConfigCompressed {
             pair_id: self.pair_id.to_owned(),
-            disabled: self.disabled,
+            oi_max: DFloat16::from(self.oi_max),
             update_price_delta_ratio: DFloat16::from(self.update_price_delta_ratio),
             update_period_seconds: self.update_period_seconds as u16,
             margin_initial: DFloat16::from(self.margin_initial),
@@ -269,7 +270,7 @@ impl PairConfigCompressed {
     pub fn decompress(&self) -> PairConfig {
         PairConfig {
             pair_id: self.pair_id.to_owned(),
-            disabled: self.disabled,
+            oi_max: self.oi_max.into(),
             update_price_delta_ratio: self.update_price_delta_ratio.into(),
             update_period_seconds: self.update_period_seconds as i64,
             margin_initial: self.margin_initial.into(),

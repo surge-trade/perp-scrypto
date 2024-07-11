@@ -3,6 +3,7 @@ pub const ERROR_INVALID_FEE_OATH: &str = "Invalid fee oath";
 
 pub const ERROR_COLLATERAL_INVALID: &str = "Invalid collateral";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";
+pub const ERROR_PAIR_OI_TOO_HIGH: &str = "Pair OI exceeds maximum";
 pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 
 pub const ERROR_PAIR_DISABLED: &str = "Pair disabled";
@@ -23,6 +24,10 @@ pub const ERROR_ADL_SKEW_NOT_REDUCED: &str = "Skew ratio not reduced";
 pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 
 pub const ERROR_SWAP_NO_DEBT: &str = "No debt to swap";
+
+pub const ERROR_CLAIMS_TOO_MANY: &str = "Claims list too big";
+pub const ERROR_ACTIVATE_REQUESTS_TOO_MANY: &str = "Activate requests list too big";
+pub const ERROR_CANCEL_REQUESTS_TOO_MANY: &str = "Cancel requests list too big";
 
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
 pub const ERROR_ACTIVE_REQUESTS_TOO_MANY: &str = "Too many active requests";

@@ -831,6 +831,11 @@ mod exchange_mod {
 
                 account.verify_level_2_auth();
 
+                assert!(
+                    claims.len() <= 10,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_CLAIMS_TOO_MANY, claims.len(), 10
+                );
+
                 let request = Request::RemoveCollateral(RequestRemoveCollateral {
                     target_account,
                     claims,
@@ -862,6 +867,14 @@ mod exchange_mod {
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
                 account.verify_level_3_auth();
+
+                assert!(
+                    activate_requests.len() <= 2,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_ACTIVATE_REQUESTS_TOO_MANY, activate_requests.len(), 2
+                );        
+                assert!(cancel_requests.len() <= 2,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= ", ERROR_CANCEL_REQUESTS_TOO_MANY, cancel_requests.len(), 2
+                );
 
                 let request = Request::MarginOrder(RequestMarginOrder {
                     pair_id,
@@ -1905,11 +1918,6 @@ mod exchange_mod {
             let pair_config = config.pair_config(pair_id);
             let fee_rebate = account.fee_rebate();
 
-            assert!(
-                !pair_config.disabled, 
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PAIR_DISABLED, pair_config.disabled, true
-            );
-
             let price = oracle.price(pair_id);
             let value = amount * price;
             let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
@@ -1931,6 +1939,12 @@ mod exchange_mod {
             
             position.amount += amount;
             position.cost += cost;
+
+            let oi_total = (pool_position.oi_long + pool_position.oi_short) * price;
+            assert!(
+                oi_total <= pair_config.oi_max, 
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, oi_total, pair_config.oi_max
+            );
 
             self._assert_position_limit(config, account);
             self._assert_account_integrity(config, pool, account, oracle);
