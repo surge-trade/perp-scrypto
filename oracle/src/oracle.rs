@@ -1,7 +1,7 @@
 mod errors;
 
 use scrypto::prelude::*;
-use common::{PairId, _AUTHORITY_RESOURCE};
+use common::{PairId, ListIndex, _AUTHORITY_RESOURCE};
 use self::errors::*;
 
 #[derive(ScryptoSbor)]
@@ -22,6 +22,8 @@ mod oracle_mod {
             get_user => updatable_by: [];
         },
         methods {
+            add_key => restrict_to: [OWNER];
+            remove_key => restrict_to: [OWNER];
             remove_price => restrict_to: [OWNER];
             push_and_get_prices_with_auth => restrict_to: [authority];
             get_prices_with_auth => restrict_to: [authority];
@@ -31,14 +33,14 @@ mod oracle_mod {
     );
 
     struct Oracle {
-        public_key: Bls12381G1PublicKey,
+        keys: HashMap<ListIndex, Bls12381G1PublicKey>,
         prices: HashMap<PairId, (Decimal, Instant)>,
     }
 
     impl Oracle {
-        pub fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle> {    
+        pub fn new(owner_role: OwnerRole, keys: HashMap<ListIndex, Bls12381G1PublicKey>) -> Global<Oracle> {    
             Self {
-                public_key,
+                keys,
                 prices: HashMap::new()
             }
             .instantiate()  
@@ -58,6 +60,8 @@ mod oracle_mod {
                     royalty_claimer_updater => OWNER;
                 },
                 init {
+                    add_key => Free, locked;
+                    remove_key => Free, locked;
                     remove_price => Free, locked;
                     push_and_get_prices_with_auth => Free, locked;
                     get_prices_with_auth => Free, locked;
@@ -68,32 +72,46 @@ mod oracle_mod {
             .globalize()
         }
 
+        pub fn add_key(&mut self, id: ListIndex, public_key: Bls12381G1PublicKey) {
+            assert!(
+                !self.keys.contains_key(&id),
+                "{}", ERROR_KEY_ID_ALREADY_EXISTS
+            );
+
+            self.keys.insert(id, public_key);
+        }
+
+        pub fn remove_key(&mut self, id: ListIndex) {
+            self.keys.remove(&id);
+        }
+
         pub fn remove_price(&mut self, pair_id: PairId) {
             self.prices.remove(&pair_id);
         }
 
-        pub fn push_and_get_prices_with_auth(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
-            self._push_and_get_prices(pair_ids, max_age, data, signature)
+        pub fn push_and_get_prices_with_auth(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal> {
+            self._push_and_get_prices(pair_ids, max_age, data, signature, key_id)
         }
 
         pub fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
             self._get_prices(pair_ids, max_age)
         }
 
-        pub fn push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
-            self._push_and_get_prices(pair_ids, max_age, data, signature)
+        pub fn push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal> {
+            self._push_and_get_prices(pair_ids, max_age, data, signature, key_id)
         }
 
         pub fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
             self._get_prices(pair_ids, max_age)
         }
 
-        fn _push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal> {
+        fn _push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal> {
             let prices: Vec<Price> = scrypto_decode(&data).expect(ERROR_INVALID_DATA);
 
             let hash = CryptoUtils::keccak256_hash(data).to_vec();
+            let key = *self.keys.get(&key_id).expect(ERROR_INVALID_KEY_ID);
             assert!(
-                CryptoUtils::bls12381_v1_verify(hash.clone(), self.public_key, signature),
+                CryptoUtils::bls12381_v1_verify(hash.clone(), key, signature),
                 "{}", ERROR_INVALID_SIGNATURE
             );
 

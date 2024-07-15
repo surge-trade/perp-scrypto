@@ -3,7 +3,7 @@ use super::requests::*;
 use common::*;
 use config::*;
 use account::*;
-use referral_generator::ReferralData;
+use referral_generator::{ReferralData, ReferralAllocation};
 
 #[derive(ScryptoSbor, Clone)]
 pub struct PositionDetails {
@@ -63,6 +63,12 @@ pub struct PairDetails {
     pub oi_short: Decimal,
     pub funding_2: Decimal,
     pub pair_config: PairConfig,
+}
+
+#[derive(ScryptoSbor, Clone)]
+pub struct ReferralDetails {
+    pub referral: ReferralData,
+    pub allocations: Vec<ReferralAllocation>,
 }
 
 pub struct ResultValuePositions {

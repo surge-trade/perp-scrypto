@@ -132,6 +132,33 @@ impl ExchangeInterface {
         receipt
     }
 
+    pub fn mint_referral_with_allocation(
+        &mut self,
+        fee_referral: Decimal,
+        fee_rebate: Decimal,
+        max_referrals: u64,
+        allocation_usd_amount: Decimal,
+        allocation_count: u64,
+    ) -> TransactionReceiptV1 {
+        let allocation_claims = vec![(self.resources.base_resource, allocation_usd_amount / Decimal::from(allocation_count))];
+
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .withdraw_from_account(self.account, self.resources.base_resource, allocation_usd_amount)
+            .take_all_from_worktop(self.resources.base_resource, "token")
+            .with_bucket("token", |manifest, bucket| {
+                manifest.call_method(
+                    self.components.exchange_component, 
+                    "create_referral_codes_from_allocation", 
+                    manifest_args!(fee_referral, fee_rebate, max_referrals, vec![bucket], allocation_claims, allocation_count)
+                )
+            })
+            .deposit_batch(self.account)
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
+    }
+
     pub fn update_referral(
         &mut self,
         referral_id: NonFungibleLocalId,
@@ -144,6 +171,31 @@ impl ExchangeInterface {
             "update_referral", 
             manifest_args!(referral_id, fee_referral, fee_rebate, max_referrals)
         );
+        receipt
+    }
+
+    pub fn add_referral_allocation(
+        &mut self,
+        referral_id: NonFungibleLocalId,
+        allocation_usd_amount: Decimal,
+        allocation_count: u64,
+    ) -> TransactionReceiptV1 {
+        let allocation_claims = vec![(self.resources.base_resource, allocation_usd_amount / Decimal::from(allocation_count))];
+
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .withdraw_from_account(self.account, self.resources.base_resource, allocation_usd_amount)
+            .take_all_from_worktop(self.resources.base_resource, "token")
+            .with_bucket("token", |manifest, bucket| {
+                manifest.call_method(
+                    self.components.exchange_component, 
+                    "add_referral_allocation", 
+                    manifest_args!(referral_id, vec![bucket], allocation_claims, allocation_count)
+                )
+            })
+            .deposit_batch(self.account)
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
@@ -205,6 +257,18 @@ impl ExchangeInterface {
             self.components.exchange_component, 
             "get_pair_details", 
             manifest_args!(pair_ids)
+        );
+        receipt.expect_commit_success().output(1)
+    }
+
+    pub fn get_referral_details(
+        &mut self,
+        referral_id: NonFungibleLocalId,
+    ) -> ReferralDetails {
+        let receipt = self.ledger.call_method(
+            self.components.exchange_component, 
+            "get_referral_details", 
+            manifest_args!(referral_id)
         );
         receipt.expect_commit_success().output(1)
     }
@@ -331,7 +395,7 @@ impl ExchangeInterface {
         &mut self,
         referral_id: NonFungibleLocalId,
         usd_amount: Decimal,
-        referral_hashes: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>,
+        referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>,
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -347,6 +411,32 @@ impl ExchangeInterface {
                     self.components.exchange_component, 
                     "create_referral_codes", 
                     manifest_args!(lookup.proof("referral"), lookup.bucket("token"), referral_hashes)
+                )
+            })
+            .deposit_batch(self.account)
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
+    }
+
+    pub fn create_referral_codes_from_allocation(
+        &mut self,
+        referral_id: NonFungibleLocalId,
+        allocation_index: ListIndex,
+        referral_hashes: HashMap<Hash, u64>,
+    ) -> TransactionReceiptV1 {
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .create_proof_from_account_of_non_fungible(
+                self.account, 
+                NonFungibleGlobalId::new(self.resources.referral_resource, referral_id)
+            )
+            .pop_from_auth_zone("referral")
+            .with_name_lookup(|manifest, lookup| {
+                manifest.call_method(
+                    self.components.exchange_component, 
+                    "create_referral_codes_from_allocation", 
+                    manifest_args!(lookup.proof("referral"), allocation_index, referral_hashes)
                 )
             })
             .build();
@@ -539,6 +629,39 @@ impl ExchangeInterface {
         receipt
     }
 
+    pub fn margin_order_tp_sl_request(
+        &mut self,
+        delay_seconds: u64,
+        expiry_seconds: u64,
+        margin_account_component: ComponentAddress,
+        pair_id: PairId,
+        amount: Decimal,
+        reduce_only: bool,
+        price_limit: Limit,
+        price_limit_tp: Limit,
+        price_limit_sl: Limit,
+    ) -> TransactionReceiptV1 {
+        let fee_oath: Option<ManifestBucket> = None;
+
+        let receipt = self.ledger.call_method(
+            self.components.exchange_component, 
+            "margin_order_tp_sl_request", 
+            manifest_args!(
+                fee_oath, 
+                delay_seconds, 
+                expiry_seconds, 
+                margin_account_component, 
+                pair_id, 
+                amount, 
+                reduce_only, 
+                price_limit, 
+                price_limit_tp, 
+                price_limit_sl
+            )
+        );
+        receipt
+    }
+
     pub fn cancel_request(
         &mut self,
         margin_account_component: ComponentAddress,
@@ -588,7 +711,7 @@ impl ExchangeInterface {
         let price_data = scrypto_encode(&prices).unwrap();
         let price_data_hash = keccak256_hash(&price_data).to_vec();
         let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature));
+        let price_updates = Some((price_data, price_signature, 0));
     
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -617,7 +740,7 @@ impl ExchangeInterface {
         let price_data = scrypto_encode(&prices).unwrap();
         let price_data_hash = keccak256_hash(&price_data).to_vec();
         let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature));
+        let price_updates = Some((price_data, price_signature, 0));
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -645,7 +768,7 @@ impl ExchangeInterface {
         let price_data = scrypto_encode(&prices).unwrap();
         let price_data_hash = keccak256_hash(&price_data).to_vec();
         let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature));
+        let price_updates = Some((price_data, price_signature, 0));
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -673,7 +796,7 @@ impl ExchangeInterface {
         let price_data = scrypto_encode(&prices).unwrap();
         let price_data_hash = keccak256_hash(&price_data).to_vec();
         let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature));
+        let price_updates = Some((price_data, price_signature, 0));
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -696,7 +819,7 @@ impl ExchangeInterface {
         let price_data = scrypto_encode(&prices).unwrap();
         let price_data_hash = keccak256_hash(&price_data).to_vec();
         let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature));
+        let price_updates = Some((price_data, price_signature, 0));
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()

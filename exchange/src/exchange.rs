@@ -66,7 +66,7 @@ mod exchange_mod {
             // fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
 
             // Authority protected methods
-            fn push_and_get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
+            fn push_and_get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal>;
             fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
 
             // User methods
@@ -138,10 +138,13 @@ mod exchange_mod {
             // fn new(owner_role: OwnerRole) -> Global<ReferralGenerator>;
 
             // Getter methods
+            fn get_allocations(&self, referral_id: NonFungibleLocalId) -> Vec<ReferralAllocation>;
             // fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
 
             // Authority protected methods
-            fn create_referral_codes(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>);
+            fn add_allocation(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, claims: Vec<(ResourceAddress, Decimal)>, count: u64) -> (Vec<Bucket>, ListIndex);
+            fn create_referral_codes(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>) -> Vec<Bucket>;
+            fn create_referral_codes_from_allocation(&self, referral_id: NonFungibleLocalId, allocation_index: ListIndex, referral_hashes: HashMap<Hash, u64>);
             fn claim_referral_code(&self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>);
         }
     }
@@ -222,7 +225,9 @@ mod exchange_mod {
             collect_treasury => restrict_to: [OWNER, admin];
             collect_fee_delegator =>  restrict_to: [OWNER, admin];
             mint_referral => restrict_to: [OWNER, admin];
+            mint_referral_with_allocation => restrict_to: [OWNER, admin];
             update_referral => restrict_to: [OWNER, admin];
+            add_referral_allocation => restrict_to: [OWNER, admin];
 
             // Get methods
             get_pairs => PUBLIC;
@@ -230,6 +235,7 @@ mod exchange_mod {
             get_account_details => PUBLIC;
             get_pool_details => PUBLIC;
             get_pair_details => PUBLIC;
+            get_referral_details => PUBLIC;
             get_exchange_config => PUBLIC;
             get_pair_configs => PUBLIC;
             get_pair_configs_len => PUBLIC;
@@ -242,6 +248,7 @@ mod exchange_mod {
             add_liquidity => restrict_to: [user];
             remove_liquidity => restrict_to: [user];
             create_referral_codes => restrict_to: [user];
+            create_referral_codes_from_allocation => restrict_to: [user];
             create_account => restrict_to: [user];
             set_level_1_auth => restrict_to: [user];
             set_level_2_auth => restrict_to: [user];
@@ -410,7 +417,7 @@ mod exchange_mod {
             })
         }
 
-        // TODO: deposit and withdraw fee delegator? change to credit fee delegator?
+        // TODO: deposit and withdraw fee delegator? or change to credit fee delegator?
 
         pub fn collect_fee_delegator(
             &self,
@@ -436,24 +443,43 @@ mod exchange_mod {
             fee_rebate: Decimal,
             max_referrals: u64,
         ) -> Bucket {
-            let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
-            assert!(
-                fee_referral >= dec!(0) && fee_referral <= dec!(0.1) &&
-                fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
-                "{}", ERROR_INVALID_REFERRAL_DATA
-            );
+            authorize!(self, {
+                let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+                assert!(
+                    fee_referral >= dec!(0) && fee_referral <= dec!(0.1) &&
+                    fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
+                    "{}", ERROR_INVALID_REFERRAL_DATA
+                );
 
-            let referral_data = ReferralData {
-                fee_referral,
-                fee_rebate,
-                referrals: 0,
-                max_referrals,
-                balance: dec!(0),
-                total_rewarded: dec!(0),
-            };
-            let referral = referral_manager.mint_ruid_non_fungible(referral_data);
+                let referral_data = ReferralData {
+                    fee_referral,
+                    fee_rebate,
+                    referrals: 0,
+                    max_referrals,
+                    balance: dec!(0),
+                    total_rewarded: dec!(0),
+                };
+                let referral = referral_manager.mint_ruid_non_fungible(referral_data);
 
-            referral
+                referral
+            })
+        }
+
+        pub fn mint_referral_with_allocation(
+            &self,
+            fee_referral: Decimal,
+            fee_rebate: Decimal,
+            max_referrals: u64,
+            allocation_tokens: Vec<Bucket>,
+            allocation_claims: Vec<(ResourceAddress, Decimal)>,
+            allocation_count: u64,
+        ) -> (Bucket, Vec<Bucket>, ListIndex) {
+            let referral = self.mint_referral(fee_referral, fee_rebate, max_referrals);
+            let referral_id = referral.as_non_fungible().non_fungible_local_id();
+
+            let (allocation_tokens, allocation_index) = self.add_referral_allocation(referral_id, allocation_tokens, allocation_claims, allocation_count);
+
+            (referral, allocation_tokens, allocation_index)
         }
 
         pub fn update_referral(
@@ -463,25 +489,52 @@ mod exchange_mod {
             fee_rebate: Option<Decimal>,
             max_referrals: Option<u64>,
         ) {
-            let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+            authorize!(self, {
+                let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
 
-            if let Some(fee_referral) = fee_referral {
+                if let Some(fee_referral) = fee_referral {
+                    assert!(
+                        fee_referral >= dec!(0) && fee_referral <= dec!(0.1),
+                        "{}", ERROR_INVALID_REFERRAL_DATA
+                    );
+                    referral_manager.update_non_fungible_data(&referral_id, "fee_referral", fee_referral);
+                }
+                if let Some(fee_rebate) = fee_rebate {
+                    assert!(
+                        fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
+                        "{}", ERROR_INVALID_REFERRAL_DATA
+                    );
+                    referral_manager.update_non_fungible_data(&referral_id, "fee_rebate", fee_rebate);
+                }
+                if let Some(max_referrals) = max_referrals {
+                    referral_manager.update_non_fungible_data(&referral_id, "max_referrals", max_referrals);
+                }
+            })
+        }
+
+        pub fn add_referral_allocation(
+            &self,
+            referral_id: NonFungibleLocalId,
+            tokens: Vec<Bucket>,
+            claims: Vec<(ResourceAddress, Decimal)>,
+            count: u64,
+        ) -> (Vec<Bucket>, ListIndex) {
+            authorize!(self, {
+                let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+                let referral_data: ReferralData = referral_manager.get_non_fungible_data(&referral_id);
+
                 assert!(
-                    fee_referral >= dec!(0) && fee_referral <= dec!(0.1),
-                    "{}", ERROR_INVALID_REFERRAL_DATA
+                    referral_data.referrals + count <= referral_data.max_referrals,
+                    "{}", ERROR_REFERRAL_LIMIT_REACHED
                 );
-                referral_manager.update_non_fungible_data(&referral_id, "fee_referral", fee_referral);
-            }
-            if let Some(fee_rebate) = fee_rebate {
-                assert!(
-                    fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
-                    "{}", ERROR_INVALID_REFERRAL_DATA
-                );
-                referral_manager.update_non_fungible_data(&referral_id, "fee_rebate", fee_rebate);
-            }
-            if let Some(max_referrals) = max_referrals {
-                referral_manager.update_non_fungible_data(&referral_id, "max_referrals", max_referrals);
-            }
+
+                referral_manager.update_non_fungible_data(&referral_id, "referrals", referral_data.referrals + count);
+
+                let referral_generator = Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT);
+                let (remainder_tokens, allocation_index) = referral_generator.add_allocation(tokens, referral_id.clone(), claims, count);
+
+                (remainder_tokens, allocation_index)
+            })
         }
 
         // --- GET METHODS ---
@@ -534,6 +587,21 @@ mod exchange_mod {
             config.load_pair_configs(pair_ids_set.clone());
             let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids_set);
             pair_ids.into_iter().map(|pair_id| self._pair_details(&config, &pool, &pair_id)).collect()
+        }
+
+        pub fn get_referral_details(
+            &self,
+            referral_id: NonFungibleLocalId,
+        ) -> ReferralDetails {
+            let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+            let referral = referral_manager.get_non_fungible_data(&referral_id);
+            let referral_generator = Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT);
+            let allocations = referral_generator.get_allocations(referral_id);
+
+            ReferralDetails {
+                allocations,
+                referral,
+            }
         }
 
         pub fn get_exchange_config(
@@ -615,14 +683,15 @@ mod exchange_mod {
             &self, 
             referral_proof: Proof,
             tokens: Vec<Bucket>, 
-            referral_hashes: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>, // TODO: hashmap?
-        ) {
+            referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>,
+        ) -> Vec<Bucket> {
             authorize!(self, {
-                let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL).as_non_fungible().non_fungible();
+                let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL)
+                    .as_non_fungible().non_fungible();
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 let referral_id = checked_referral.local_id();
                 let referral_data = checked_referral.data();
-                let count: u64 = referral_hashes.iter().map(|(_, _, count)| *count).sum();
+                let count: u64 = referral_hashes.iter().map(|(_, (_, count))| *count).sum();
 
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
@@ -630,7 +699,26 @@ mod exchange_mod {
                 );
 
                 referral_manager.update_non_fungible_data(referral_id, "referrals", referral_data.referrals + count);
-                Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT).create_referral_codes(tokens, referral_id.clone(), referral_hashes);
+                let referral_generator = Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT);
+                let remainder_tokens = referral_generator.create_referral_codes(tokens, referral_id.clone(), referral_hashes);
+
+                remainder_tokens
+            })
+        }
+
+        pub fn create_referral_codes_from_allocation(
+            &self, 
+            referral_proof: Proof,
+            allocation_index: ListIndex,
+            referral_hashes: HashMap<Hash, u64>,
+        ) {
+            authorize!(self, {
+                let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL)
+                    .as_non_fungible().non_fungible();
+                let referral_id = checked_referral.local_id();
+
+                let referral_generator = Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT);
+                referral_generator.create_referral_codes_from_allocation(referral_id.clone(), allocation_index, referral_hashes);
             })
         }
 
@@ -1023,7 +1111,7 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             index: ListIndex,
-            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
@@ -1065,7 +1153,7 @@ mod exchange_mod {
             account: ComponentAddress, 
             resource: ResourceAddress, // TODO: make list of resources?
             payment: Bucket, 
-            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
         ) -> (Bucket, Bucket) {
             authorize!(self, {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
@@ -1091,7 +1179,7 @@ mod exchange_mod {
             &self,
             account: ComponentAddress,
             payment: Bucket,
-            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
         ) -> (Vec<Bucket>, Bucket) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
@@ -1118,7 +1206,7 @@ mod exchange_mod {
             &self, 
             account: ComponentAddress, 
             pair_id: PairId, 
-            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
         ) -> Bucket {
             authorize!(self, {
                 let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
@@ -1145,7 +1233,7 @@ mod exchange_mod {
         pub fn update_pairs(
             &self, 
             pair_ids: Vec<PairId>,
-            price_updates: Option<(Vec<u8>, Bls12381G2Signature)>,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
         ) -> (Bucket, Vec<bool>) {
             authorize!(self, {
                 let mut config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));

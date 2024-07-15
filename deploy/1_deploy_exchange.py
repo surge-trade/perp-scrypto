@@ -300,7 +300,6 @@ async def main():
             print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
 
             if 'ORACLE_PACKAGE' not in config_data:
-                oracle_key_array = [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)]
                 code, definition = build('oracle', envs, network_config['network_name'])
                 payload, intent = await gateway.build_publish_transaction(
                     account,
@@ -319,13 +318,20 @@ async def main():
             print('ORACLE_PACKAGE:', oracle_package)
 
             if 'ORACLE_COMPONENT' not in config_data:
+                oracle_key_bytes = ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, 
+                    [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)])
                 builder = ret.ManifestBuilder()
                 builder = lock_fee(builder, account, 100)
                 builder = builder.call_function(
                     ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
                     'Oracle',
                     'new',
-                    [manifest_owner_role, ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, oracle_key_array)]
+                    [
+                        manifest_owner_role, 
+                        ret.ManifestBuilderValue.MAP_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, ret.ManifestBuilderValueKind.ARRAY_VALUE, [
+                            ret.ManifestBuilderMapEntry(ret.ManifestBuilderValue.U64_VALUE(0), oracle_key_bytes)
+                        ])
+                    ]
                 )
                 payload, intent = await gateway.build_transaction(builder, public_key, private_key)
                 await gateway.submit_transaction(payload)

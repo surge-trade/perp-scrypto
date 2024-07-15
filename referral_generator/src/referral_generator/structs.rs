@@ -17,3 +17,10 @@ pub struct ReferralCode {
     pub count: u64,
     pub max_count: u64,
 }
+
+#[derive(ScryptoSbor, Clone)]
+pub struct ReferralAllocation {
+    pub claims: Vec<(ResourceAddress, Decimal)>,
+    pub count: u64,
+    pub max_count: u64,
+}
