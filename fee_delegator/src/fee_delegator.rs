@@ -13,6 +13,7 @@ mod fee_delegator_mod {
             authority => updatable_by: [];
             admin => updatable_by: [OWNER];
             depositor => updatable_by: [OWNER];
+            withdrawer => updatable_by: [OWNER];
             user => updatable_by: [OWNER];
         },
         methods { 
@@ -26,7 +27,7 @@ mod fee_delegator_mod {
             update_is_contingent => restrict_to: [OWNER, admin];
             update_virtual_balance => restrict_to: [authority];
             deposit => restrict_to: [depositor];
-            withdraw => restrict_to: [depositor];
+            withdraw => restrict_to: [withdrawer];
 
             lock_fee => restrict_to: [user];
         }
@@ -81,6 +82,7 @@ mod fee_delegator_mod {
                 authority => rule!(require(AUTHORITY_RESOURCE));
                 admin => OWNER;
                 depositor => OWNER;
+                withdrawer => OWNER;
                 user => rule!(allow_all);
             })
             .with_address(component_reservation)

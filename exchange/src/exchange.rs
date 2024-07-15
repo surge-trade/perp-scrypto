@@ -417,8 +417,6 @@ mod exchange_mod {
             })
         }
 
-        // TODO: deposit and withdraw fee delegator? or change to credit fee delegator?
-
         pub fn collect_fee_delegator(
             &self,
         ) -> Bucket {
@@ -748,7 +746,7 @@ mod exchange_mod {
         pub fn create_account(
             &self, 
             fee_oath: Option<Bucket>,
-            initial_rule: AccessRule, // TODO: split to level 1, 2, 3?
+            initial_rule: AccessRule,
             mut tokens: Vec<Bucket>,
             referral_code: Option<String>,
             reservation: Option<GlobalAddressReservation>,
@@ -1151,7 +1149,7 @@ mod exchange_mod {
         pub fn swap_debt(
             &self, 
             account: ComponentAddress, 
-            resource: ResourceAddress, // TODO: make list of resources?
+            resource: ResourceAddress, 
             payment: Bucket, 
             price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
         ) -> (Bucket, Bucket) {
