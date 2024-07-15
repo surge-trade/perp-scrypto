@@ -171,14 +171,12 @@ mod exchange_mod {
             // fn new(owner_role: OwnerRole) -> Global<FeeDelegator>;
 
             // Getter methods
-            // fn get_fee_oath_resource(&self) -> ResourceAddress;
-            // fn get_max_lock(&self) -> Decimal;
-            // fn get_is_contingent(&self) -> bool;
+            // fn get_info(&self) -> (Decimal, Decimal, Decimal, Decimal, bool);
             fn get_virtual_balance(&self) -> Decimal;
-            // fn get_vault_amount(&self) -> Decimal;
 
             // Owner protected methods
             // fn update_max_lock(&self, max_lock: Decimal);
+            // fn update_price_multiplier(&self, price_multiplier: Decimal);
             // fn update_is_contingent(&self, is_contingent: bool);
 
             // Authority protected methods

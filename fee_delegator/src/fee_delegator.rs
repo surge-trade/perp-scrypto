@@ -17,13 +17,11 @@ mod fee_delegator_mod {
             user => updatable_by: [OWNER];
         },
         methods { 
-            get_fee_oath_resource => PUBLIC;
-            get_max_lock => PUBLIC;
-            get_is_contingent => PUBLIC;
-            get_vault_amount => PUBLIC;
+            get_info => PUBLIC;
             get_virtual_balance => PUBLIC;
 
             update_max_lock => restrict_to: [OWNER, admin];
+            update_price_multiplier => restrict_to: [OWNER, admin];
             update_is_contingent => restrict_to: [OWNER, admin];
             update_virtual_balance => restrict_to: [authority];
             deposit => restrict_to: [depositor];
@@ -38,6 +36,7 @@ mod fee_delegator_mod {
         vault: FungibleVault,
         virtual_balance: Decimal,
         max_lock: Decimal,
+        price_multiplier: Decimal,
         is_contingent: bool,
     }
 
@@ -70,11 +69,12 @@ mod fee_delegator_mod {
                 .create_with_no_initial_supply();
                 
             Self {
-                max_lock: dec!(3),
-                is_contingent: false,
+                fee_oath,
                 vault: FungibleVault::new(XRD),
                 virtual_balance: dec!(0),
-                fee_oath,
+                max_lock: dec!(3),
+                price_multiplier: dec!(1.5),
+                is_contingent: false,
             }
             .instantiate()
             .prepare_to_globalize(owner_role)
@@ -89,29 +89,22 @@ mod fee_delegator_mod {
             .globalize()
         }
 
-        pub fn get_fee_oath_resource(&self) -> ResourceAddress {
-            self.fee_oath.address()
-        }
-
-        pub fn get_max_lock(&self) -> Decimal {
-            self.max_lock
-        }
-
-        pub fn get_is_contingent(&self) -> bool {
-            self.is_contingent
+        pub fn get_info(&self) -> (Decimal, Decimal, Decimal, Decimal, bool) {
+            (self.vault.amount(), self.virtual_balance, self.max_lock, self.price_multiplier, self.is_contingent)
         }
 
         pub fn get_virtual_balance(&self) -> Decimal {
             self.virtual_balance
         }
 
-        pub fn get_vault_amount(&self) -> Decimal {
-            self.vault.amount()
-        }
-
         pub fn update_max_lock(&mut self, max_lock: Decimal) {
             assert!(max_lock >= dec!(0));
             self.max_lock = max_lock;
+        }
+
+        pub fn update_price_multiplier(&mut self, price_multiplier: Decimal) {
+            assert!(price_multiplier >= dec!(0));
+            self.price_multiplier = price_multiplier;
         }
 
         pub fn update_is_contingent(&mut self, is_contingent: bool) {
