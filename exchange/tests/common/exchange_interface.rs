@@ -638,8 +638,8 @@ impl ExchangeInterface {
         amount: Decimal,
         reduce_only: bool,
         price_limit: Limit,
-        price_limit_tp: Limit,
-        price_limit_sl: Limit,
+        price_tp: Option<Decimal>,
+        price_sl: Option<Decimal>,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
@@ -655,8 +655,8 @@ impl ExchangeInterface {
                 amount, 
                 reduce_only, 
                 price_limit, 
-                price_limit_tp, 
-                price_limit_sl
+                price_tp, 
+                price_sl
             )
         );
         receipt

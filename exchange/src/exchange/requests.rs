@@ -13,16 +13,9 @@ pub enum Limit {
 impl Limit {
     pub fn compare(&self, value: Decimal) -> bool {
         match self {
-            Limit::Gte(price) => value >= *price,
-            Limit::Lte(price) => value <= *price,
+            Limit::Gte(limit) => value >= *limit,
+            Limit::Lte(limit) => value <= *limit,
             Limit::None => true,
-        }
-    }
-
-    pub fn is_some(&self) -> bool {
-        match self {
-            Limit::None => false,
-            _ => true,
         }
     }
 

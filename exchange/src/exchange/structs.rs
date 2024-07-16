@@ -41,6 +41,7 @@ pub struct AccountDetails {
     pub valid_requests_start: ListIndex,
     pub active_requests: Vec<RequestDetails>,
     pub requests_history: Vec<RequestDetails>,
+    pub requests_len: ListIndex,
     pub referral: Option<(NonFungibleGlobalId, ReferralData)>,
 }
 

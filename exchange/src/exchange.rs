@@ -110,6 +110,7 @@ mod exchange_mod {
 
             // Authority protected methods
             fn update(&self, update: MarginAccountUpdates);
+            // fn update_referral_id(&self, referral_id: Option<NonFungibleLocalId>);
             fn deposit_collateral_batch(&self, tokens: Vec<Bucket>);
             fn withdraw_collateral_batch(&self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket>;
         }
@@ -679,7 +680,7 @@ mod exchange_mod {
             &self, 
             referral_proof: Proof,
             tokens: Vec<Bucket>, 
-            referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>,
+            referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>, 
         ) -> Vec<Bucket> {
             authorize!(self, {
                 let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL)
@@ -723,7 +724,8 @@ mod exchange_mod {
             referral_proof: Proof,
         ) -> Bucket {
             authorize!(self, {
-                let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL).as_non_fungible().non_fungible();
+                let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL)
+                    .as_non_fungible().non_fungible();
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 let referral_id = checked_referral.local_id();
                 let referral_data = checked_referral.data();
@@ -945,7 +947,7 @@ mod exchange_mod {
             activate_requests: Vec<ListIndex>,
             cancel_requests: Vec<ListIndex>,
             status: Status,
-        ) {
+        ) -> ListIndex {
             authorize!(self, {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
@@ -969,10 +971,13 @@ mod exchange_mod {
                     cancel_requests,
                 });
 
+                let request_index = account.requests_len();
                 account.push_request(request, delay_seconds, expiry_seconds, status, vec![]);
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
+
+                request_index
             })
         }
 
@@ -986,9 +991,9 @@ mod exchange_mod {
             amount: Decimal,
             reduce_only: bool,
             price_limit: Limit,
-            price_limit_tp: Limit,
-            price_limit_sl: Limit,
-        ) {
+            price_tp: Option<Decimal>,
+            price_sl: Option<Decimal>,
+        ) -> (ListIndex, Option<ListIndex>, Option<ListIndex>) {
             authorize!(self, {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
@@ -996,20 +1001,43 @@ mod exchange_mod {
                 account.verify_level_3_auth();
 
                 let mut request_index = account.requests_len();
+                let index_order = request_index;
+
                 let mut activate_requests_order = vec![];
                 let mut cancel_requests_tp = vec![];
                 let mut cancel_requests_sl = vec![];
-                if price_limit_tp.is_some() {
+
+                let (price_limit_tp, index_tp) = if let Some(price) = price_tp {
                     let index_tp = request_index + 1;
                     request_index += 1;
                     activate_requests_order.push(index_tp);
                     cancel_requests_sl.push(index_tp);
-                }
-                if price_limit_tp.is_some() {
+
+                    let price_limit_tp = if amount.is_positive() {
+                        Limit::Gte(price)
+                    } else {
+                        Limit::Lte(price)
+                    };
+
+                    (Some(price_limit_tp), Some(index_tp))
+                } else {
+                    (None, None)
+                };
+                let (price_limit_sl, index_sl) = if let Some(price) = price_sl {
                     let index_sl = request_index + 1;
                     activate_requests_order.push(index_sl);
                     cancel_requests_tp.push(index_sl);
-                }
+
+                    let price_limit_sl = if amount.is_positive() {
+                        Limit::Lte(price)
+                    } else {
+                        Limit::Gte(price)
+                    };
+
+                    (Some(price_limit_sl), Some(index_sl))
+                } else {
+                    (None, None)
+                };
 
                 let request_order = Request::MarginOrder(RequestMarginOrder {
                     pair_id: pair_id.clone(),
@@ -1019,10 +1047,9 @@ mod exchange_mod {
                     activate_requests: activate_requests_order,
                     cancel_requests: vec![],
                 });
-
                 account.push_request(request_order, delay_seconds, expiry_seconds, STATUS_ACTIVE, vec![]);
 
-                if price_limit_tp.is_some() {
+                if let Some(price_limit_tp) = price_limit_tp {
                     let request_tp = Request::MarginOrder(RequestMarginOrder {
                         pair_id: pair_id.clone(),
                         amount,
@@ -1031,10 +1058,9 @@ mod exchange_mod {
                         activate_requests: vec![],
                         cancel_requests: cancel_requests_tp,
                     });
-
                     account.push_request(request_tp, delay_seconds, expiry_seconds, STATUS_DORMANT, vec![]);
                 }
-                if price_limit_sl.is_some() {
+                if let Some(price_limit_sl) = price_limit_sl {
                     let request_sl = Request::MarginOrder(RequestMarginOrder {
                         pair_id: pair_id.clone(),
                         amount,
@@ -1043,13 +1069,14 @@ mod exchange_mod {
                         activate_requests: vec![],
                         cancel_requests: cancel_requests_sl,
                     });
-
                     account.push_request(request_sl, delay_seconds, expiry_seconds, STATUS_DORMANT, vec![]);
                 }
 
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
+
+                (index_order, index_tp, index_sl)
             })
         }
 
@@ -1482,6 +1509,7 @@ mod exchange_mod {
                 valid_requests_start: account.valid_requests_start(),
                 active_requests,
                 requests_history,
+                requests_len: account.requests_len(),
                 referral: account.referral(),
             }
         }

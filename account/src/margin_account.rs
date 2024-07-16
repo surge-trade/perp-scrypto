@@ -36,6 +36,7 @@ pub mod margin_account {
 
             // Authority protected methods
             update => restrict_to: [authority];
+            update_referral_id => restrict_to: [authority];
             deposit_collateral_batch => restrict_to: [authority];
             withdraw_collateral_batch => restrict_to: [authority];
         }
@@ -148,6 +149,10 @@ pub mod margin_account {
             for removal in update.active_request_removals {
                 self.active_requests.remove(&removal);
             }
+        }
+
+        pub fn update_referral_id(&mut self, referral_id: Option<NonFungibleLocalId>) {
+            self.referral_id = referral_id;
         }
 
         pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
