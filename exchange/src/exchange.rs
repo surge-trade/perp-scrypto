@@ -208,9 +208,20 @@ mod exchange_mod {
 
     enable_method_auth! { 
         roles {
-            admin => updatable_by: [OWNER];
+            fee_delegator_admin => updatable_by: [OWNER];
+            treasury_admin => updatable_by: [OWNER];
+            referral_admin => updatable_by: [OWNER];
+            user_admin => updatable_by: [OWNER];
+
+            protocol_swap_user => updatable_by: [OWNER, user_admin];
+            liquidity_user => updatable_by: [OWNER, user_admin];
+            referral_user => updatable_by: [OWNER, user_admin];
+            account_management_user => updatable_by: [OWNER, user_admin];
+            remove_collateral_request_user => updatable_by: [OWNER, user_admin];
+            margin_order_request_user => updatable_by: [OWNER, user_admin];
+            cancel_request_user => updatable_by: [OWNER, user_admin];
+
             keeper => updatable_by: [OWNER];
-            user => updatable_by: [OWNER, admin];
         },
         methods { 
             // Owner methods
@@ -221,12 +232,14 @@ mod exchange_mod {
             update_pair_configs => restrict_to: [OWNER];
             update_collateral_configs => restrict_to: [OWNER];
             remove_collateral_config => restrict_to: [OWNER];
-            collect_treasury => restrict_to: [OWNER, admin];
-            collect_fee_delegator =>  restrict_to: [OWNER, admin];
-            mint_referral => restrict_to: [OWNER, admin];
-            mint_referral_with_allocation => restrict_to: [OWNER, admin];
-            update_referral => restrict_to: [OWNER, admin];
-            add_referral_allocation => restrict_to: [OWNER, admin];
+
+            // Admin methods
+            collect_treasury => restrict_to: [treasury_admin];
+            collect_fee_delegator =>  restrict_to: [fee_delegator_admin];
+            mint_referral => restrict_to: [referral_admin];
+            mint_referral_with_allocation => restrict_to: [referral_admin];
+            update_referral => restrict_to: [referral_admin];
+            add_referral_allocation => restrict_to: [referral_admin];
 
             // Get methods
             get_pairs => PUBLIC;
@@ -244,21 +257,22 @@ mod exchange_mod {
             get_treasury_balance => PUBLIC;
 
             // User methods
-            add_liquidity => restrict_to: [user];
-            remove_liquidity => restrict_to: [user];
-            create_referral_codes => restrict_to: [user];
-            create_referral_codes_from_allocation => restrict_to: [user];
-            create_account => restrict_to: [user];
-            set_level_1_auth => restrict_to: [user];
-            set_level_2_auth => restrict_to: [user];
-            set_level_3_auth => restrict_to: [user];
-            collect_referral_rewards => restrict_to: [user];
-            add_collateral => restrict_to: [user];
-            remove_collateral_request => restrict_to: [user];
-            margin_order_request => restrict_to: [user];
-            margin_order_tp_sl_request => restrict_to: [user];
-            cancel_request => restrict_to: [user];
-            cancel_requests => restrict_to: [user];
+            swap_protocol_fee => restrict_to: [protocol_swap_user];
+            add_liquidity => restrict_to: [liquidity_user];
+            remove_liquidity => restrict_to: [liquidity_user];
+            create_referral_codes => restrict_to: [referral_user];
+            create_referral_codes_from_allocation => restrict_to: [referral_user];
+            collect_referral_rewards => restrict_to: [referral_user];
+            create_account => restrict_to: [account_management_user];
+            set_level_1_auth => restrict_to: [account_management_user];
+            set_level_2_auth => restrict_to: [account_management_user];
+            set_level_3_auth => restrict_to: [account_management_user];
+            add_collateral => restrict_to: [account_management_user];
+            remove_collateral_request => restrict_to: [remove_collateral_request_user];
+            margin_order_request => restrict_to: [margin_order_request_user];
+            margin_order_tp_sl_request => restrict_to: [margin_order_request_user];
+            cancel_request => restrict_to: [cancel_request_user];
+            cancel_requests => restrict_to: [cancel_request_user];
 
             // Keeper methods
             process_request => restrict_to: [keeper];
@@ -266,7 +280,6 @@ mod exchange_mod {
             liquidate => restrict_to: [keeper];
             auto_deleverage => restrict_to: [keeper];
             update_pairs => restrict_to: [keeper];
-            swap_protocol_fee => restrict_to: [keeper];
         }
     }
 
@@ -312,9 +325,20 @@ mod exchange_mod {
             .instantiate()
             .prepare_to_globalize(owner_role)
             .roles(roles! {
-                admin => OWNER;
+                fee_delegator_admin => OWNER;
+                treasury_admin => OWNER;
+                referral_admin => OWNER;
+                user_admin => OWNER;
+                
+                protocol_swap_user => rule!(allow_all);
+                liquidity_user => rule!(allow_all);
+                referral_user => rule!(allow_all);
+                account_management_user => rule!(allow_all);
+                remove_collateral_request_user => rule!(allow_all);
+                margin_order_request_user => rule!(allow_all);
+                cancel_request_user => rule!(allow_all);
+
                 keeper => rule!(allow_all);
-                user => rule!(allow_all);
             })
             .with_address(component_reservation)
             .globalize()
@@ -343,8 +367,6 @@ mod exchange_mod {
                 new_exchange,
             });
         }
-
-        // --- ADMIN METHODS ---
 
         pub fn update_exchange_config(
             &mut self, 
@@ -398,6 +420,8 @@ mod exchange_mod {
             });
         }
 
+        // --- ADMIN METHODS ---
+
         pub fn collect_treasury(
             &self, 
         ) -> Bucket {
@@ -405,6 +429,11 @@ mod exchange_mod {
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 let fee_distributor = Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT);
                 let amount = fee_distributor.get_treasury_virtual_balance();
+
+                assert!(
+                    amount <= pool.base_tokens_amount(),
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS, amount, pool.base_tokens_amount()
+                );
 
                 fee_distributor.update_treasury_virtual_balance(dec!(0));
                 pool.add_virtual_balance(amount);
@@ -423,6 +452,11 @@ mod exchange_mod {
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 let fee_delegator = Global::<FeeDelegator>::from(FEE_DELEGATOR_COMPONENT);
                 let amount = fee_delegator.get_virtual_balance();
+
+                assert!(
+                    amount <= pool.base_tokens_amount(),
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS, amount, pool.base_tokens_amount()
+                );
 
                 fee_delegator.update_virtual_balance(dec!(0));
                 pool.add_virtual_balance(amount);
@@ -648,6 +682,36 @@ mod exchange_mod {
 
         // --- USER METHODS ---
 
+        pub fn swap_protocol_fee(&self, mut payment: Bucket) -> (Bucket, Bucket) {
+            authorize!(self, {
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
+
+                assert!(
+                    payment.resource_address() == PROTOCOL_RESOURCE,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(PROTOCOL_RESOURCE)
+                );
+
+                let burn_amount = config.exchange_config().protocol_burn_amount;
+                payment.take_advanced(burn_amount, TO_INFINITY).burn();
+                
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+                let amount = Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).get_protocol_virtual_balance();
+
+                assert!(
+                    amount <= pool.base_tokens_amount(),
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS, amount, pool.base_tokens_amount()
+                );
+
+                Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).update_protocol_virtual_balance(dec!(0));
+                pool.add_virtual_balance(amount);
+                let token = pool.withdraw(amount, TO_ZERO);
+                
+                pool.realize();
+
+                (token, payment)
+            })
+        }
+
         pub fn add_liquidity(
             &self,
             payment: Bucket,
@@ -732,6 +796,11 @@ mod exchange_mod {
 
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 let amount = referral_data.balance;
+
+                assert!(
+                    amount <= pool.base_tokens_amount(),
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS, amount, pool.base_tokens_amount()
+                );
 
                 referral_manager.update_non_fungible_data(referral_id, "balance", dec!(0));
                 pool.add_virtual_balance(amount);
@@ -1281,31 +1350,6 @@ mod exchange_mod {
             })
         }
 
-        pub fn swap_protocol_fee(&self, mut payment: Bucket) -> (Bucket, Bucket) {
-            authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
-
-                assert!(
-                    payment.resource_address() == PROTOCOL_RESOURCE,
-                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(PROTOCOL_RESOURCE)
-                );
-
-                let burn_amount = config.exchange_config().protocol_burn_amount;
-                payment.take_advanced(burn_amount, TO_INFINITY).burn();
-                
-                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-                let amount = Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).get_protocol_virtual_balance();
-
-                Global::<FeeDistributor>::from(FEE_DISTRIBUTOR_COMPONENT).update_protocol_virtual_balance(dec!(0));
-                pool.add_virtual_balance(amount);
-                let token = pool.withdraw(amount, TO_ZERO);
-                
-                pool.realize();
-
-                (token, payment)
-            })
-        }
-
         // --- INTERNAL METHODS ---
 
         fn _max_age(
@@ -1721,8 +1765,12 @@ mod exchange_mod {
             claims.retain(|(resource, amount)| {
                 if *resource == BASE_RESOURCE {
                     assert!(
+                        *amount <= account.virtual_balance(),
+                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_BALANCE, *amount, account.virtual_balance()
+                    );
+                    assert!(
                         *amount <= pool.base_tokens_amount(),
-                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REMOVE_COLLATERAL_INSUFFICIENT_POOL_TOKENS, *amount, pool.base_tokens_amount()
+                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS, *amount, pool.base_tokens_amount()
                     );
 
                     let base_token = pool.withdraw(*amount, TO_ZERO);
