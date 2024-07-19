@@ -1,5 +1,6 @@
 use scrypto_test::prelude::*;
 use super::Resources;
+use ::common::*;
 
 #[derive(Clone)]
 pub struct Components {
@@ -140,7 +141,7 @@ fn create_oracle(
         oracle_package, 
         "Oracle", 
         "new", 
-        manifest_args!(resources.owner_role.clone(), hashmap!(0 => oracle_key))
+        manifest_args!(resources.owner_role.clone(), hashmap!(0 as ListIndex => oracle_key))
     ).expect_commit_success().new_component_addresses()[0];
     
     envs.insert("ORACLE_PACKAGE".to_owned(), oracle_package.to_string(encoder));

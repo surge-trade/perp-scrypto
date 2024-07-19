@@ -17,3 +17,26 @@ pub fn set_time(time: Instant, ledger: &mut LedgerSimulator<NoExtension, InMemor
         )
         .unwrap();
 }
+
+pub fn check_error_msg(err: &RuntimeError, expected: &str) -> bool {
+    match err {
+        RuntimeError::ApplicationError(ApplicationError::PanicMessage(msg)) => {
+            msg.contains(expected)
+        },
+        _ => false,
+    }
+}
+
+pub fn parse_added_nft_ids(
+    result: &CommitResult,
+    resource: ResourceAddress,
+) -> BTreeSet<NonFungibleLocalId> {
+    result.vault_balance_changes()
+        .into_iter().find_map(|(_, (r, c))| {
+            if *r == resource {
+                Some(c.clone().added_non_fungibles().clone())
+            } else {
+                None
+            }
+        }).unwrap()
+}

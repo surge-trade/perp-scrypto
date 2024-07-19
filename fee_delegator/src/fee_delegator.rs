@@ -2,7 +2,7 @@ mod errors;
 
 use scrypto::prelude::*;
 use common::{_AUTHORITY_RESOURCE, TO_ZERO};
-use self::errors::*;
+pub use self::errors::*;
 
 #[blueprint]
 mod fee_delegator_mod {

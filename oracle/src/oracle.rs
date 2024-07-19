@@ -2,7 +2,7 @@ mod errors;
 
 use scrypto::prelude::*;
 use common::{PairId, ListIndex, _AUTHORITY_RESOURCE};
-use self::errors::*;
+pub use self::errors::*;
 
 #[derive(ScryptoSbor)]
 pub struct Price {

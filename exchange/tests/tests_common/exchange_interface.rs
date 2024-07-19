@@ -2,14 +2,11 @@ use scrypto_test::prelude::*;
 use super::*;
 
 use ::common::*;
-use config::*;
-use account::*;
 use exchange::*;
-use oracle::*;
 
 pub struct ExchangeInterface {
     pub public_key: Secp256k1PublicKey,
-    pub account: ComponentAddress,
+    pub test_account: ComponentAddress,
     pub resources: Resources,
     pub components: Components,
     pub ledger: LedgerSimulator<NoExtension, InMemorySubstateDatabase>,
@@ -25,12 +22,86 @@ impl ExchangeInterface {
     ) -> Self {
         Self { 
             public_key,
-            account,
+            test_account: account,
             resources, 
             components, 
             ledger 
         }
     }
+
+    // Useful helpers
+
+    pub fn test_account_balance(
+        &mut self, 
+        resource: ResourceAddress,
+    ) -> Decimal {
+        self.ledger.get_component_balance(self.test_account, resource)
+    }
+
+    pub fn mint_test_token(
+        &mut self,
+        amount: Decimal,
+        divisibility: u8,
+    ) -> ResourceAddress {
+        self.ledger.create_fungible_resource(amount, divisibility, self.test_account)
+    }
+
+    pub fn mint_test_nft(
+        &mut self,
+    ) -> (ResourceAddress, NonFungibleLocalId) {
+        let resource = self.ledger.create_non_fungible_resource_advanced(NonFungibleResourceRoles::default(), self.test_account, 1);
+        let id = NonFungibleLocalId::integer(1);
+
+        (resource, id)
+    }
+
+    pub fn get_role(
+        &mut self,
+        component: ComponentAddress,
+        role_module: ModuleId,
+        role_name: &str,
+    ) -> AccessRule {
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .get_role(component, role_module, RoleKey::new(role_name))
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt.expect_commit_success().output(1)
+    }
+
+    pub fn increment_ledger_time(
+        &mut self,
+        seconds: i64,
+    ) -> Instant {
+        let current_time = self.ledger.get_current_time(TimePrecisionV2::Second);
+        let new_time = current_time.add_seconds(seconds).unwrap();
+        set_time(new_time, &mut self.ledger);
+        new_time
+    }
+
+    pub fn parse_event<T: ScryptoEvent>(
+        &mut self,
+        result: &CommitResult,
+    ) -> T {
+        result.application_events
+            .iter()
+            .find_map(|(event_type_identifier, event_data)| {
+                if self.ledger.is_event_name_equal::<T>(event_type_identifier) {
+                    Some(scrypto_decode::<T>(event_data).unwrap())
+                } else {
+                    None
+                }
+            }).unwrap()
+    }
+
+    pub fn get_pool_value(
+        &mut self,
+    ) -> Decimal {
+        let pool_details = self.get_pool_details();
+        pool_details.base_tokens_amount + pool_details.virtual_balance + pool_details.unrealized_pool_funding + pool_details.pnl_snap
+    }
+
+    // Core exchange methods
 
     pub fn update_exchange_config(
         &mut self,
@@ -90,7 +161,7 @@ impl ExchangeInterface {
                 "collect_treasury", 
                 manifest_args!()
             )
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -107,7 +178,7 @@ impl ExchangeInterface {
                 "collect_fee_delegator", 
                 manifest_args!(fee_delegator)
             )
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -126,7 +197,7 @@ impl ExchangeInterface {
                 "mint_referral", 
                 manifest_args!(fee_referral, fee_rebate, max_referrals)
             )
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -137,23 +208,30 @@ impl ExchangeInterface {
         fee_referral: Decimal,
         fee_rebate: Decimal,
         max_referrals: u64,
-        allocation_usd_amount: Decimal,
+        allocation_tokens: Vec<(ResourceAddress, Decimal)>,
+        allocation_claims: Vec<(ResourceAddress, Decimal)>,
         allocation_count: u64,
     ) -> TransactionReceiptV1 {
-        let allocation_claims = vec![(self.resources.base_resource, allocation_usd_amount / Decimal::from(allocation_count))];
-
-        let manifest = ManifestBuilder::new()
-            .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.base_resource, allocation_usd_amount)
-            .take_all_from_worktop(self.resources.base_resource, "token")
-            .with_bucket("token", |manifest, bucket| {
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        let mut bucket_names = vec![];
+        for (i, token) in allocation_tokens.into_iter().enumerate() {
+            let bucket_name = format!("token{}", i);
+            bucket_names.push(bucket_name.clone());
+            builder = builder 
+                .withdraw_from_account(self.test_account, token.0, token.1)
+                .take_all_from_worktop(self.resources.base_resource, bucket_name);
+        }
+        let manifest = builder
+            .with_name_lookup(|manifest, lookup| {
+                let buckets: Vec<ManifestBucket> = bucket_names.into_iter().map(|n| lookup.bucket(n)).collect();
                 manifest.call_method(
                     self.components.exchange_component, 
                     "create_referral_codes_from_allocation", 
-                    manifest_args!(fee_referral, fee_rebate, max_referrals, vec![bucket], allocation_claims, allocation_count)
+                    manifest_args!(fee_referral, fee_rebate, max_referrals, buckets, allocation_claims, allocation_count)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -177,23 +255,30 @@ impl ExchangeInterface {
     pub fn add_referral_allocation(
         &mut self,
         referral_id: NonFungibleLocalId,
-        allocation_usd_amount: Decimal,
+        allocation_tokens: Vec<(ResourceAddress, Decimal)>,
+        allocation_claims: Vec<(ResourceAddress, Decimal)>,
         allocation_count: u64,
     ) -> TransactionReceiptV1 {
-        let allocation_claims = vec![(self.resources.base_resource, allocation_usd_amount / Decimal::from(allocation_count))];
-
-        let manifest = ManifestBuilder::new()
-            .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.base_resource, allocation_usd_amount)
-            .take_all_from_worktop(self.resources.base_resource, "token")
-            .with_bucket("token", |manifest, bucket| {
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        let mut bucket_names = vec![];
+        for (i, token) in allocation_tokens.into_iter().enumerate() {
+            let bucket_name = format!("token{}", i);
+            bucket_names.push(bucket_name.clone());
+            builder = builder 
+                .withdraw_from_account(self.test_account, token.0, token.1)
+                .take_all_from_worktop(self.resources.base_resource, bucket_name);
+        }
+        let manifest = builder
+            .with_name_lookup(|manifest, lookup| {
+                let buckets: Vec<ManifestBucket> = bucket_names.into_iter().map(|n| lookup.bucket(n)).collect();
                 manifest.call_method(
                     self.components.exchange_component, 
                     "add_referral_allocation", 
-                    manifest_args!(referral_id, vec![bucket], allocation_claims, allocation_count)
+                    manifest_args!(referral_id, buckets, allocation_claims, allocation_count)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -215,7 +300,7 @@ impl ExchangeInterface {
     pub fn get_permissions(
         &mut self,
         access_rule: AccessRule,
-    ) -> Vec<AccessRule> {
+    ) -> Permissions {
         let receipt = self.ledger.call_method(
             self.components.exchange_component, 
             "get_permissions", 
@@ -233,7 +318,7 @@ impl ExchangeInterface {
         let receipt = self.ledger.call_method(
             self.components.exchange_component, 
             "get_account_details", 
-            manifest_args!(margin_account_component)
+            manifest_args!(margin_account_component, history_n, history_start)
         );
         receipt.expect_commit_success().output(1)
     }
@@ -351,12 +436,12 @@ impl ExchangeInterface {
     
     pub fn add_liquidity(
         &mut self,
-        amount: Decimal,
+        token: (ResourceAddress, Decimal)
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.base_resource, amount)
-            .take_all_from_worktop(self.resources.base_resource, "token")
+            .withdraw_from_account(self.test_account, token.0, token.1)
+            .take_all_from_worktop(token.0, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
                     self.components.exchange_component, 
@@ -364,7 +449,7 @@ impl ExchangeInterface {
                     manifest_args!(bucket)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -372,12 +457,12 @@ impl ExchangeInterface {
 
     pub fn remove_liquidity(
         &mut self,
-        amount: Decimal,
+        token: (ResourceAddress, Decimal)
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.base_resource, amount)
-            .take_all_from_worktop(self.resources.lp_resource, "token")
+            .withdraw_from_account(self.test_account, token.0, token.1)
+            .take_all_from_worktop(token.0, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
                     self.components.exchange_component, 
@@ -385,7 +470,7 @@ impl ExchangeInterface {
                     manifest_args!(bucket)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -393,27 +478,35 @@ impl ExchangeInterface {
 
     pub fn create_referral_codes(
         &mut self,
-        referral_id: NonFungibleLocalId,
-        usd_amount: Decimal,
+        referral_proof: (ResourceAddress, NonFungibleLocalId),
+        tokens: Vec<(ResourceAddress, Decimal)>,
         referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>,
     ) -> TransactionReceiptV1 {
-        let manifest = ManifestBuilder::new()
+        let mut builder = ManifestBuilder::new()
             .lock_fee_from_faucet()
             .create_proof_from_account_of_non_fungible(
-                self.account, 
-                NonFungibleGlobalId::new(self.resources.referral_resource, referral_id)
+                self.test_account, 
+                NonFungibleGlobalId::new(referral_proof.0, referral_proof.1)
             )
-            .pop_from_auth_zone("referral")
-            .withdraw_from_account(self.account, self.resources.base_resource, usd_amount)
-            .take_all_from_worktop(self.resources.base_resource, "token")
+            .pop_from_auth_zone("referral");
+        let mut bucket_names = vec![];
+        for (i, token) in tokens.into_iter().enumerate() {
+            let bucket_name = format!("token{}", i);
+            bucket_names.push(bucket_name.clone());
+            builder = builder 
+                .withdraw_from_account(self.test_account, token.0, token.1)
+                .take_all_from_worktop(self.resources.base_resource, bucket_name);
+        }
+        let manifest = builder
             .with_name_lookup(|manifest, lookup| {
+                let buckets: Vec<ManifestBucket> = bucket_names.into_iter().map(|n| lookup.bucket(n)).collect();
                 manifest.call_method(
                     self.components.exchange_component, 
                     "create_referral_codes", 
-                    manifest_args!(lookup.proof("referral"), lookup.bucket("token"), referral_hashes)
+                    manifest_args!(lookup.proof("referral"), buckets, referral_hashes)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -421,15 +514,15 @@ impl ExchangeInterface {
 
     pub fn create_referral_codes_from_allocation(
         &mut self,
-        referral_id: NonFungibleLocalId,
+        referral_proof: (ResourceAddress, NonFungibleLocalId),
         allocation_index: ListIndex,
         referral_hashes: HashMap<Hash, u64>,
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
             .create_proof_from_account_of_non_fungible(
-                self.account, 
-                NonFungibleGlobalId::new(self.resources.referral_resource, referral_id)
+                self.test_account, 
+                NonFungibleGlobalId::new(referral_proof.0, referral_proof.1)
             )
             .pop_from_auth_zone("referral")
             .with_name_lookup(|manifest, lookup| {
@@ -446,13 +539,13 @@ impl ExchangeInterface {
 
     pub fn collect_referral_rewards(
         &mut self,
-        referral_id: NonFungibleLocalId,
+        referral_proof: (ResourceAddress, NonFungibleLocalId),
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
             .create_proof_from_account_of_non_fungible(
-                self.account, 
-                NonFungibleGlobalId::new(self.resources.referral_resource, referral_id)
+                self.test_account, 
+                NonFungibleGlobalId::new(referral_proof.0, referral_proof.1)
             )
             .pop_from_auth_zone("referral")
             .with_name_lookup(|manifest, lookup| {
@@ -462,7 +555,7 @@ impl ExchangeInterface {
                     manifest_args!(lookup.proof("referral"))
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -471,25 +564,32 @@ impl ExchangeInterface {
     pub fn create_account(
         &mut self,
         initial_rule: AccessRule,
-        preload_usd_amount: Decimal,
+        tokens: Vec<(ResourceAddress, Decimal)>,
         referral_code: Option<String>,
-    ) -> ComponentAddress {
+    ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
-        let token: (ResourceAddress, Decimal)  = (self.resources.base_resource, preload_usd_amount);
         let reservation: Option<ManifestAddressReservation> = None;
 
-        let manifest = ManifestBuilder::new()
-            .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, token.0, token.1)
-            .take_all_from_worktop(token.0, "token")
-            .with_bucket("token", |manifest, bucket| {
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        let mut bucket_names = vec![];
+        for (i, token) in tokens.into_iter().enumerate() {
+            let bucket_name = format!("token{}", i);
+            bucket_names.push(bucket_name.clone());
+            builder = builder 
+                .withdraw_from_account(self.test_account, token.0, token.1)
+                .take_all_from_worktop(self.resources.base_resource, bucket_name);
+        }
+        let manifest = builder
+            .with_name_lookup(|manifest, lookup| {
+                let buckets: Vec<ManifestBucket> = bucket_names.into_iter().map(|n| lookup.bucket(n)).collect();
                 manifest.call_method(
                     self.components.exchange_component, 
                     "create_account", 
                     manifest_args!(
                         fee_oath,
                         initial_rule,
-                        vec![bucket],
+                        buckets,
                         referral_code,
                         reservation,
                     )
@@ -497,55 +597,79 @@ impl ExchangeInterface {
             })    
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
-        receipt.expect_commit_success();
-        let margin_account_component = receipt.expect_commit_success().new_component_addresses()[0];
-        
-        margin_account_component
+        receipt
     }
 
     pub fn set_level_1_auth(
         &mut self,
+        proof: (ResourceAddress, NonFungibleLocalId),
         margin_account_component: ComponentAddress,
         rule: AccessRule,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
-            self.components.exchange_component, 
-            "set_level_1_auth", 
-            manifest_args!(fee_oath, margin_account_component, rule)
-        );
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .create_proof_from_account_of_non_fungible(
+                self.test_account, 
+                NonFungibleGlobalId::new(proof.0, proof.1)
+            )
+            .call_method(
+                self.components.exchange_component, 
+                "set_level_1_auth", 
+                manifest_args!(fee_oath, margin_account_component, rule)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
     pub fn set_level_2_auth(
         &mut self,
+        proof: (ResourceAddress, NonFungibleLocalId),
         margin_account_component: ComponentAddress,
         rule: AccessRule,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
+        let manifest = ManifestBuilder::new()
+        .lock_fee_from_faucet()
+        .create_proof_from_account_of_non_fungible(
+            self.test_account, 
+            NonFungibleGlobalId::new(proof.0, proof.1)
+        )
+        .call_method(
             self.components.exchange_component, 
             "set_level_2_auth", 
             manifest_args!(fee_oath, margin_account_component, rule)
-        );
-        receipt
+        )
+        .build();
+    let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+    receipt
     }
 
     pub fn set_level_3_auth(
         &mut self,
+        proof: (ResourceAddress, NonFungibleLocalId),
         margin_account_component: ComponentAddress,
         rule: AccessRule,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
+        let manifest = ManifestBuilder::new()
+        .lock_fee_from_faucet()
+        .create_proof_from_account_of_non_fungible(
+            self.test_account, 
+            NonFungibleGlobalId::new(proof.0, proof.1)
+        )
+        .call_method(
             self.components.exchange_component, 
             "set_level_3_auth", 
             manifest_args!(fee_oath, margin_account_component, rule)
-        );
-        receipt
+        )
+        .build();
+    let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+    receipt
     }
 
     pub fn add_collateral(
@@ -584,7 +708,7 @@ impl ExchangeInterface {
         claims: Vec<(ResourceAddress, Decimal)>,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
-        let target_account: ComponentAddress = self.account;
+        let target_account: ComponentAddress = self.test_account;
 
         let receipt = self.ledger.call_method(
             self.components.exchange_component, 
@@ -692,16 +816,6 @@ impl ExchangeInterface {
         receipt
     }
 
-    pub fn increment_ledger_time(
-        &mut self,
-        seconds: i64,
-    ) -> Instant {
-        let current_time = self.ledger.get_current_time(TimePrecisionV2::Second);
-        let new_time = current_time.add_seconds(seconds).unwrap();
-        set_time(new_time, &mut self.ledger);
-        new_time
-    }
-
     pub fn process_request(
         &mut self,
         margin_account_component: ComponentAddress,
@@ -711,7 +825,7 @@ impl ExchangeInterface {
         let price_data = scrypto_encode(&prices).unwrap();
         let price_data_hash = keccak256_hash(&price_data).to_vec();
         let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature, 0));
+        let price_updates = Some((price_data, price_signature, 0 as ListIndex));
     
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -724,7 +838,7 @@ impl ExchangeInterface {
                     price_updates
                 )
             )
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -744,7 +858,7 @@ impl ExchangeInterface {
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.base_resource, payment_amount)
+            .withdraw_from_account(self.test_account, self.resources.base_resource, payment_amount)
             .take_all_from_worktop(self.resources.base_resource, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
@@ -753,7 +867,7 @@ impl ExchangeInterface {
                     manifest_args!(margin_account_component, resource, bucket, price_updates)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -772,7 +886,7 @@ impl ExchangeInterface {
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.base_resource, payment_amount)
+            .withdraw_from_account(self.test_account, self.resources.base_resource, payment_amount)
             .take_all_from_worktop(self.resources.base_resource, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
@@ -781,7 +895,7 @@ impl ExchangeInterface {
                     manifest_args!(margin_account_component, bucket, price_updates)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -805,7 +919,7 @@ impl ExchangeInterface {
                 "auto_deleverage", 
                 manifest_args!(margin_account_component, pair_id, price_updates)
             )
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -828,7 +942,7 @@ impl ExchangeInterface {
                 "update_pairs", 
                 manifest_args!(pair_ids, price_updates)
             )
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
@@ -840,7 +954,7 @@ impl ExchangeInterface {
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.account, self.resources.protocol_resource, payment_amount)
+            .withdraw_from_account(self.test_account, self.resources.protocol_resource, payment_amount)
             .take_all_from_worktop(self.resources.protocol_resource, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
@@ -849,7 +963,7 @@ impl ExchangeInterface {
                     manifest_args!(bucket)
                 )
             })
-            .deposit_batch(self.account)
+            .deposit_batch(self.test_account)
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt

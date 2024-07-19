@@ -38,6 +38,7 @@ pub struct EventPairUpdates {
 #[derive(ScryptoSbor, ScryptoEvent)]
 pub struct EventAccountCreation {
     pub account: ComponentAddress,
+    pub referral_id: Option<NonFungibleLocalId>,
 }
 
 #[derive(ScryptoSbor, ScryptoEvent)]

@@ -12,12 +12,13 @@ use self::virtual_config::*;
 use self::virtual_margin_pool::*;
 use self::virtual_margin_account::*;
 use self::virtual_oracle::*;
-use common::*;
-use config::*;
-use account::*;
-use pool::*;
-use referral_generator::*;
-use permission_registry::*;
+pub use common::*;
+pub use oracle::*;
+pub use config::*;
+pub use account::*;
+pub use pool::*;
+pub use referral_generator::*;
+pub use permission_registry::*;
 pub use self::errors::*;
 pub use self::events::*;
 pub use self::requests::*;
@@ -834,7 +835,7 @@ mod exchange_mod {
                     initial_rule.clone(),
                     initial_rule.clone(),
                     initial_rule.clone(),
-                    referral_id,
+                    referral_id.clone(),
                     reservation
                 );
                 let account_component = account_global.address();
@@ -862,6 +863,7 @@ mod exchange_mod {
 
                 Runtime::emit_event(EventAccountCreation {
                     account: account_component,
+                    referral_id,
                 });
 
                 account_global

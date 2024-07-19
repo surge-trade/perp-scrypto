@@ -3,7 +3,7 @@ mod structs;
 
 use scrypto::prelude::*;
 use common::{ListIndex, Vaults, _AUTHORITY_RESOURCE, TO_ZERO, TO_INFINITY};
-use self::errors::*;
+pub use self::errors::*;
 pub use self::structs::*;
 
 #[blueprint]
@@ -92,6 +92,10 @@ mod referral_generator_mod {
             let mut remainder_tokens: Vec<Bucket> = vec![];
             for (resource_address, &total_claim) in total_claims.iter() {
                 let mut token = mapped_tokens.remove(resource_address).unwrap_or(Bucket::new(*resource_address));
+                assert!(
+                    total_claim >= token.amount(),
+                    "{}", ERROR_INSUFFICIENT_TOKEN
+                );
                 let referral_token = token.take_advanced(total_claim, TO_INFINITY);
                 referral_tokens.push(referral_token);
                 remainder_tokens.push(token);
@@ -142,6 +146,10 @@ mod referral_generator_mod {
             let mut remainder_tokens: Vec<Bucket> = vec![];
             for (resource_address, &total_claim) in total_claims.iter() {
                 let mut token = mapped_tokens.remove(resource_address).unwrap_or(Bucket::new(*resource_address));
+                assert!(
+                    total_claim >= token.amount(),
+                    "{}", ERROR_INSUFFICIENT_TOKEN
+                );
                 let referral_token = token.take_advanced(total_claim, TO_INFINITY);
                 referral_tokens.push(referral_token);
                 remainder_tokens.push(token);
@@ -179,7 +187,7 @@ mod referral_generator_mod {
 
             assert!(
                 referral_allocation.count <= referral_allocation.max_count,
-                "{}", ERROR_ALLOCATION_COUNT_EXCEEDED
+                "{}", ERROR_ALLOCATION_LIMIT_REACHED
             );
 
             let claims = &referral_allocation.claims;

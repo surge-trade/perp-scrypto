@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 
-#[derive(ScryptoSbor, NonFungibleData, Clone, ManifestSbor)]
+#[derive(ScryptoSbor, NonFungibleData, Clone, ManifestSbor, Debug)]
 pub struct ReferralData {
     #[mutable] pub fee_referral: Decimal,
     #[mutable] pub fee_rebate: Decimal,

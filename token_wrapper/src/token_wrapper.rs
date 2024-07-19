@@ -2,7 +2,7 @@ mod errors;
 
 use scrypto::prelude::*;
 use common::{ListIndex, List, _BASE_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO, TO_INFINITY};
-use self::errors::*;
+pub use self::errors::*;
 
 #[derive(ScryptoSbor)]
 pub struct Input {
