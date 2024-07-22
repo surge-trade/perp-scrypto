@@ -1,6 +1,6 @@
 use scrypto::prelude::*;
 
-#[derive(ScryptoSbor, NonFungibleData, Clone, ManifestSbor, Debug)]
+#[derive(ScryptoSbor, ManifestSbor, NonFungibleData, Clone, Debug)]
 pub struct ReferralData {
     #[mutable] pub fee_referral: Decimal,
     #[mutable] pub fee_rebate: Decimal,
@@ -10,7 +10,7 @@ pub struct ReferralData {
     #[mutable] pub total_rewarded: Decimal,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct ReferralCode {
     pub referral_id: NonFungibleLocalId,
     pub claims: Vec<(ResourceAddress, Decimal)>,
@@ -18,7 +18,7 @@ pub struct ReferralCode {
     pub max_count: u64,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct ReferralAllocation {
     pub claims: Vec<(ResourceAddress, Decimal)>,
     pub count: u64,

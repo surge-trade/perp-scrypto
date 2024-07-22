@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+#[path = "tests_common/mod.rs"]
 mod tests_common;
 use tests_common::*;
 
@@ -9,15 +10,15 @@ fn test_create_account_without_referral() {
 
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
-        rule!(allow_all),
+        rule_0.clone(),
         vec![],
         None,
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), rule_0);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), rule_0);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), rule_0);
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), Some(rule_0.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), Some(rule_0.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), Some(rule_0.clone()));
 
     let permissions = interface.get_permissions(rule_0);
     assert_eq!(permissions.level_1, indexset!(margin_account_component));
@@ -58,8 +59,9 @@ fn test_create_account_with_referral() {
     );
     interface.create_referral_codes((referral_resource, referral_id.clone()), vec![(base_resource, base_input_0)], referral_hashes).expect_commit_success();
 
+    let rule_1 = rule!(allow_all);
     let result = interface.create_account(
-        rule!(allow_all),
+        rule_1,
         vec![],
         Some(referral_code.clone()),
     ).expect_commit_success().clone();
@@ -80,9 +82,10 @@ fn test_create_account_with_tokens() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
+    let rule_0 = rule!(allow_all);
     let base_input_0 = dec!(10);
     let result = interface.create_account(
-        rule!(allow_all),
+        rule_0,
         vec![(base_resource, base_input_0)],
         None,
     ).expect_commit_success().clone();
@@ -95,6 +98,10 @@ fn test_create_account_with_tokens() {
     let event: EventAccountCreation = interface.parse_event(&result);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.referral_id, None);
+
+    let event: EventAddCollateral = interface.parse_event(&result);
+    assert_eq!(event.account, margin_account_component);
+    assert_eq!(event.amounts, vec![(base_resource, base_input_0)]);
 }
 
 // TODO: with address reservation

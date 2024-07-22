@@ -981,7 +981,7 @@ mod exchange_mod {
             account: ComponentAddress, 
             target_account: ComponentAddress,
             claims: Vec<(ResourceAddress, Decimal)>,
-        ) {
+        ) -> ListIndex {
             authorize!(self, {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
                 let mut account = self._handle_fee_oath(account, &config, fee_oath);
@@ -998,10 +998,13 @@ mod exchange_mod {
                     claims,
                 });
 
+                let request_index = account.requests_len();
                 account.push_request(request, 0, expiry_seconds, STATUS_ACTIVE, vec![target_account]);
                 self._assert_active_requests_limit(&config, &account);
 
                 account.realize();
+
+                request_index
             })
         }
 
@@ -1432,7 +1435,7 @@ mod exchange_mod {
         ) {
             assert!(
                 config.collateral_configs().contains_key(&resource),
-                "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_COLLATERAL_INVALID, Runtime::bech32_encode_address(resource), 
+                "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_COLLATERAL, Runtime::bech32_encode_address(resource), 
                 config.collateral_configs().keys().map(|r| Runtime::bech32_encode_address(*r)).collect::<Vec<String>>()
             );
         }

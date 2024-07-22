@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+#[path = "tests_common/mod.rs"]
 mod tests_common;
 use tests_common::*;
 
@@ -24,9 +25,9 @@ fn test_set_level_1_auth() {
         rule_1.clone(),
     ).expect_commit_success();
 
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), rule_1);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), rule_0);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), rule_0);
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), Some(rule_1.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), Some(rule_0.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), Some(rule_0.clone()));
 
     let permissions_a = interface.get_permissions(rule_0);
     assert_eq!(permissions_a.level_1, indexset!());
@@ -60,9 +61,9 @@ fn test_set_level_2_auth() {
         rule_1.clone(),
     ).expect_commit_success();
 
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), rule_0);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), rule_1);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), rule_0);
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), Some(rule_0.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), Some(rule_1.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), Some(rule_0.clone()));
 
     let permissions_a = interface.get_permissions(rule_0);
     assert_eq!(permissions_a.level_1, indexset!(margin_account_component));
@@ -96,9 +97,9 @@ fn test_set_level_3_auth() {
         rule_1.clone(),
     ).expect_commit_success();
 
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), rule_0);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), rule_0);
-    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), rule_1);
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_1"), Some(rule_0.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_2"), Some(rule_0.clone()));
+    assert_eq!(interface.get_role(margin_account_component, ModuleId::Main, "level_3"), Some(rule_1.clone()));
 
     let permissions_a = interface.get_permissions(rule_0);
     assert_eq!(permissions_a.level_1, indexset!(margin_account_component));

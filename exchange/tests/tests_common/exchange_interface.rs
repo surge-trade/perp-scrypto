@@ -60,13 +60,19 @@ impl ExchangeInterface {
         component: ComponentAddress,
         role_module: ModuleId,
         role_name: &str,
-    ) -> AccessRule {
+    ) -> Option<AccessRule> {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
             .get_role(component, role_module, RoleKey::new(role_name))
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt.expect_commit_success().output(1)
+    }
+
+    pub fn ledger_time(
+        &mut self,
+    ) -> Instant {
+        self.ledger.get_current_time(TimePrecisionV2::Second)
     }
 
     pub fn increment_ledger_time(
@@ -129,7 +135,7 @@ impl ExchangeInterface {
 
     pub fn update_collateral_configs(
         &mut self,
-        collateral_configs: Vec<CollateralConfig>
+        collateral_configs: Vec<(ResourceAddress, CollateralConfig)>
     ) -> TransactionReceiptV1 {
         let receipt = self.ledger.call_method(
             self.components.exchange_component, 
@@ -227,7 +233,7 @@ impl ExchangeInterface {
                 let buckets: Vec<ManifestBucket> = bucket_names.into_iter().map(|n| lookup.bucket(n)).collect();
                 manifest.call_method(
                     self.components.exchange_component, 
-                    "create_referral_codes_from_allocation", 
+                    "mint_referral_with_allocation", 
                     manifest_args!(fee_referral, fee_rebate, max_referrals, buckets, allocation_claims, allocation_count)
                 )
             })
@@ -674,8 +680,6 @@ impl ExchangeInterface {
 
     pub fn add_collateral(
         &mut self,
-        public_key: Secp256k1PublicKey,
-        account: ComponentAddress,
         margin_account_component: ComponentAddress,
         token: (ResourceAddress, Decimal),
     ) -> TransactionReceiptV1 {
@@ -683,7 +687,7 @@ impl ExchangeInterface {
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(account, token.0, token.1)
+            .withdraw_from_account(self.test_account, token.0, token.1)
             .take_all_from_worktop(token.0, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
@@ -697,7 +701,7 @@ impl ExchangeInterface {
                 )
             })    
             .build();
-        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
@@ -705,10 +709,10 @@ impl ExchangeInterface {
         &mut self,
         expiry_seconds: u64,
         margin_account_component: ComponentAddress,
+        target_account: ComponentAddress,
         claims: Vec<(ResourceAddress, Decimal)>,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
-        let target_account: ComponentAddress = self.test_account;
 
         let receipt = self.ledger.call_method(
             self.components.exchange_component, 

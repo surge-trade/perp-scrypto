@@ -1,8 +1,9 @@
 use scrypto_test::prelude::*;
 use once_cell::sync::Lazy;
+use std::sync::Mutex;
 use super::*;
 
-pub static SETUP: Lazy<(LedgerSimulatorSnapshot, Secp256k1PublicKey, ComponentAddress, Resources, Components)> = Lazy::new(initialize_setup);
+pub static SETUP: Lazy<Mutex<(LedgerSimulatorSnapshot, Secp256k1PublicKey, ComponentAddress, Resources, Components)>> = Lazy::new(|| Mutex::new(initialize_setup()));
 
 fn initialize_setup() -> (LedgerSimulatorSnapshot, Secp256k1PublicKey, ComponentAddress, Resources, Components) {
     let mut ledger = LedgerSimulatorBuilder::new().without_kernel_trace().build();
@@ -16,11 +17,12 @@ fn initialize_setup() -> (LedgerSimulatorSnapshot, Secp256k1PublicKey, Component
 }
 
 pub fn get_setup() -> ExchangeInterface {
-    let snapshot = SETUP.0.clone();
-    let public_key = SETUP.1.clone();
-    let account = SETUP.2.clone();
-    let resources = SETUP.3.clone();
-    let components = SETUP.4.clone();
+    let setup = SETUP.lock().unwrap();
+    let snapshot = setup.0.clone();
+    let public_key = setup.1.clone();
+    let account = setup.2.clone();
+    let resources = setup.3.clone();
+    let components = setup.4.clone();
     
     let ledger = LedgerSimulatorBuilder::new().with_kernel_trace().build_from_snapshot(snapshot);
     let exchange = ExchangeInterface::new(public_key, account, resources, components, ledger);

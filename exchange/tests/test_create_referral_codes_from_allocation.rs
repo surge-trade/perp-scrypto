@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+#[path = "tests_common/mod.rs"]
 mod tests_common;
 use tests_common::*;
 
@@ -24,7 +25,11 @@ fn test_create_referral_codes_from_allocation_normal() {
     let referral_hashes = hashmap!(
         Hash([0; Hash::LENGTH]) => 1u64,
     );
-    interface.create_referral_codes_from_allocation((referral_resource, referral_id), 0, referral_hashes).expect_commit_success();
+    interface.create_referral_codes_from_allocation(
+        (referral_resource, referral_id), 
+        0, 
+        referral_hashes
+    ).expect_commit_success();
 }
 
 #[test]
@@ -37,8 +42,11 @@ fn test_create_referral_codes_from_allocation_invalid_resource() {
     let referral_hashes = hashmap!(
         Hash([0; Hash::LENGTH]) => 1u64,
     );
-    interface.create_referral_codes_from_allocation((fake_referral_resource, referral_id), 0, referral_hashes)
-        .expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_REFERRAL));
+    interface.create_referral_codes_from_allocation(
+        (fake_referral_resource, referral_id), 
+        0, 
+        referral_hashes
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_REFERRAL));
 }
 
 #[test]
@@ -52,8 +60,11 @@ fn test_create_referral_codes_from_allocation_not_found_0() {
     let referral_hashes = hashmap!(
         Hash([0; Hash::LENGTH]) => 1u64,
     );
-    interface.create_referral_codes_from_allocation((referral_resource, referral_id), 0, referral_hashes)
-        .expect_specific_failure(|err| check_error_msg(err, ERROR_ALLOCATION_NOT_FOUND));
+    interface.create_referral_codes_from_allocation(
+        (referral_resource, referral_id), 
+        0, 
+        referral_hashes
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_ALLOCATION_NOT_FOUND));
 }
 
 #[test]
@@ -77,8 +88,11 @@ fn test_create_referral_codes_from_allocation_not_found_1() {
     let referral_hashes = hashmap!(
         Hash([0; Hash::LENGTH]) => 1u64,
     );
-    interface.create_referral_codes_from_allocation((referral_resource, referral_id), 1, referral_hashes)
-        .expect_specific_failure(|err| check_error_msg(err, ERROR_ALLOCATION_NOT_FOUND));
+    interface.create_referral_codes_from_allocation(
+        (referral_resource, referral_id), 
+        1, 
+        referral_hashes
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_ALLOCATION_NOT_FOUND));
 }
 
 #[test]

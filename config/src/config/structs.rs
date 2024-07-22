@@ -22,7 +22,7 @@ impl ConfigInfoCompressed {
     }
 }
 
-#[derive(ScryptoSbor, ManifestSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: i64,
@@ -165,7 +165,7 @@ impl ExchangeConfigCompressed {
     }
 }
 
-#[derive(ScryptoSbor, ManifestSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct PairConfig {
     /// Price feed id
     pub pair_id: PairId,
@@ -287,7 +287,7 @@ impl PairConfigCompressed {
     }
 }
 
-#[derive(ScryptoSbor, ManifestSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct CollateralConfig {
     /// Price feed id
     pub pair_id: PairId,

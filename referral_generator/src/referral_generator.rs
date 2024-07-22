@@ -93,7 +93,7 @@ mod referral_generator_mod {
             for (resource_address, &total_claim) in total_claims.iter() {
                 let mut token = mapped_tokens.remove(resource_address).unwrap_or(Bucket::new(*resource_address));
                 assert!(
-                    total_claim >= token.amount(),
+                    total_claim <= token.amount(),
                     "{}", ERROR_INSUFFICIENT_TOKEN
                 );
                 let referral_token = token.take_advanced(total_claim, TO_INFINITY);
@@ -147,7 +147,7 @@ mod referral_generator_mod {
             for (resource_address, &total_claim) in total_claims.iter() {
                 let mut token = mapped_tokens.remove(resource_address).unwrap_or(Bucket::new(*resource_address));
                 assert!(
-                    total_claim >= token.amount(),
+                    total_claim <= token.amount(),
                     "{}", ERROR_INSUFFICIENT_TOKEN
                 );
                 let referral_token = token.take_advanced(total_claim, TO_INFINITY);

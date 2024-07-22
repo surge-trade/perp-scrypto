@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+#[path = "tests_common/mod.rs"]
 mod tests_common;
 use tests_common::*;
 
@@ -86,8 +87,8 @@ fn test_create_referral_codes_code_already_exists() {
     let result = interface.mint_referral(dec!(0.05), dec!(0.05), 1).expect_commit_success().clone();
     let referral_id = parse_added_nft_ids(&result, referral_resource).first().unwrap().clone();
 
-    let base_referral_0 = dec!(10);
-    let base_input_0 = dec!(5);
+    let base_referral_0 = dec!(5);
+    let base_input_0 = dec!(10);
     let referral_hashes = hashmap!(
         Hash([0; Hash::LENGTH]) => (vec![(base_resource, base_referral_0)], 1u64),
     );
