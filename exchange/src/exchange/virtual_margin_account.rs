@@ -32,9 +32,9 @@ pub struct VirtualMarginAccount {
 }
 
 impl VirtualMarginAccount {
-    pub fn new(account: ComponentAddress, collateral_resources: Vec<ResourceAddress>) -> Self {
+    pub fn new(account: ComponentAddress) -> Self {
         let account = Global::<MarginAccount>::try_from(account).expect(ERROR_INVALID_MARGIN_ACCOUNT);
-        let account_info = account.get_info(collateral_resources);
+        let account_info = account.get_info();
         let referral_data: Option<ReferralData> = if let Some(referral) = account_info.referral_id.clone() {
             let referral_data: ReferralData = NonFungible::from(NonFungibleGlobalId::new(REFERRAL_RESOURCE, referral)).data();
             Some(referral_data)
@@ -387,6 +387,9 @@ impl VirtualMarginAccount {
             self.collateral_balances
                 .entry(resource)
                 .and_modify(|balance| *balance -= amount);
+            if self.collateral_balances[&resource].is_zero() {
+                self.collateral_balances.remove(&resource);
+            }
         }
 
         tokens

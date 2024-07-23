@@ -3,12 +3,14 @@ use common::{PairId, DFloat16};
 
 pub struct ConfigInfo {
     pub exchange: ExchangeConfig,
+    pub pair_configs: HashMap<PairId, Option<PairConfig>>,
     pub collaterals: HashMap<ResourceAddress, CollateralConfig>,
 }
 
 #[derive(ScryptoSbor)]
 pub struct ConfigInfoCompressed {
     pub exchange: ExchangeConfigCompressed,
+    pub pair_configs: HashMap<PairId, Option<PairConfigCompressed>>,
     pub collaterals: HashMap<ResourceAddress, CollateralConfigCompressed>,
 }
 
@@ -17,6 +19,7 @@ impl ConfigInfoCompressed {
     pub fn decompress(&self) -> ConfigInfo {
         ConfigInfo {
             exchange: self.exchange.decompress(),
+            pair_configs: self.pair_configs.iter().map(|(pair_id, config)| (pair_id.to_owned(), config.as_ref().map(|c| c.decompress()))).collect(),
             collaterals: self.collaterals.iter().map(|(resource, config)| (*resource, config.decompress())).collect(),
         }
     }

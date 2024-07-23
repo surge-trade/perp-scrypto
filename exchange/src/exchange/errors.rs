@@ -55,8 +55,6 @@ pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
 pub const ERROR_PROCESS_REQUEST_BEFORE_VALID_START: &str = "Request before valid start";
 pub const ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION: &str = "Request before submission";
 
-pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";
-
 pub const ERROR_INVALID_REFERRAL_DATA: &str = "Invalid referral data";
 pub const ERROR_INVALID_REFERRAL: &str = "Invalid referral";
 pub const ERROR_REFERRAL_LIMIT_REACHED: &str = "Referral limit reached";

@@ -57,12 +57,14 @@ mod config_mod {
             .globalize()
         }
 
-        pub fn get_info(&self) -> ConfigInfoCompressed {
+        pub fn get_info(&self, pair_ids: HashSet<PairId>) -> ConfigInfoCompressed {
             let exchange = self.exchange.clone();
+            let pair_configs = self.get_pair_configs_by_ids(pair_ids);
             let collaterals = self.collaterals.iter().map(|(k, v)| (*k, v.clone())).collect();
 
             ConfigInfoCompressed {
                 exchange,
+                pair_configs,
                 collaterals,
             }
         }
@@ -107,6 +109,4 @@ mod config_mod {
             self.collaterals.remove(&resource);
         }
     }
-
 }
-

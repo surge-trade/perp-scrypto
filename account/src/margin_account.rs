@@ -44,6 +44,7 @@ pub mod margin_account {
     
     struct MarginAccount {
         collateral: Vaults,
+        collateral_balances: HashMap<ResourceAddress, Decimal>,
         positions: HashMap<PairId, AccountPosition>,
         virtual_balance: Decimal,
         requests: List<KeeperRequest>,
@@ -66,6 +67,7 @@ pub mod margin_account {
 
             Self {
                 collateral: Vaults::new(MarginAccountKeyValueStore::new_with_registered_type),
+                collateral_balances: HashMap::new(),
                 positions: HashMap::new(),
                 virtual_balance: dec!(0),
                 requests: List::new(MarginAccountKeyValueStore::new_with_registered_type),
@@ -85,10 +87,10 @@ pub mod margin_account {
             .globalize()
         }
 
-        pub fn get_info(&self, collateral_resources: Vec<ResourceAddress>) -> MarginAccountInfo {
+        pub fn get_info(&self) -> MarginAccountInfo {
             MarginAccountInfo {
                 positions: self.positions.clone(),
-                collateral_balances: self.collateral.amounts(collateral_resources),
+                collateral_balances: self.collateral_balances.clone(),
                 virtual_balance: self.virtual_balance,
                 requests_len: self.requests.len(),
                 active_requests_len: self.active_requests.len(),
@@ -156,11 +158,31 @@ pub mod margin_account {
         }
 
         pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
+            for token in tokens.iter() {
+                let amount = token.amount();
+                let resource = token.resource_address();
+                self.collateral_balances
+                    .entry(resource)
+                    .and_modify(|balance| *balance += amount)
+                    .or_insert(amount);
+            }
             self.collateral.put_batch(tokens);
         }
 
         pub fn withdraw_collateral_batch(&mut self, claims: Vec<(ResourceAddress, Decimal)>, withdraw_strategy: WithdrawStrategy) -> Vec<Bucket> {            
-            self.collateral.take_advanced_batch(claims, withdraw_strategy)
+            let tokens = self.collateral.take_advanced_batch(claims, withdraw_strategy);
+            for token in tokens.iter() {
+                let amount = token.amount();
+                let resource = token.resource_address();
+                self.collateral_balances
+                    .entry(resource)
+                    .and_modify(|balance| *balance -= amount);
+                if self.collateral_balances[&resource].is_zero() {
+                    self.collateral_balances.remove(&resource);
+                }
+            }
+
+            tokens
         }
     }
 }
