@@ -1,7 +1,6 @@
 pub const ERROR_INVALID_AUTHORITY: &str = "Invalid authority";
 pub const ERROR_INVALID_FEE_OATH: &str = "Invalid fee oath";
 
-pub const ERROR_INVALID_COLLATERAL: &str = "Invalid collateral";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";
 pub const ERROR_PAIR_OI_TOO_HIGH: &str = "Pair OI exceeds maximum";
 pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
@@ -30,7 +29,9 @@ pub const ERROR_CLAIMS_TOO_MANY: &str = "Claims list too big";
 pub const ERROR_ACTIVATE_REQUESTS_TOO_MANY: &str = "Activate requests list too big";
 pub const ERROR_CANCEL_REQUESTS_TOO_MANY: &str = "Cancel requests list too big";
 
+pub const ERROR_INVALID_COLLATERAL: &str = "Invalid collateral";
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
+pub const ERROR_COLLATERALS_TOO_MANY: &str = "Too many collaterals";
 pub const ERROR_ACTIVE_REQUESTS_TOO_MANY: &str = "Too many active requests";
 
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";

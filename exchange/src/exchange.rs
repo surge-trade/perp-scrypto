@@ -1381,6 +1381,26 @@ mod exchange_mod {
             pool.skew_abs_snap() / self._pool_value(pool).max(dec!(1))
         }
 
+        fn _assert_lp_resource(
+            &self,
+            resource: &ResourceAddress,
+        ) {
+            assert!(
+                *resource == LP_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(*resource), Runtime::bech32_encode_address(LP_RESOURCE)
+            );
+        }
+        
+        fn _assert_base_resource(
+            &self,
+            resource: &ResourceAddress,
+        ) {
+            assert!(
+                *resource == BASE_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(*resource), Runtime::bech32_encode_address(BASE_RESOURCE)
+            );
+        }
+
         fn _assert_pool_integrity(
             &self,
             config: &VirtualConfig,
@@ -1435,6 +1455,19 @@ mod exchange_mod {
             assert!(
                 positions_len <= positions_max,
                 "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_POSITIONS_TOO_MANY, positions_len, positions_max
+            );
+        }
+
+        fn _assert_collaterals_limit(
+            &self,
+            config: &VirtualConfig,
+            account: &VirtualMarginAccount,
+        ) {
+            let collaterals_len = account.collateral_amounts().len();
+            let collaterals_max = config.exchange_config().collaterals_max as usize;
+            assert!(
+                collaterals_len <= collaterals_max,
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_COLLATERALS_TOO_MANY, collaterals_len, collaterals_max
             );
         }
 
@@ -1644,10 +1677,7 @@ mod exchange_mod {
             payment: Bucket,
         ) -> Bucket {
             let lp_token_manager = ResourceManager::from_address(LP_RESOURCE);
-            assert!(
-                payment.resource_address() == BASE_RESOURCE,
-                "{}", ERROR_INVALID_PAYMENT
-            );
+            self._assert_base_resource(&payment.resource_address());
 
             let value = payment.amount();
             let fee = value * config.exchange_config().fee_liquidity;
@@ -1685,10 +1715,7 @@ mod exchange_mod {
             lp_token: Bucket,
         ) -> Bucket {
             let lp_token_manager = ResourceManager::from_address(LP_RESOURCE);
-            assert!(
-                lp_token.resource_address() == LP_RESOURCE,
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_LP_TOKEN, Runtime::bech32_encode_address(lp_token.resource_address()), Runtime::bech32_encode_address(LP_RESOURCE)
-            );
+            self._assert_lp_resource(&lp_token.resource_address());
 
             let lp_amount = lp_token.amount();
             let pool_value = self._pool_value(pool).max(dec!(0));
@@ -1733,6 +1760,7 @@ mod exchange_mod {
             tokens.iter().for_each(|token| self._assert_valid_collateral(config, token.resource_address()));
 
             account.deposit_collateral_batch(tokens);
+            self._assert_collaterals_limit(config, account);
 
             Runtime::emit_event(EventAddCollateral {
                 account: account.address(),
@@ -1880,10 +1908,7 @@ mod exchange_mod {
             resource: &ResourceAddress, 
             mut payment_token: Bucket, 
         ) -> (Bucket, Bucket) {
-            assert!(
-                payment_token.resource_address() == BASE_RESOURCE, 
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
-            );            
+            self._assert_base_resource(&payment_token.resource_address());      
             assert!(
                 account.virtual_balance() < dec!(0),
                 "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_SWAP_NO_DEBT, account.virtual_balance(), dec!(0)
@@ -1923,10 +1948,7 @@ mod exchange_mod {
             oracle: &VirtualOracle,
             mut payment_token: Bucket,
         ) -> Vec<Bucket> {
-            assert!(
-                payment_token.resource_address() == BASE_RESOURCE, 
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
-            );
+            self._assert_base_resource(&payment_token.resource_address());
 
             let result_positions = self._liquidate_positions(config, pool, account, oracle); 
             let result_collateral = self._liquidate_collateral(config, account, oracle); 
