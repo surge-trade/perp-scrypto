@@ -55,6 +55,7 @@ async def main():
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.I64_VALUE(30), # max_price_age_seconds
                     ret.ManifestBuilderValue.U16_VALUE(20), # positions_max
+                    ret.ManifestBuilderValue.U16_VALUE(10), # collaterals_max
                     ret.ManifestBuilderValue.U16_VALUE(60), # active_requests_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.15')), # skew_ratio_cap
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.2')), # adl_offset
