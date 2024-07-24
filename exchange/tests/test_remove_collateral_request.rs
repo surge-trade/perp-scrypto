@@ -9,8 +9,6 @@ fn test_remove_collateral_request_normal() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
-    let time = interface.ledger_time();
-
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
@@ -29,6 +27,7 @@ fn test_remove_collateral_request_normal() {
         claims_1.clone(),
     ).expect_commit_success().clone();
 
+    let time = interface.ledger_time();
     let account_details = interface.get_account_details(margin_account_component, 10, None);
     assert_eq!(account_details.valid_requests_start, 0);
     assert_eq!(account_details.active_requests.len(), 1);

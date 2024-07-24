@@ -3,7 +3,7 @@ use account::Status;
 use common::{PairId, ListIndex};
 use super::errors::*;
 
-#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Limit {
     Gte(Decimal),
     Lte(Decimal),

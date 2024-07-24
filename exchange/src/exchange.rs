@@ -1028,10 +1028,10 @@ mod exchange_mod {
 
                 assert!(
                     activate_requests.len() <= 2,
-                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_ACTIVATE_REQUESTS_TOO_MANY, activate_requests.len(), 2
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_EFFECTED_REQUESTS_TOO_MANY, activate_requests.len(), 2
                 );        
                 assert!(cancel_requests.len() <= 2,
-                    "{}, VALUE:{}, REQUIRED:{}, OP:<= ", ERROR_CANCEL_REQUESTS_TOO_MANY, cancel_requests.len(), 2
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= ", ERROR_EFFECTED_REQUESTS_TOO_MANY, cancel_requests.len(), 2
                 );
 
                 let request = Request::MarginOrder(RequestMarginOrder {

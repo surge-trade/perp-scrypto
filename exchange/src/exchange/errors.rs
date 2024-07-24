@@ -26,8 +26,7 @@ pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 pub const ERROR_SWAP_NO_DEBT: &str = "No debt to swap";
 
 pub const ERROR_CLAIMS_TOO_MANY: &str = "Claims list too big";
-pub const ERROR_ACTIVATE_REQUESTS_TOO_MANY: &str = "Activate requests list too big";
-pub const ERROR_CANCEL_REQUESTS_TOO_MANY: &str = "Cancel requests list too big";
+pub const ERROR_EFFECTED_REQUESTS_TOO_MANY: &str = "Too many effected requests";
 
 pub const ERROR_INVALID_COLLATERAL: &str = "Invalid collateral";
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";

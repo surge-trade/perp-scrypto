@@ -73,6 +73,37 @@ fn test_add_collateral_other_asset() {
 }
 
 #[test]
+fn test_add_collateral_exceed_collaterals_max() {
+    let mut interface = get_setup();
+    let exchange_config = interface.get_exchange_config();
+
+    let rule_0 = rule!(allow_all);
+    let result = interface.create_account(
+        rule_0.clone(),
+        vec![],
+        None,
+    ).expect_commit_success().clone();
+    let margin_account_component = result.new_component_addresses()[0];
+
+    for _ in 0..exchange_config.collaterals_max {
+        let token_input_1 = dec!(100);
+        let token_resource_1 = interface.mint_test_token(token_input_1, DIVISIBILITY_MAXIMUM);
+
+        interface.add_collateral(
+            margin_account_component,
+            (token_resource_1, token_input_1),
+        ).expect_commit_success();
+    }
+
+    let token_input_2 = dec!(100);
+    let token_resource_2 = interface.mint_test_token(token_input_2, DIVISIBILITY_MAXIMUM);
+    interface.add_collateral(
+        margin_account_component,
+        (token_resource_2, token_input_2),
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_COLLATERALS_TOO_MANY));
+}
+
+#[test]
 fn test_add_collateral_invalid_collateral() {
     let mut interface = get_setup();
 
