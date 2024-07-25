@@ -222,7 +222,11 @@ mod exchange_mod {
             margin_order_request_user => updatable_by: [OWNER, user_admin];
             cancel_request_user => updatable_by: [OWNER, user_admin];
 
-            keeper => updatable_by: [OWNER];
+            keeper_process => updatable_by: [OWNER];
+            keeper_swap_debt => updatable_by: [OWNER];
+            keeper_liquidate => updatable_by: [OWNER];
+            keeper_auto_deleverage => updatable_by: [OWNER];
+            keeper_update_pairs => updatable_by: [OWNER];
         },
         methods { 
             // Owner methods
@@ -276,11 +280,11 @@ mod exchange_mod {
             cancel_requests => restrict_to: [cancel_request_user];
 
             // Keeper methods
-            process_request => restrict_to: [keeper];
-            swap_debt => restrict_to: [keeper];
-            liquidate => restrict_to: [keeper];
-            auto_deleverage => restrict_to: [keeper];
-            update_pairs => restrict_to: [keeper];
+            process_request => restrict_to: [keeper_process];
+            swap_debt => restrict_to: [keeper_swap_debt];
+            liquidate => restrict_to: [keeper_liquidate];
+            auto_deleverage => restrict_to: [keeper_auto_deleverage];
+            update_pairs => restrict_to: [keeper_update_pairs];
         }
     }
 
@@ -339,7 +343,11 @@ mod exchange_mod {
                 margin_order_request_user => rule!(allow_all);
                 cancel_request_user => rule!(allow_all);
 
-                keeper => rule!(allow_all);
+                keeper_process => rule!(allow_all);
+                keeper_swap_debt => rule!(allow_all);
+                keeper_liquidate => rule!(allow_all);
+                keeper_auto_deleverage => rule!(allow_all);
+                keeper_update_pairs => rule!(allow_all);
             })
             .with_address(component_reservation)
             .globalize()
