@@ -75,44 +75,50 @@ mod referral_generator_mod {
         ) -> (Vec<Bucket>, ListIndex) {
             let mut mapped_tokens: HashMap<ResourceAddress, Bucket> = HashMap::new();
             for token in tokens.into_iter() {
-                if let Some(mapped_token) = mapped_tokens.get_mut(&token.resource_address()) {
+                let resource = token.resource_address();
+                if let Some(mapped_token) = mapped_tokens.get_mut(&resource) {
                     mapped_token.put(token);
                 } else {
-                    mapped_tokens.insert(token.resource_address(), token);
+                    mapped_tokens.insert(resource, token);
                 }
             }
 
             let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
-            for &(resource_address, amount) in claims.iter() {
-                let total_claim = total_claims.entry(resource_address).or_insert(Decimal::zero());
+            for &(resource, amount) in claims.iter() {
+                let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
                 *total_claim += amount * Decimal::from(count);
             }
 
             let mut referral_tokens: Vec<Bucket> = vec![];
             let mut remainder_tokens: Vec<Bucket> = vec![];
-            for (resource_address, &total_claim) in total_claims.iter() {
-                let mut token = mapped_tokens.remove(resource_address).unwrap_or(Bucket::new(*resource_address));
-                assert!(
-                    total_claim <= token.amount(),
-                    "{}", ERROR_INSUFFICIENT_TOKEN
-                );
-                let referral_token = token.take_advanced(total_claim, TO_INFINITY);
-                referral_tokens.push(referral_token);
-                remainder_tokens.push(token);
+            for (&resource, &total_claim) in total_claims.iter() {
+                if let Some(token) = mapped_tokens.get_mut(&resource) {
+                    assert!(
+                        total_claim <= token.amount(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                    let referral_token = token.take_advanced(total_claim, TO_INFINITY);
+                    referral_tokens.push(referral_token);
+                } else {
+                    assert!(
+                        total_claim.is_zero(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                }
             }
+            remainder_tokens.extend(mapped_tokens.into_iter().map(|(_, token)| token));
 
             if self.referral_allocations.get(&referral_id).is_none() {
-                self.referral_allocations.insert(referral_id.clone(), vec![])
+                self.referral_allocations.insert(referral_id.clone(), Vec::new());
             }
             let mut referral_allocation_list = self.referral_allocations.get_mut(&referral_id).unwrap();
 
+            let index = referral_allocation_list.len() as ListIndex;
             referral_allocation_list.push(ReferralAllocation {
                 claims,
                 count: 0,
                 max_count: count,
             });
-
-            let index = (referral_allocation_list.len() - 1) as ListIndex;
 
             self.vaults.put_batch(referral_tokens);
             
@@ -127,33 +133,40 @@ mod referral_generator_mod {
         ) -> Vec<Bucket> {
             let mut mapped_tokens: HashMap<ResourceAddress, Bucket> = HashMap::new();
             for token in tokens.into_iter() {
-                if let Some(mapped_token) = mapped_tokens.get_mut(&token.resource_address()) {
+                let resource = token.resource_address();
+                if let Some(mapped_token) = mapped_tokens.get_mut(&resource) {
                     mapped_token.put(token);
                 } else {
-                    mapped_tokens.insert(token.resource_address(), token);
+                    mapped_tokens.insert(resource, token);
                 }
             }
 
             let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
             for (_, (claims, count)) in referral_hashes.iter() {
-                for &(resource_address, amount) in claims {
-                    let total_claim = total_claims.entry(resource_address).or_insert(Decimal::zero());
+                for &(resource, amount) in claims {
+                    let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
                     *total_claim += amount * Decimal::from(*count);
                 }
             }
 
             let mut referral_tokens: Vec<Bucket> = vec![];
             let mut remainder_tokens: Vec<Bucket> = vec![];
-            for (resource_address, &total_claim) in total_claims.iter() {
-                let mut token = mapped_tokens.remove(resource_address).unwrap_or(Bucket::new(*resource_address));
-                assert!(
-                    total_claim <= token.amount(),
-                    "{}", ERROR_INSUFFICIENT_TOKEN
-                );
-                let referral_token = token.take_advanced(total_claim, TO_INFINITY);
-                referral_tokens.push(referral_token);
-                remainder_tokens.push(token);
+            for (&resource, &total_claim) in total_claims.iter() {
+                if let Some(token) = mapped_tokens.get_mut(&resource) {
+                    assert!(
+                        total_claim <= token.amount(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                    let referral_token = token.take_advanced(total_claim, TO_INFINITY);
+                    referral_tokens.push(referral_token);
+                } else {
+                    assert!(
+                        total_claim.is_zero(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                }
             }
+            remainder_tokens.extend(mapped_tokens.into_iter().map(|(_, token)| token));
 
             for (hash, (claims, count)) in referral_hashes.into_iter() {
                 assert!(

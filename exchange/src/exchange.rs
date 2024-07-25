@@ -509,9 +509,9 @@ mod exchange_mod {
             let referral = self.mint_referral(fee_referral, fee_rebate, max_referrals);
             let referral_id = referral.as_non_fungible().non_fungible_local_id();
 
-            let (allocation_tokens, allocation_index) = self.add_referral_allocation(referral_id, allocation_tokens, allocation_claims, allocation_count);
+            let (remainder_tokens, allocation_index) = self.add_referral_allocation(referral_id, allocation_tokens, allocation_claims, allocation_count);
 
-            (referral, allocation_tokens, allocation_index)
+            (referral, remainder_tokens, allocation_index)
         }
 
         pub fn update_referral(

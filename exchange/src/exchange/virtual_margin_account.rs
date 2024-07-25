@@ -317,10 +317,10 @@ impl VirtualMarginAccount {
             assert!(
                 status_phases.contains(&keeper_request.status),
                 "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
-                );
-                if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
-                    self._remove_active_request(index);
-                }
+            );
+            if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
+                self._remove_active_request(index);
+            }
             keeper_request.status = STATUS_CANCELLED;
             self.request_updates.insert(index, keeper_request);
         }

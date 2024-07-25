@@ -608,18 +608,22 @@ impl ExchangeInterface {
 
     pub fn set_level_1_auth(
         &mut self,
-        proof: (ResourceAddress, NonFungibleLocalId),
+        proof: Option<(ResourceAddress, NonFungibleLocalId)>,
         margin_account_component: ComponentAddress,
         rule: AccessRule,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let manifest = ManifestBuilder::new()
-            .lock_fee_from_faucet()
-            .create_proof_from_account_of_non_fungible(
-                self.test_account, 
-                NonFungibleGlobalId::new(proof.0, proof.1)
-            )
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        if let Some(proof) = proof {
+            builder = builder
+                .create_proof_from_account_of_non_fungible(
+                    self.test_account, 
+                    NonFungibleGlobalId::new(proof.0, proof.1)
+                );
+        }
+        let manifest = builder
             .call_method(
                 self.components.exchange_component, 
                 "set_level_1_auth", 
@@ -632,50 +636,58 @@ impl ExchangeInterface {
 
     pub fn set_level_2_auth(
         &mut self,
-        proof: (ResourceAddress, NonFungibleLocalId),
+        proof: Option<(ResourceAddress, NonFungibleLocalId)>,
         margin_account_component: ComponentAddress,
         rule: AccessRule,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let manifest = ManifestBuilder::new()
-        .lock_fee_from_faucet()
-        .create_proof_from_account_of_non_fungible(
-            self.test_account, 
-            NonFungibleGlobalId::new(proof.0, proof.1)
-        )
-        .call_method(
-            self.components.exchange_component, 
-            "set_level_2_auth", 
-            manifest_args!(fee_oath, margin_account_component, rule)
-        )
-        .build();
-    let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
-    receipt
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        if let Some(proof) = proof {
+            builder = builder
+                .create_proof_from_account_of_non_fungible(
+                    self.test_account, 
+                    NonFungibleGlobalId::new(proof.0, proof.1)
+                );
+        }
+        let manifest = builder
+            .call_method(
+                self.components.exchange_component, 
+                "set_level_2_auth", 
+                manifest_args!(fee_oath, margin_account_component, rule)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
     }
 
     pub fn set_level_3_auth(
         &mut self,
-        proof: (ResourceAddress, NonFungibleLocalId),
+        proof: Option<(ResourceAddress, NonFungibleLocalId)>,
         margin_account_component: ComponentAddress,
         rule: AccessRule,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let manifest = ManifestBuilder::new()
-        .lock_fee_from_faucet()
-        .create_proof_from_account_of_non_fungible(
-            self.test_account, 
-            NonFungibleGlobalId::new(proof.0, proof.1)
-        )
-        .call_method(
-            self.components.exchange_component, 
-            "set_level_3_auth", 
-            manifest_args!(fee_oath, margin_account_component, rule)
-        )
-        .build();
-    let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
-    receipt
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        if let Some(proof) = proof {
+            builder = builder
+                .create_proof_from_account_of_non_fungible(
+                    self.test_account, 
+                    NonFungibleGlobalId::new(proof.0, proof.1)
+                );
+        }
+        let manifest = builder
+            .call_method(
+                self.components.exchange_component, 
+                "set_level_3_auth", 
+                manifest_args!(fee_oath, margin_account_component, rule)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
     }
 
     pub fn add_collateral(
@@ -714,11 +726,15 @@ impl ExchangeInterface {
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
-            self.components.exchange_component, 
-            "remove_collateral_request", 
-            manifest_args!(fee_oath, expiry_seconds, margin_account_component, target_account, claims)
-        );
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.components.exchange_component, 
+                "remove_collateral_request", 
+                manifest_args!(fee_oath, expiry_seconds, margin_account_component, target_account, claims)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
@@ -737,23 +753,27 @@ impl ExchangeInterface {
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
-            self.components.exchange_component, 
-            "margin_order_request", 
-            manifest_args!(
-                fee_oath,
-                delay_seconds,
-                expiry_seconds,
-                margin_account_component,
-                pair_id,
-                amount,
-                reduce_only,
-                price_limit,
-                activate_requests,
-                cancel_requests,
-                status,
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.components.exchange_component, 
+                "margin_order_request", 
+                manifest_args!(
+                    fee_oath,
+                    delay_seconds,
+                    expiry_seconds,
+                    margin_account_component,
+                    pair_id,
+                    amount,
+                    reduce_only,
+                    price_limit,
+                    activate_requests,
+                    cancel_requests,
+                    status,
+                )
             )
-        );
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
@@ -771,22 +791,26 @@ impl ExchangeInterface {
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
-            self.components.exchange_component, 
-            "margin_order_tp_sl_request", 
-            manifest_args!(
-                fee_oath, 
-                delay_seconds, 
-                expiry_seconds, 
-                margin_account_component, 
-                pair_id, 
-                amount, 
-                reduce_only, 
-                price_limit, 
-                price_tp, 
-                price_sl
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.components.exchange_component, 
+                "margin_order_tp_sl_request", 
+                manifest_args!(
+                    fee_oath, 
+                    delay_seconds, 
+                    expiry_seconds, 
+                    margin_account_component, 
+                    pair_id, 
+                    amount, 
+                    reduce_only, 
+                    price_limit, 
+                    price_tp, 
+                    price_sl
+                )
             )
-        );
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
@@ -797,11 +821,15 @@ impl ExchangeInterface {
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
-            self.components.exchange_component, 
-            "cancel_request", 
-            manifest_args!(fee_oath, margin_account_component, index)
-        );
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.components.exchange_component, 
+                "cancel_request", 
+                manifest_args!(fee_oath, margin_account_component, index)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 
@@ -812,11 +840,15 @@ impl ExchangeInterface {
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let receipt = self.ledger.call_method(
-            self.components.exchange_component, 
-            "cancel_requests", 
-            manifest_args!(fee_oath, margin_account_component, indexes)
-        );
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.components.exchange_component, 
+                "cancel_requests", 
+                manifest_args!(fee_oath, margin_account_component, indexes)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt
     }
 

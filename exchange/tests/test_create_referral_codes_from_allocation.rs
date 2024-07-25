@@ -38,7 +38,6 @@ fn test_create_referral_codes_from_allocation_invalid_resource() {
 
     let (fake_referral_resource, referral_id) = interface.mint_test_nft();
 
-
     let referral_hashes = hashmap!(
         Hash([0; Hash::LENGTH]) => 1u64,
     );
@@ -118,4 +117,38 @@ fn test_create_referral_codes_from_allocation_exceed_max_count() {
     );
     interface.create_referral_codes_from_allocation((referral_resource, referral_id), 0, referral_hashes)
         .expect_specific_failure(|err| check_error_msg(err, ERROR_ALLOCATION_LIMIT_REACHED));
+}
+
+#[test]
+fn test_create_referral_codes_from_allocation_code_already_exists() {
+    let mut interface = get_setup();
+    let base_resource = interface.resources.base_resource;
+    let referral_resource = interface.resources.referral_resource;
+
+    let base_referral_0 = dec!(5);
+    let base_input_0 = dec!(10);
+    let result = interface.mint_referral_with_allocation(
+        dec!(0.05), 
+        dec!(0.05), 
+        1,
+        vec![(base_resource, base_input_0)],
+        vec![(base_resource, base_referral_0)],
+        2
+    ).expect_commit_success().clone();
+    let referral_id = parse_added_nft_ids(&result, referral_resource).first().unwrap().clone();
+
+    let referral_hashes = hashmap!(
+        Hash([0; Hash::LENGTH]) => 1u64,
+    );
+    interface.create_referral_codes_from_allocation(
+        (referral_resource, referral_id.clone()), 
+        0, 
+        referral_hashes.clone()
+    ).expect_commit_success();
+
+    interface.create_referral_codes_from_allocation(
+        (referral_resource, referral_id), 
+        0, 
+        referral_hashes
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_REFERRAL_CODE_ALREADY_EXISTS));
 }

@@ -18,7 +18,7 @@ fn test_margin_order_tp_sl_request_no_tp_no_sl() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
@@ -78,7 +78,7 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
@@ -154,7 +154,7 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
@@ -230,7 +230,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
@@ -322,7 +322,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(-100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
@@ -415,7 +415,7 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
@@ -452,9 +452,7 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
 fn test_margin_order_tp_sl_request_invalid_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource, _badge_id) = interface.mint_test_nft();
-
-    let rule_0 = rule!(require(badge_resource));
+    let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
         vec![],
@@ -462,23 +460,27 @@ fn test_margin_order_tp_sl_request_invalid_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let delay_seconds_1 = 0;
-    let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
-    let amount_1 = dec!(100);
-    let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
-    let price_tp_1 = Some(dec!(70000));
-    let price_sl_1 = Some(dec!(50000));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
+    interface.set_level_3_auth(None, margin_account_component, rule_1).expect_commit_success();
+
+    let delay_seconds_2 = 0;
+    let expiry_seconds_2 = 10;
+    let pair_id_2 = "BTC/USD";
+    let amount_2 = dec!(100);
+    let reduce_only_2 = false;
+    let price_limit_2 = Limit::None;
+    let price_tp_2 = Some(dec!(70000));
+    let price_sl_2 = Some(dec!(50000));
     interface.margin_order_tp_sl_request(
-        delay_seconds_1,
-        expiry_seconds_1,
+        delay_seconds_2,
+        expiry_seconds_2,
         margin_account_component,
-        pair_id_1.into(),
-        amount_1,
-        reduce_only_1,
-        price_limit_1,
-        price_tp_1,
-        price_sl_1,
+        pair_id_2.into(),
+        amount_2,
+        reduce_only_2,
+        price_limit_2,
+        price_tp_2,
+        price_sl_2,
     ).expect_auth_assertion_failure();
 }

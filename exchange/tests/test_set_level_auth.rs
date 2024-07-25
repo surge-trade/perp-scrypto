@@ -8,8 +8,8 @@ use tests_common::*;
 fn test_set_level_1_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource0, badge_id0) = interface.mint_test_nft();
-    let rule_0 = rule!(require(badge_resource0));
+    let (badge_resource_0, badge_id_0) = interface.mint_test_nft();
+    let rule_0 = rule!(require(badge_resource_0));
     let result = interface.create_account(
         rule_0.clone(),
         vec![],
@@ -17,10 +17,10 @@ fn test_set_level_1_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let (badge_resource1, _badge_id1) = interface.mint_test_nft();
-    let rule_1 = rule!(require(badge_resource1));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
     interface.set_level_1_auth(
-        (badge_resource0, badge_id0),
+        Some((badge_resource_0, badge_id_0)),
         margin_account_component,
         rule_1.clone(),
     ).expect_commit_success();
@@ -44,8 +44,8 @@ fn test_set_level_1_auth() {
 fn test_set_level_2_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource0, badge_id0) = interface.mint_test_nft();
-    let rule_0 = rule!(require(badge_resource0));
+    let (badge_resource_0, badge_id_0) = interface.mint_test_nft();
+    let rule_0 = rule!(require(badge_resource_0));
     let result = interface.create_account(
         rule_0.clone(),
         vec![],
@@ -53,10 +53,10 @@ fn test_set_level_2_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let (badge_resource1, _badge_id1) = interface.mint_test_nft();
-    let rule_1 = rule!(require(badge_resource1));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
     interface.set_level_2_auth(
-        (badge_resource0, badge_id0),
+        Some((badge_resource_0, badge_id_0)),
         margin_account_component,
         rule_1.clone(),
     ).expect_commit_success();
@@ -80,8 +80,8 @@ fn test_set_level_2_auth() {
 fn test_set_level_3_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource0, badge_id0) = interface.mint_test_nft();
-    let rule_0 = rule!(require(badge_resource0));
+    let (badge_resource_0, badge_id_0) = interface.mint_test_nft();
+    let rule_0 = rule!(require(badge_resource_0));
     let result = interface.create_account(
         rule_0.clone(),
         vec![],
@@ -89,10 +89,10 @@ fn test_set_level_3_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let (badge_resource1, _badge_id1) = interface.mint_test_nft();
-    let rule_1 = rule!(require(badge_resource1));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
     interface.set_level_3_auth(
-        (badge_resource0, badge_id0),
+        Some((badge_resource_0, badge_id_0)),
         margin_account_component,
         rule_1.clone(),
     ).expect_commit_success();
@@ -115,8 +115,7 @@ fn test_set_level_3_auth() {
 fn test_set_level_1_auth_invalid_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource0, _badge_id0) = interface.mint_test_nft();
-    let rule_0 = rule!(require(badge_resource0));
+    let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0.clone(),
         vec![],
@@ -124,20 +123,23 @@ fn test_set_level_1_auth_invalid_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let (badge_resource1, badge_id1) = interface.mint_test_nft();
-    let rule_1 = rule!(require(badge_resource1));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
+    interface.set_level_1_auth(None, margin_account_component, rule_1).expect_commit_success();
+
+    let (badge_resource_2, _badge_id_2) = interface.mint_test_nft();
+    let rule_2 = rule!(require(badge_resource_2));
     interface.set_level_1_auth(
-        (badge_resource1, badge_id1),
+        None,
         margin_account_component,
-        rule_1.clone(),
+        rule_2,
     ).expect_auth_assertion_failure();
 }
 
 fn test_set_level_2_auth_invalid_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource0, _badge_id0) = interface.mint_test_nft();
-    let rule_0 = rule!(require(badge_resource0));
+    let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0.clone(),
         vec![],
@@ -145,20 +147,23 @@ fn test_set_level_2_auth_invalid_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let (badge_resource1, badge_id1) = interface.mint_test_nft();
-    let rule_1 = rule!(require(badge_resource1));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
+    interface.set_level_1_auth(None, margin_account_component, rule_1).expect_commit_success();
+
+    let (badge_resource_2, _badge_id_2) = interface.mint_test_nft();
+    let rule_2 = rule!(require(badge_resource_2));
     interface.set_level_2_auth(
-        (badge_resource1, badge_id1),
+        None,
         margin_account_component,
-        rule_1.clone(),
+        rule_2,
     ).expect_auth_assertion_failure();
 }
 
 fn test_set_level_3_auth_invalid_auth() {
     let mut interface = get_setup();
 
-    let (badge_resource0, _badge_id0) = interface.mint_test_nft();
-    let rule_0 = rule!(require(badge_resource0));
+    let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0.clone(),
         vec![],
@@ -166,13 +171,16 @@ fn test_set_level_3_auth_invalid_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let (badge_resource1, badge_id1) = interface.mint_test_nft();
-    let rule_1 = rule!(require(badge_resource1));
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
+    interface.set_level_1_auth(None, margin_account_component, rule_1).expect_commit_success();
 
-    interface.set_level_3_auth(
-        (badge_resource1, badge_id1),
+    let (badge_resource_2, _badge_id_2) = interface.mint_test_nft();
+    let rule_2 = rule!(require(badge_resource_2));
+    interface.set_level_1_auth(
+        None,
         margin_account_component,
-        rule_1.clone(),
+        rule_2,
     ).expect_auth_assertion_failure();
 }
 

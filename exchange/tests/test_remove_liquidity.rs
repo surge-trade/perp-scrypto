@@ -27,22 +27,22 @@ fn test_remove_liquidity_normal() {
     let pool_value_2 = interface.get_pool_value();
 
     let lp_price = pool_value_1 / lp_output_1;
-    let value = lp_input_1 / lp_price;
-    let fee = -value * exchange_config.fee_liquidity;
+    let value = lp_input_1 * lp_price;
+    let fee = value * exchange_config.fee_liquidity;
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_pool = fee - fee_protocol - fee_treasury;
 
     assert_eq!(base_output_2, value - fee);
-    assert_eq!(pool_value_1 - pool_value_2, value - fee_protocol - fee_treasury);
+    assert_eq!(pool_value_2 - pool_value_1, -value + fee_pool);
 
     let event: EventLiquidityChange = interface.parse_event(&result);
     assert_eq!(event.lp_price, lp_price);
     assert_eq!(event.lp_amount, -lp_input_1);
     assert_eq!(event.amount, -base_output_2);
-    assert_eq!(event.fee_pool, fee_pool);
-    assert_eq!(event.fee_protocol, fee_protocol);
-    assert_eq!(event.fee_treasury, fee_treasury);
+    assert_eq!(event.fee_pool, -fee_pool);
+    assert_eq!(event.fee_protocol, -fee_protocol);
+    assert_eq!(event.fee_treasury, -fee_treasury);
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn test_remove_liquidity_exceed_skew_cap() {
     
     let lp_balance_1 = interface.test_account_balance(lp_resource);
     let lp_output_1 = lp_balance_1 - lp_balance_0;
-    let trade_size_1 = base_input_0 * exchange_config.skew_ratio_cap - dec!(1);
+    let trade_size_1 = (base_input_0 * dec!(0.95)) * exchange_config.skew_ratio_cap;
     interface.margin_order_request(
         0,
         10000000000,

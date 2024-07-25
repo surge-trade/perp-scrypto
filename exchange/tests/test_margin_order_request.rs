@@ -18,12 +18,13 @@ fn test_margin_order_request_normal() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
     let activate_requests_1 = vec![];
     let cancel_requests_1 = vec![];
+    let status_1 = STATUS_ACTIVE;
     let result = interface.margin_order_request(
         delay_seconds_1,
         expiry_seconds_1,
@@ -34,7 +35,7 @@ fn test_margin_order_request_normal() {
         price_limit_1,
         activate_requests_1.clone(),
         cancel_requests_1.clone(),
-        STATUS_ACTIVE,
+        status_1,
     ).expect_commit_success().clone();
 
     let time = interface.ledger_time();
@@ -48,7 +49,7 @@ fn test_margin_order_request_normal() {
     assert_eq!(request_details.index, 0);
     assert_eq!(request_details.submission, time);
     assert_eq!(request_details.expiry, time.add_seconds(expiry_seconds_1 as i64).unwrap());
-    assert_eq!(request_details.status, STATUS_ACTIVE);
+    assert_eq!(request_details.status, status_1);
     if let Request::MarginOrder(margin_order_request) = request_details.request {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, amount_1);
@@ -79,12 +80,13 @@ fn test_margin_order_request_exceed_max_activate_requests() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
-    let activate_requests_1 = vec![1, 2];
+    let activate_requests_1 = vec![1, 2, 3];
     let cancel_requests_1 = vec![];
+    let status_1 = STATUS_ACTIVE;
     interface.margin_order_request(
         delay_seconds_1,
         expiry_seconds_1,
@@ -95,7 +97,7 @@ fn test_margin_order_request_exceed_max_activate_requests() {
         price_limit_1,
         activate_requests_1.clone(),
         cancel_requests_1.clone(),
-        STATUS_ACTIVE,
+        status_1,
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_EFFECTED_REQUESTS_TOO_MANY));
 }
 
@@ -113,12 +115,13 @@ fn test_margin_order_request_exceed_max_cancel_requests() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
     let activate_requests_1 = vec![];
-    let cancel_requests_1 = vec![1, 2];
+    let cancel_requests_1 = vec![1, 2, 3];
+    let status_1 = STATUS_ACTIVE;
     interface.margin_order_request(
         delay_seconds_1,
         expiry_seconds_1,
@@ -129,7 +132,7 @@ fn test_margin_order_request_exceed_max_cancel_requests() {
         price_limit_1,
         activate_requests_1.clone(),
         cancel_requests_1.clone(),
-        STATUS_ACTIVE,
+        status_1,
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_EFFECTED_REQUESTS_TOO_MANY));
 }
 
@@ -148,12 +151,13 @@ fn test_margin_order_request_exceed_max_active() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
     let activate_requests_1 = vec![];
     let cancel_requests_1 = vec![];
+    let status_1 = STATUS_ACTIVE;
     for _ in 0..exchange_config.active_requests_max {
         interface.margin_order_request(
             delay_seconds_1,
@@ -165,7 +169,7 @@ fn test_margin_order_request_exceed_max_active() {
             price_limit_1,
             activate_requests_1.clone(),
             cancel_requests_1.clone(),
-            STATUS_ACTIVE,
+            status_1,
         ).expect_commit_success();
     }
 
@@ -179,17 +183,15 @@ fn test_margin_order_request_exceed_max_active() {
         price_limit_1,
         activate_requests_1.clone(),
         cancel_requests_1.clone(),
-        STATUS_ACTIVE,
+        status_1,
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_ACTIVE_REQUESTS_TOO_MANY));
 }
 
 #[test]
-fn test_margin_order_request_invalid_auth() {
+fn test_margin_order_request_invalid_status() {
     let mut interface = get_setup();
 
-    let (badge_resource, _badge_id) = interface.mint_test_nft();
-
-    let rule_0 = rule!(require(badge_resource));
+    let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
         vec![],
@@ -199,12 +201,13 @@ fn test_margin_order_request_invalid_auth() {
 
     let delay_seconds_1 = 0;
     let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USDT";
+    let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
     let price_limit_1 = Limit::None;
     let activate_requests_1 = vec![];
     let cancel_requests_1 = vec![];
+    let status_1 = STATUS_EXECUTED;
     interface.margin_order_request(
         delay_seconds_1,
         expiry_seconds_1,
@@ -215,6 +218,45 @@ fn test_margin_order_request_invalid_auth() {
         price_limit_1,
         activate_requests_1.clone(),
         cancel_requests_1.clone(),
-        STATUS_ACTIVE,
+        status_1,
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_REQUEST_STATUS));
+}
+
+#[test]
+fn test_margin_order_request_invalid_auth() {
+    let mut interface = get_setup();
+
+    let rule_0 = rule!(allow_all);
+    let result = interface.create_account(
+        rule_0,
+        vec![],
+        None,
+    ).expect_commit_success().clone();
+    let margin_account_component = result.new_component_addresses()[0];
+
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
+    interface.set_level_3_auth(None, margin_account_component, rule_1).expect_commit_success();
+
+    let delay_seconds_2 = 0;
+    let expiry_seconds_2 = 10;
+    let pair_id_2 = "BTC/USD";
+    let amount_2 = dec!(100);
+    let reduce_only_2 = false;
+    let price_limit_2 = Limit::None;
+    let activate_requests_2 = vec![];
+    let cancel_requests_2 = vec![];
+    let status_2 = STATUS_ACTIVE;
+    interface.margin_order_request(
+        delay_seconds_2,
+        expiry_seconds_2,
+        margin_account_component,
+        pair_id_2.into(),
+        amount_2,
+        reduce_only_2,
+        price_limit_2,
+        activate_requests_2.clone(),
+        cancel_requests_2.clone(),
+        status_2,
     ).expect_auth_assertion_failure();
 }

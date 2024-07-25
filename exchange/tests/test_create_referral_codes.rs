@@ -84,7 +84,7 @@ fn test_create_referral_codes_code_already_exists() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
 
-    let result = interface.mint_referral(dec!(0.05), dec!(0.05), 1).expect_commit_success().clone();
+    let result = interface.mint_referral(dec!(0.05), dec!(0.05), 2).expect_commit_success().clone();
     let referral_id = parse_added_nft_ids(&result, referral_resource).first().unwrap().clone();
 
     let base_referral_0 = dec!(5);

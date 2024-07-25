@@ -110,13 +110,11 @@ fn test_remove_collateral_request_exceed_max_active() {
 }
 
 #[test]
-fn test_remove_collateral_invalid_auth() {
+fn test_remove_collateral_request_invalid_auth() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
-    let (badge_resource, _badge_id) = interface.mint_test_nft();
-
-    let rule_0 = rule!(require(badge_resource));
+    let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
         vec![],
@@ -124,13 +122,17 @@ fn test_remove_collateral_invalid_auth() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let expiry_seconds_1 = 10;
-    let claims_1 = vec![(base_resource, dec!(100))];
-    let target_account_1 = interface.test_account;
+    let (badge_resource_1, _badge_id_1) = interface.mint_test_nft();
+    let rule_1 = rule!(require(badge_resource_1));
+    interface.set_level_2_auth(None, margin_account_component, rule_1).expect_commit_success();
+
+    let expiry_seconds_2 = 10;
+    let claims_2 = vec![(base_resource, dec!(100))];
+    let target_account_2 = interface.test_account;
     interface.remove_collateral_request(
-        expiry_seconds_1,
+        expiry_seconds_2,
         margin_account_component,
-        target_account_1,
-        claims_1.clone(),
+        target_account_2,
+        claims_2.clone(),
     ).expect_auth_assertion_failure();
 }
