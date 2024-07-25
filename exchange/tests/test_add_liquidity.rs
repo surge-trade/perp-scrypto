@@ -19,7 +19,7 @@ fn test_add_liquidity_initial() {
     let lp_output_1 = lp_balance_1 - lp_balance_0;
     let pool_value_1 = interface.get_pool_value();
 
-    let fee = base_input_0 * exchange_config.fee_liquidity;
+    let fee = base_input_0 * exchange_config.fee_liquidity_add;
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_pool = fee - fee_protocol - fee_treasury;
@@ -57,7 +57,7 @@ fn test_add_liquidity_normal() {
     let lp_output_2 = lp_balance_2 - base_balance_1;
     let pool_value_2 = interface.get_pool_value();
 
-    let fee = base_input_1 * exchange_config.fee_liquidity;
+    let fee = base_input_1 * exchange_config.fee_liquidity_add;
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_pool = fee - fee_protocol - fee_treasury;

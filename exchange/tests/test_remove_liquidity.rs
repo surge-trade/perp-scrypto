@@ -28,7 +28,7 @@ fn test_remove_liquidity_normal() {
 
     let lp_price = pool_value_1 / lp_output_1;
     let value = lp_input_1 * lp_price;
-    let fee = value * exchange_config.fee_liquidity;
+    let fee = value * exchange_config.fee_liquidity_remove;
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_pool = fee - fee_protocol - fee_treasury;

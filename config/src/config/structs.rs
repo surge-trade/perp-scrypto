@@ -43,8 +43,10 @@ pub struct ExchangeConfig {
     pub adl_a: Decimal,
     /// ADL B calculation parameter
     pub adl_b: Decimal,
-    /// Fee for adding and removing liquidity
-    pub fee_liquidity: Decimal,
+    /// Fee for adding liquidity
+    pub fee_liquidity_add: Decimal,
+    /// Fee for removing liquidity
+    pub fee_liquidity_remove: Decimal,
     /// Share of fees that goes to the protocol
     pub fee_share_protocol: Decimal,
     /// Share of fees that goes to the treasury
@@ -77,8 +79,10 @@ pub struct ExchangeConfigCompressed {
     pub adl_a: DFloat16,
     /// ADL B calculation parameter
     pub adl_b: DFloat16,
-    /// Fee for adding and removing liquidity
-    pub fee_liquidity: DFloat16,
+    /// Fee for adding liquidity
+    pub fee_liquidity_add: DFloat16,
+    /// Fee for removing liquidity
+    pub fee_liquidity_remove: DFloat16,
     /// Share of fees that goes to the protocol
     pub fee_share_protocol: DFloat16,
     /// Share of fees that goes to the treasury
@@ -104,7 +108,8 @@ impl Default for ExchangeConfig {
             adl_offset: dec!(0.2),
             adl_a: dec!(0.05),
             adl_b: dec!(0.01),
-            fee_liquidity: dec!(0.005),
+            fee_liquidity_add: dec!(0.0025),
+            fee_liquidity_remove: dec!(0.0025),
             fee_share_protocol: dec!(0.1),
             fee_share_treasury: dec!(0.1),
             fee_share_referral: dec!(1),
@@ -123,10 +128,12 @@ impl ExchangeConfig {
         assert!(self.adl_offset >= dec!(0), "Invalid adl offset");
         assert!(self.adl_a >= dec!(0), "Invalid adl a");
         assert!(self.adl_b >= dec!(0), "Invalid adl b");
-        assert!(self.fee_liquidity >= dec!(0), "Invalid liquidity fee");
+        assert!(self.fee_liquidity_add >= dec!(0), "Invalid liquidity fee");
+        assert!(self.fee_liquidity_remove >= dec!(0), "Invalid liquidity fee");
         assert!(self.fee_share_protocol >= dec!(0), "Invalid protocol fee");
         assert!(self.fee_share_treasury >= dec!(0), "Invalid treasury fee");
-        assert!(self.fee_share_referral >= dec!(0), "Invalid referral fee");
+        assert!(self.fee_share_protocol + self.fee_share_treasury <= dec!(0.5), "Invalid combined fee share");
+        assert!(self.fee_share_referral >= dec!(0) && self.fee_share_referral <= dec!(1), "Invalid referral fee");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
         assert!(self.protocol_burn_amount > dec!(0), "Invalid protocol burn amount");
         assert!(self.reward_keeper >= dec!(0), "Invalid keeper reward");
@@ -142,7 +149,8 @@ impl ExchangeConfig {
             adl_offset: DFloat16::from(self.adl_offset),
             adl_a: DFloat16::from(self.adl_a),
             adl_b: DFloat16::from(self.adl_b),
-            fee_liquidity: DFloat16::from(self.fee_liquidity),
+            fee_liquidity_add: DFloat16::from(self.fee_liquidity_add),
+            fee_liquidity_remove: DFloat16::from(self.fee_liquidity_remove),
             fee_share_protocol: DFloat16::from(self.fee_share_protocol),
             fee_share_treasury: DFloat16::from(self.fee_share_treasury),
             fee_share_referral: DFloat16::from(self.fee_share_referral),
@@ -164,7 +172,8 @@ impl ExchangeConfigCompressed {
             adl_offset: self.adl_offset.into(),
             adl_a: self.adl_a.into(),
             adl_b: self.adl_b.into(),
-            fee_liquidity: self.fee_liquidity.into(),
+            fee_liquidity_add: self.fee_liquidity_add.into(),
+            fee_liquidity_remove: self.fee_liquidity_remove.into(),
             fee_share_protocol: self.fee_share_protocol.into(),
             fee_share_treasury: self.fee_share_treasury.into(),
             fee_share_referral: self.fee_share_referral.into(),

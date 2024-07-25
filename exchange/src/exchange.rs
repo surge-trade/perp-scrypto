@@ -1680,7 +1680,7 @@ mod exchange_mod {
             self._assert_base_resource(&payment.resource_address());
 
             let value = payment.amount();
-            let fee = value * config.exchange_config().fee_liquidity;
+            let fee = value * config.exchange_config().fee_liquidity_add;
             let pool_value = self._pool_value(pool).max(dec!(1));
             let lp_supply = lp_token_manager.total_supply().unwrap();
 
@@ -1723,7 +1723,7 @@ mod exchange_mod {
 
             let lp_price = pool_value / lp_supply;
             let value = lp_amount * lp_price;
-            let fee = value * config.exchange_config().fee_liquidity;
+            let fee = value * config.exchange_config().fee_liquidity_remove;
             
             lp_token.burn();
             let token = pool.withdraw(value - fee, TO_ZERO);
