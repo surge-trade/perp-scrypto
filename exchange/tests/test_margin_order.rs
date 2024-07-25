@@ -8,7 +8,7 @@ use tests_common::*;
 fn test_hello() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
-
+    
     interface.update_pair_configs(vec![
         PairConfig {
             pair_id: "BTC/USD".into(),
@@ -58,12 +58,12 @@ fn test_hello() {
     interface.process_request(
         margin_account_component,
         0, 
-        vec![
+        Some(vec![
             Price {
                 pair: "BTC/USD".into(),
                 quote: btc_price_3,
                 timestamp: time,
             },
-        ]
+        ])
     ).expect_commit_success();
 }

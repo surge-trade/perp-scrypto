@@ -8,5 +8,7 @@ mod test_set_level_auth;
 mod test_add_collateral;
 mod test_remove_collateral_request;
 mod test_margin_order_request;
+mod test_cancel_request;
+mod test_cancel_requests;
 
 mod test_margin_order;

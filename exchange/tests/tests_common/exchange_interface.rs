@@ -856,13 +856,17 @@ impl ExchangeInterface {
         &mut self,
         margin_account_component: ComponentAddress,
         index: ListIndex,
-        prices: Vec<Price>,
+        prices: Option<Vec<Price>>,
     ) -> TransactionReceiptV1 {
-        let price_data = scrypto_encode(&prices).unwrap();
-        let price_data_hash = keccak256_hash(&price_data).to_vec();
-        let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature, 0 as ListIndex));
-    
+        let price_updates = if let Some(prices) = prices {
+            let price_data = scrypto_encode(&prices).unwrap();
+            let price_data_hash = keccak256_hash(&price_data).to_vec();
+            let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
+            Some((price_data, price_signature, 0 as ListIndex))
+        } else {
+            None
+        };
+
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
             .call_method(
@@ -885,12 +889,16 @@ impl ExchangeInterface {
         margin_account_component: ComponentAddress,
         resource: ResourceAddress,
         payment_amount: Decimal,
-        prices: Vec<Price>,
+        prices: Option<Vec<Price>>,
     ) -> TransactionReceiptV1 {
-        let price_data = scrypto_encode(&prices).unwrap();
-        let price_data_hash = keccak256_hash(&price_data).to_vec();
-        let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature, 0));
+        let price_updates = if let Some(prices) = prices {
+            let price_data = scrypto_encode(&prices).unwrap();
+            let price_data_hash = keccak256_hash(&price_data).to_vec();
+            let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
+            Some((price_data, price_signature, 0 as ListIndex))
+        } else {
+            None
+        };
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -913,12 +921,16 @@ impl ExchangeInterface {
         &mut self,
         margin_account_component: ComponentAddress,
         payment_amount: Decimal,
-        prices: Vec<Price>,
+        prices: Option<Vec<Price>>,
     ) -> TransactionReceiptV1 {
-        let price_data = scrypto_encode(&prices).unwrap();
-        let price_data_hash = keccak256_hash(&price_data).to_vec();
-        let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature, 0));
+        let price_updates = if let Some(prices) = prices {
+            let price_data = scrypto_encode(&prices).unwrap();
+            let price_data_hash = keccak256_hash(&price_data).to_vec();
+            let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
+            Some((price_data, price_signature, 0 as ListIndex))
+        } else {
+            None
+        };
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -941,12 +953,16 @@ impl ExchangeInterface {
         &mut self,
         margin_account_component: ComponentAddress,
         pair_id: PairId,
-        prices: Vec<Price>,
+        prices: Option<Vec<Price>>,
     ) -> TransactionReceiptV1 {
-        let price_data = scrypto_encode(&prices).unwrap();
-        let price_data_hash = keccak256_hash(&price_data).to_vec();
-        let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature, 0));
+        let price_updates = if let Some(prices) = prices {
+            let price_data = scrypto_encode(&prices).unwrap();
+            let price_data_hash = keccak256_hash(&price_data).to_vec();
+            let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
+            Some((price_data, price_signature, 0 as ListIndex))
+        } else {
+            None
+        };
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
@@ -964,12 +980,16 @@ impl ExchangeInterface {
     pub fn update_pairs(
         &mut self,
         pair_ids: Vec<PairId>,
-        prices: Vec<Price>,
+        prices: Option<Vec<Price>>,
     ) -> TransactionReceiptV1 {
-        let price_data = scrypto_encode(&prices).unwrap();
-        let price_data_hash = keccak256_hash(&price_data).to_vec();
-        let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
-        let price_updates = Some((price_data, price_signature, 0));
+        let price_updates = if let Some(prices) = prices {
+            let price_data = scrypto_encode(&prices).unwrap();
+            let price_data_hash = keccak256_hash(&price_data).to_vec();
+            let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
+            Some((price_data, price_signature, 0 as ListIndex))
+        } else {
+            None
+        };
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()

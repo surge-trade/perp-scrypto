@@ -98,13 +98,13 @@ fn test_remove_liquidity_exceed_skew_cap() {
     
     let lp_balance_1 = interface.test_account_balance(lp_resource);
     let lp_output_1 = lp_balance_1 - lp_balance_0;
-    let trade_size_1 = (base_input_0 * dec!(0.95)) * exchange_config.skew_ratio_cap;
+    let amount_1 = (base_input_0 * dec!(0.95)) * exchange_config.skew_ratio_cap;
     interface.margin_order_request(
         0,
         10000000000,
         margin_account_component,
         "TEST/USD".into(),
-        trade_size_1,
+        amount_1,
         false,
         Limit::None,
         vec![],
@@ -116,13 +116,13 @@ fn test_remove_liquidity_exceed_skew_cap() {
     interface.process_request(
         margin_account_component,
         0, 
-        vec![
+        Some(vec![
             Price {
                 pair: "TEST/USD".into(),
                 quote: dec!(1),
                 timestamp: time,
             },
-        ]
+        ])
     ).expect_commit_success();
 
     let lp_input_1 = lp_output_1 / dec!(2);
