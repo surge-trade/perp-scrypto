@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use common::PairId;
+use common::{PairId, ListIndex};
 use super::errors::*;
 use super::exchange_mod::Oracle;
 
@@ -9,17 +9,17 @@ pub struct VirtualOracle {
 }
 
 impl VirtualOracle {
-    pub fn new(oracle: Global<Oracle>, resource_feeds: HashMap<ResourceAddress, PairId>, mut pair_ids: HashSet<PairId>, max_age: Instant, updates: Option<(Vec<u8>, Bls12381G2Signature)>) -> Self {
-        if let Some((update_data, update_signature)) = updates {
+    pub fn new(oracle: Global<Oracle>, resource_feeds: HashMap<ResourceAddress, PairId>, mut pair_ids: HashSet<PairId>, max_age: Instant, updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>) -> Self {
+        if let Some((update_data, update_signature, key_id)) = updates {
             pair_ids.extend(resource_feeds.values().cloned());
-            let prices = oracle.push_and_get_prices(pair_ids, max_age, update_data, update_signature);
+            let prices = oracle.push_and_get_prices_with_auth(pair_ids, max_age, update_data, update_signature, key_id);
 
             Self {
                 prices,
                 resource_feeds,
             }
         } else {
-            let prices = oracle.get_prices(pair_ids, max_age);
+            let prices = oracle.get_prices_with_auth(pair_ids, max_age);
 
             Self {
                 prices,

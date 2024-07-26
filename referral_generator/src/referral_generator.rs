@@ -1,22 +1,18 @@
 mod errors;
+mod structs;
 
 use scrypto::prelude::*;
-use common::{Vaults, _AUTHORITY_RESOURCE, TO_ZERO};
-use self::errors::*;
-
-#[derive(ScryptoSbor, Clone)]
-pub struct ReferralCode {
-    referral_id: NonFungibleLocalId,
-    claims: Vec<(ResourceAddress, Decimal)>,
-    count: u64,
-    max_count: u64,
-}
+use common::{ListIndex, Vaults, _AUTHORITY_RESOURCE, TO_ZERO, TO_INFINITY};
+pub use self::errors::*;
+pub use self::structs::*;
 
 #[blueprint]
 #[types(
     ResourceAddress,
     Vault,
     Hash,
+    NonFungibleLocalId,
+    Vec<ReferralAllocation>,
     ReferralCode,
 )]
 mod referral_generator_mod {
@@ -27,15 +23,19 @@ mod referral_generator_mod {
             authority => updatable_by: [];
         },
         methods {
+            get_allocations => PUBLIC;
             get_referral_code => PUBLIC;
 
+            add_allocation => restrict_to: [authority];
             create_referral_codes => restrict_to: [authority];
+            create_referral_codes_from_allocation => restrict_to: [authority];
             claim_referral_code => restrict_to: [authority];
         }
     );
 
     pub struct ReferralGenerator {
         vaults: Vaults,
+        referral_allocations: KeyValueStore<NonFungibleLocalId, Vec<ReferralAllocation>>,
         referral_codes: KeyValueStore<Hash, ReferralCode>,
     }
 
@@ -43,6 +43,7 @@ mod referral_generator_mod {
         pub fn new(owner_role: OwnerRole) -> Global<ReferralGenerator> {
             Self {
                 vaults: Vaults::new(ReferralGeneratorKeyValueStore::new_with_registered_type),
+                referral_allocations: KeyValueStore::new_with_registered_type(),
                 referral_codes: KeyValueStore::new_with_registered_type(),
             }
             .instantiate()
@@ -53,34 +54,121 @@ mod referral_generator_mod {
             .globalize()
         }
 
+        pub fn get_allocations(&self, referral_id: NonFungibleLocalId) -> Vec<ReferralAllocation> {
+            if let Some(referral_allocation_list) = self.referral_allocations.get(&referral_id) {
+                referral_allocation_list.clone()
+            } else {
+                Vec::new()
+            }
+        }
+
         pub fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode> {
             self.referral_codes.get(&hash).map(|entry| entry.clone())
         }
-        
-        pub fn create_referral_codes(&mut self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referrals: Vec<(Hash, Vec<(ResourceAddress, Decimal)>, u64)>) {
-            let mut amounts: HashMap<ResourceAddress, Decimal> = HashMap::new();
-            for bucket in tokens.iter() {
-                let amount = amounts.entry(bucket.resource_address()).or_insert(Decimal::zero());
-                *amount += bucket.amount();
+
+        pub fn add_allocation(
+            &mut self, 
+            tokens: Vec<Bucket>, 
+            referral_id: NonFungibleLocalId, 
+            claims: Vec<(ResourceAddress, Decimal)>, 
+            count: u64
+        ) -> (Vec<Bucket>, ListIndex) {
+            let mut mapped_tokens: HashMap<ResourceAddress, Bucket> = HashMap::new();
+            for token in tokens.into_iter() {
+                let resource = token.resource_address();
+                if let Some(mapped_token) = mapped_tokens.get_mut(&resource) {
+                    mapped_token.put(token);
+                } else {
+                    mapped_tokens.insert(resource, token);
+                }
             }
 
             let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
-            for (_, claims, count) in referrals.iter() {
-                for &(resource_address, amount) in claims {
-                    let total_claim = total_claims.entry(resource_address).or_insert(Decimal::zero());
+            for &(resource, amount) in claims.iter() {
+                let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
+                *total_claim += amount * Decimal::from(count);
+            }
+
+            let mut referral_tokens: Vec<Bucket> = vec![];
+            let mut remainder_tokens: Vec<Bucket> = vec![];
+            for (&resource, &total_claim) in total_claims.iter() {
+                if let Some(token) = mapped_tokens.get_mut(&resource) {
+                    assert!(
+                        total_claim <= token.amount(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                    let referral_token = token.take_advanced(total_claim, TO_INFINITY);
+                    referral_tokens.push(referral_token);
+                } else {
+                    assert!(
+                        total_claim.is_zero(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                }
+            }
+            remainder_tokens.extend(mapped_tokens.into_iter().map(|(_, token)| token));
+
+            if self.referral_allocations.get(&referral_id).is_none() {
+                self.referral_allocations.insert(referral_id.clone(), Vec::new());
+            }
+            let mut referral_allocation_list = self.referral_allocations.get_mut(&referral_id).unwrap();
+
+            let index = referral_allocation_list.len() as ListIndex;
+            referral_allocation_list.push(ReferralAllocation {
+                claims,
+                count: 0,
+                max_count: count,
+            });
+
+            self.vaults.put_batch(referral_tokens);
+            
+            (remainder_tokens, index)
+        }
+        
+        pub fn create_referral_codes(
+            &mut self, 
+            tokens: Vec<Bucket>, 
+            referral_id: NonFungibleLocalId, 
+            referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>
+        ) -> Vec<Bucket> {
+            let mut mapped_tokens: HashMap<ResourceAddress, Bucket> = HashMap::new();
+            for token in tokens.into_iter() {
+                let resource = token.resource_address();
+                if let Some(mapped_token) = mapped_tokens.get_mut(&resource) {
+                    mapped_token.put(token);
+                } else {
+                    mapped_tokens.insert(resource, token);
+                }
+            }
+
+            let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
+            for (_, (claims, count)) in referral_hashes.iter() {
+                for &(resource, amount) in claims {
+                    let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
                     *total_claim += amount * Decimal::from(*count);
                 }
             }
 
-            for (resource_address, &total_claim) in total_claims.iter() {
-                let amount = amounts.get(resource_address).copied().unwrap_or(Decimal::zero());
-                assert!(
-                    total_claim <= amount, 
-                    "{}", ERROR_INSUFFICIENT_TOKENS
-                );
+            let mut referral_tokens: Vec<Bucket> = vec![];
+            let mut remainder_tokens: Vec<Bucket> = vec![];
+            for (&resource, &total_claim) in total_claims.iter() {
+                if let Some(token) = mapped_tokens.get_mut(&resource) {
+                    assert!(
+                        total_claim <= token.amount(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                    let referral_token = token.take_advanced(total_claim, TO_INFINITY);
+                    referral_tokens.push(referral_token);
+                } else {
+                    assert!(
+                        total_claim.is_zero(),
+                        "{}", ERROR_INSUFFICIENT_TOKEN
+                    );
+                }
             }
+            remainder_tokens.extend(mapped_tokens.into_iter().map(|(_, token)| token));
 
-            for (hash, claims, count) in referrals {
+            for (hash, (claims, count)) in referral_hashes.into_iter() {
                 assert!(
                     self.referral_codes.get(&hash).is_none(),
                     "{}", ERROR_REFERRAL_CODE_ALREADY_EXISTS
@@ -93,7 +181,41 @@ mod referral_generator_mod {
                 });
             }
 
-            self.vaults.put_batch(tokens);
+            self.vaults.put_batch(referral_tokens);
+
+            remainder_tokens
+        }
+
+        pub fn create_referral_codes_from_allocation(
+            &mut self, 
+            referral_id: NonFungibleLocalId, 
+            allocation_index: ListIndex, 
+            referral_hashes: HashMap<Hash, u64>
+        ) {
+            let mut referral_allocation_list = self.referral_allocations.get_mut(&referral_id).expect(ERROR_ALLOCATION_NOT_FOUND);
+            let referral_allocation = referral_allocation_list.get_mut(allocation_index as usize).expect(ERROR_ALLOCATION_NOT_FOUND);
+                
+            let total_count: u64 = referral_hashes.iter().map(|(_, c)| c).sum();
+            referral_allocation.count += total_count;
+
+            assert!(
+                referral_allocation.count <= referral_allocation.max_count,
+                "{}", ERROR_ALLOCATION_LIMIT_REACHED
+            );
+
+            let claims = &referral_allocation.claims;
+            for (hash, count) in referral_hashes.into_iter() {
+                assert!(
+                    self.referral_codes.get(&hash).is_none(),
+                    "{}", ERROR_REFERRAL_CODE_ALREADY_EXISTS
+                );
+                self.referral_codes.insert(hash, ReferralCode {
+                    referral_id: referral_id.clone(),
+                    claims: claims.clone(),
+                    count: 0,
+                    max_count: count,
+                });
+            }
         }
 
         pub fn claim_referral_code(&mut self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>) {

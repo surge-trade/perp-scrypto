@@ -3,8 +3,9 @@ use super::requests::*;
 use common::*;
 use config::*;
 use account::*;
+use referral_generator::{ReferralData, ReferralAllocation};
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct PositionDetails {
     pub pair_id: PairId,
     pub amount: Decimal,
@@ -14,7 +15,7 @@ pub struct PositionDetails {
     pub funding: Decimal,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct CollateralDetails {
     pub pair_id: PairId,
     pub resource: ResourceAddress,
@@ -23,7 +24,7 @@ pub struct CollateralDetails {
     pub margin: Decimal,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct RequestDetails {
     pub index: ListIndex,
     pub request: Request,
@@ -32,7 +33,7 @@ pub struct RequestDetails {
     pub status: Status,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct AccountDetails {
     pub virtual_balance: Decimal,
     pub positions: Vec<PositionDetails>,
@@ -40,10 +41,11 @@ pub struct AccountDetails {
     pub valid_requests_start: ListIndex,
     pub active_requests: Vec<RequestDetails>,
     pub requests_history: Vec<RequestDetails>,
+    pub requests_len: ListIndex,
     pub referral: Option<(NonFungibleGlobalId, ReferralData)>,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct PoolDetails {
     pub base_tokens_amount: Decimal,
     pub virtual_balance: Decimal,
@@ -55,13 +57,19 @@ pub struct PoolDetails {
     pub lp_price: Decimal,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct PairDetails {
     pub pair_id: PairId,
     pub oi_long: Decimal,
     pub oi_short: Decimal,
     pub funding_2: Decimal,
     pub pair_config: PairConfig,
+}
+
+#[derive(ScryptoSbor, Clone, Debug)]
+pub struct ReferralDetails {
+    pub referral: ReferralData,
+    pub allocations: Vec<ReferralAllocation>,
 }
 
 pub struct ResultValuePositions {

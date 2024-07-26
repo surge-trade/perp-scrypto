@@ -1,8 +1,8 @@
 pub const ERROR_INVALID_AUTHORITY: &str = "Invalid authority";
 pub const ERROR_INVALID_FEE_OATH: &str = "Invalid fee oath";
 
-pub const ERROR_COLLATERAL_INVALID: &str = "Invalid collateral";
 pub const ERROR_SKEW_TOO_HIGH: &str = "Skew exceeds maximum";
+pub const ERROR_PAIR_OI_TOO_HIGH: &str = "Pair OI exceeds maximum";
 pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 
 pub const ERROR_PAIR_DISABLED: &str = "Pair disabled";
@@ -12,7 +12,8 @@ pub const ERROR_MARGIN_ORDER_PRICE_LIMIT: &str = "Price limit not met";
 pub const ERROR_INVALID_PAYMENT: &str = "Invalid payment resource";
 pub const ERROR_INVALID_LP_TOKEN: &str = "Invalid LP token";
 
-pub const ERROR_REMOVE_COLLATERAL_INSUFFICIENT_POOL_TOKENS: &str = "Insufficient pool balance for withdrawal";
+pub const ERROR_WITHDRAWAL_INSUFFICIENT_BALANCE: &str = "Insufficient balance for withdrawal";
+pub const ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS: &str = "Insufficient pool balance for withdrawal";
 
 pub const ERROR_LIQUIDATION_SUFFICIENT_MARGIN: &str = "Sufficient margin for liquidation";
 pub const ERROR_LIQUIDATION_INSUFFICIENT_PAYMENT: &str = "Insufficient payment for liquidation";
@@ -24,7 +25,12 @@ pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 
 pub const ERROR_SWAP_NO_DEBT: &str = "No debt to swap";
 
+pub const ERROR_CLAIMS_TOO_MANY: &str = "Claims list too big";
+pub const ERROR_EFFECTED_REQUESTS_TOO_MANY: &str = "Too many effected requests";
+
+pub const ERROR_INVALID_COLLATERAL: &str = "Invalid collateral";
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";
+pub const ERROR_COLLATERALS_TOO_MANY: &str = "Too many collaterals";
 pub const ERROR_ACTIVE_REQUESTS_TOO_MANY: &str = "Too many active requests";
 
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
@@ -48,8 +54,6 @@ pub const ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT: &str = "Request not active
 pub const ERROR_PROCESS_REQUEST_NOT_ACTIVE: &str = "Request not active";
 pub const ERROR_PROCESS_REQUEST_BEFORE_VALID_START: &str = "Request before valid start";
 pub const ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION: &str = "Request before submission";
-
-pub const ERROR_PAIR_CONFIGS_NOT_LOADED: &str = "Pair configs not loaded";
 
 pub const ERROR_INVALID_REFERRAL_DATA: &str = "Invalid referral data";
 pub const ERROR_INVALID_REFERRAL: &str = "Invalid referral";

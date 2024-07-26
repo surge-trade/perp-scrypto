@@ -14,7 +14,7 @@ load_dotenv()
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority
-from tools.manifests import create_base, create_protocol_resource, create_keeper_reward, create_lp, create_referral_str
+from tools.manifests import create_base, mint_protocol_resource, create_keeper_reward, create_lp, create_referral_str
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
 def clean(name: str) -> None:
@@ -229,7 +229,8 @@ async def main():
             if 'PROTOCOL_RESOURCE' not in config_data:
                 builder = ret.ManifestBuilder()
                 builder = lock_fee(builder, account, 100)
-                builder = create_protocol_resource(builder, owner_role, authority_resource)
+                builder = mint_protocol_resource(builder, owner_role)
+                builder = deposit_all(builder, account)
                 payload, intent = await gateway.build_transaction(builder, public_key, private_key)
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
@@ -299,7 +300,6 @@ async def main():
             print('TOKEN_WRAPPER_COMPONENT:', token_wrapper_component)
 
             if 'ORACLE_PACKAGE' not in config_data:
-                oracle_key_array = [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)]
                 code, definition = build('oracle', envs, network_config['network_name'])
                 payload, intent = await gateway.build_publish_transaction(
                     account,
@@ -318,13 +318,20 @@ async def main():
             print('ORACLE_PACKAGE:', oracle_package)
 
             if 'ORACLE_COMPONENT' not in config_data:
+                oracle_key_bytes = ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, 
+                    [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key)])
                 builder = ret.ManifestBuilder()
                 builder = lock_fee(builder, account, 100)
                 builder = builder.call_function(
                     ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_package)),
                     'Oracle',
                     'new',
-                    [manifest_owner_role, ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, oracle_key_array)]
+                    [
+                        manifest_owner_role, 
+                        ret.ManifestBuilderValue.MAP_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, ret.ManifestBuilderValueKind.ARRAY_VALUE, [
+                            ret.ManifestBuilderMapEntry(ret.ManifestBuilderValue.U64_VALUE(0), oracle_key_bytes)
+                        ])
+                    ]
                 )
                 payload, intent = await gateway.build_transaction(builder, public_key, private_key)
                 await gateway.submit_transaction(payload)
@@ -647,14 +654,6 @@ async def main():
                     [
                         manifest_owner_role, 
                         ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(oracle_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(config_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(pool_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(referral_generator_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_distributor_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_delegator_component))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(fee_oath_resource))),
-                        ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(permission_registry_component))),
                         ret.ManifestBuilderValue.ENUM_VALUE(0, []),
                     ]
                 )

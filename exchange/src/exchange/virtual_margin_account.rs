@@ -1,7 +1,8 @@
 use scrypto::prelude::*;
 use std::cmp::Reverse;
+use common::{PairId, ListIndex, _REFERRAL_RESOURCE};
 use account::*;
-use common::{PairId, ListIndex, ReferralData, _REFERRAL_RESOURCE};
+use referral_generator::ReferralData;
 use super::errors::*;
 use super::events::*;
 use super::exchange_mod::MarginAccount;
@@ -31,9 +32,9 @@ pub struct VirtualMarginAccount {
 }
 
 impl VirtualMarginAccount {
-    pub fn new(account: ComponentAddress, collateral_resources: Vec<ResourceAddress>) -> Self {
+    pub fn new(account: ComponentAddress) -> Self {
         let account = Global::<MarginAccount>::try_from(account).expect(ERROR_INVALID_MARGIN_ACCOUNT);
-        let account_info = account.get_info(collateral_resources);
+        let account_info = account.get_info();
         let referral_data: Option<ReferralData> = if let Some(referral) = account_info.referral_id.clone() {
             let referral_data: ReferralData = NonFungible::from(NonFungibleGlobalId::new(REFERRAL_RESOURCE, referral)).data();
             Some(referral_data)
@@ -149,6 +150,10 @@ impl VirtualMarginAccount {
         }
     }
 
+    pub fn requests_len(&self) -> ListIndex {
+        self.requests_len
+    }
+
     pub fn keeper_request(&self, index: ListIndex) -> KeeperRequest {
         if let Some(request) = self.request_updates.get(&index) {
             request.clone()
@@ -260,7 +265,8 @@ impl VirtualMarginAccount {
             status,
             effected_components,
         };
-        self._add_active_request(self.requests_len);
+        let index = self.requests_len + self.request_additions.len() as ListIndex;
+        self._add_active_request(index);
 
         self.request_additions.push(keeper_request);
     }
@@ -311,10 +317,10 @@ impl VirtualMarginAccount {
             assert!(
                 status_phases.contains(&keeper_request.status),
                 "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
-                );
-                if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
-                    self._remove_active_request(index);
-                }
+            );
+            if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
+                self._remove_active_request(index);
+            }
             keeper_request.status = STATUS_CANCELLED;
             self.request_updates.insert(index, keeper_request);
         }
@@ -360,51 +366,6 @@ impl VirtualMarginAccount {
         (request, expired)
     }
 
-    // TODO: consider using
-    // pub fn process_requests(&mut self, indexes: Vec<ListIndex>) -> Vec<(Request, bool)> {
-    //     let current_time = Clock::current_time_rounded_to_seconds();
-    //     let keeper_requests = self.keeper_requests(indexes);
-    //     let mut requests = vec![];
-    //     for (index, mut keeper_request) in keeper_requests.into_iter() {
-    //         assert!(
-    //             index >= self.valid_requests_start(),
-    //             "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_PROCESS_REQUEST_BEFORE_VALID_START, index, self.valid_requests_start()
-    //         );
-            
-    //         let expired = current_time.compare(keeper_request.expiry, TimeComparisonOperator::Gte);
-    //         if expired {
-    //             assert!(
-    //                 keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT,
-    //                 "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, vec![STATUS_ACTIVE, STATUS_DORMANT]
-    //             );
-
-    //             keeper_request.status = STATUS_EXPIRED;
-    //         } else {
-    //             assert!(
-    //                 keeper_request.status == STATUS_ACTIVE,
-    //                 "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_PROCESS_REQUEST_NOT_ACTIVE, keeper_request.status, STATUS_ACTIVE
-    //             );
-                
-    //             keeper_request.status = STATUS_EXECUTED;
-    //         }
-
-    //         let submission = keeper_request.submission;
-    //         assert!(
-    //             current_time.compare(submission, TimeComparisonOperator::Gt),
-    //             "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PROCESS_REQUEST_BEFORE_SUBMISSION, current_time.seconds_since_unix_epoch, submission.seconds_since_unix_epoch
-    //         );
-
-    //         let request = Request::decode(&keeper_request.request);
-
-    //         self._remove_active_request(index);
-    //         self.request_updates.insert(index, keeper_request);
-
-    //         requests.push((request, expired));
-    //     }
-
-    //     requests
-    // }
-
     pub fn deposit_collateral_batch(&mut self, tokens: Vec<Bucket>) {
         for token in tokens.iter() {
             let amount = token.amount();
@@ -426,6 +387,9 @@ impl VirtualMarginAccount {
             self.collateral_balances
                 .entry(resource)
                 .and_modify(|balance| *balance -= amount);
+            if self.collateral_balances[&resource].is_zero() {
+                self.collateral_balances.remove(&resource);
+            }
         }
 
         tokens

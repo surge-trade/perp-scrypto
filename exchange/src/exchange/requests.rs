@@ -3,7 +3,7 @@ use account::Status;
 use common::{PairId, ListIndex};
 use super::errors::*;
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Limit {
     Gte(Decimal),
     Lte(Decimal),
@@ -13,8 +13,8 @@ pub enum Limit {
 impl Limit {
     pub fn compare(&self, value: Decimal) -> bool {
         match self {
-            Limit::Gte(price) => value >= *price,
-            Limit::Lte(price) => value <= *price,
+            Limit::Gte(limit) => value >= *limit,
+            Limit::Lte(limit) => value <= *limit,
             Limit::None => true,
         }
     }
@@ -36,13 +36,13 @@ impl Limit {
     }
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct RequestRemoveCollateral {
     pub target_account: ComponentAddress, 
     pub claims: Vec<(ResourceAddress, Decimal)>,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct RequestMarginOrder {
     pub pair_id: PairId,
     pub amount: Decimal,
@@ -52,7 +52,7 @@ pub struct RequestMarginOrder {
     pub cancel_requests: Vec<ListIndex>,
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub enum Request {
     RemoveCollateral(RequestRemoveCollateral),
     MarginOrder(RequestMarginOrder),

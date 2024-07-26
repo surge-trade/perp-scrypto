@@ -21,101 +21,6 @@ from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 from tools.price_feeds import get_feeds, get_prices
 
-def parse_request(elem):
-    request = elem['fields']
-
-    index = request[0]['value']
-    submission = request[2]['value']
-    expiry = request[3]['value']
-    status_id = int(request[4]['value'])
-    request_variant_id = int(request[1]['variant_id'])
-    request_inner = request[1]['fields'][0]['fields']
-
-    if status_id == 0:
-        status = 'Dormant'
-    elif status_id == 1:
-        status = 'Active'
-    elif status_id == 2:
-        status = 'Executed'
-    elif status_id == 3:
-        status = 'Canceled'
-    elif status_id == 4:
-        status = 'Expired'
-    elif status_id == 5:
-        status = 'Failed'
-    else:
-        status = 'Unknown'
-
-    if request_variant_id == 0:
-        type = 'Remove Collateral'
-        target_account = request_inner[0]['value']
-
-        claims = []
-        for claim in request_inner[1]['elements']:
-            claim = claim['fields']
-            claims.append({
-                'resource': claim[0]['value'],
-                'size': claim[1]['value'],
-            })
-
-        request_details = {
-            'target_account': target_account,
-            'claims': claims,
-        }
-    elif request_variant_id == 1:
-        pair_id = request_inner[0]['value']
-        size = float(request_inner[1]['value'])
-        reduce_only = bool(request_inner[2]['value'])
-        limit_variant = int(request_inner[3]['variant_id'])
-        if limit_variant == 0 or limit_variant == 1:
-            limit_price = float(request_inner[3]['fields'][0]['value'])
-        else:
-            limit_price = None
-
-        activate_requests = []
-        for i in request_inner[4]['elements']:
-            activate_requests.append(i['value'])
-
-        cancel_requests = []
-        for i in request_inner[5]['elements']:
-            cancel_requests.append(i['value'])
-
-        if limit_variant == 0 and size > 0:
-            type = 'Stop Long'
-        elif limit_variant == 0 and size <= 0:
-            type = 'Limit Short'
-        elif limit_variant == 1 and size >= 0:
-            type = 'Limit Long'
-        elif limit_variant == 1 and size < 0:
-            type = 'Stop Short'    
-        elif limit_variant == 2 and size >= 0:
-            type = 'Market Long'
-        elif limit_variant == 2 and size < 0:
-            type = 'Market Short'
-        else:
-            type = 'Unknown'
-
-        request_details = {
-            'pair': pair_id,
-            'size': size,
-            'reduce_only': reduce_only,
-            'limit_price': limit_price,
-            'activate_requests': activate_requests,
-            'cancel_requests': cancel_requests,
-        }
-    else:
-        type = 'Unknown'
-        request_details = None
-
-    return {
-        'type': type,
-        'index': index,
-        'submission': submission,
-        'expiry': expiry,
-        'status': status,
-        'request_details': request_details,
-    }
-
 async def main():
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
@@ -204,8 +109,13 @@ async def main():
             print(result['receipt']['error_message'])
             return 
         
-        result = result['receipt']['output'][4]
-        print(result)
+        data = result['receipt']['output'][4]['programmatic_json']['fields']
+        lock_amount = data[0]['fields'][4]['value']
+        bonus_amount = data[1]['value']
+        unlock_time = data[0]['fields'][9]['fields'][0]['value']
+        print(lock_amount)
+        print(bonus_amount)
+        print(unlock_time)
 
 if __name__ == '__main__':
     asyncio.run(main())

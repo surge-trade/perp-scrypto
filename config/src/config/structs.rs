@@ -3,12 +3,14 @@ use common::{PairId, DFloat16};
 
 pub struct ConfigInfo {
     pub exchange: ExchangeConfig,
+    pub pair_configs: HashMap<PairId, Option<PairConfig>>,
     pub collaterals: HashMap<ResourceAddress, CollateralConfig>,
 }
 
 #[derive(ScryptoSbor)]
 pub struct ConfigInfoCompressed {
     pub exchange: ExchangeConfigCompressed,
+    pub pair_configs: HashMap<PairId, Option<PairConfigCompressed>>,
     pub collaterals: HashMap<ResourceAddress, CollateralConfigCompressed>,
 }
 
@@ -17,17 +19,20 @@ impl ConfigInfoCompressed {
     pub fn decompress(&self) -> ConfigInfo {
         ConfigInfo {
             exchange: self.exchange.decompress(),
+            pair_configs: self.pair_configs.iter().map(|(pair_id, config)| (pair_id.to_owned(), config.as_ref().map(|c| c.decompress()))).collect(),
             collaterals: self.collaterals.iter().map(|(resource, config)| (*resource, config.decompress())).collect(),
         }
     }
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct ExchangeConfig {
     /// Maximum allowed age of the price in seconds
     pub max_price_age_seconds: i64,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
+    /// Maximum allowed number of collaterals per account
+    pub collaterals_max: u16,
     /// Maximum allowed number of active requests per account
     pub active_requests_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
@@ -38,8 +43,10 @@ pub struct ExchangeConfig {
     pub adl_a: Decimal,
     /// ADL B calculation parameter
     pub adl_b: Decimal,
-    /// Fee for adding and removing liquidity
-    pub fee_liquidity: Decimal,
+    /// Fee for adding liquidity
+    pub fee_liquidity_add: Decimal,
+    /// Fee for removing liquidity
+    pub fee_liquidity_remove: Decimal,
     /// Share of fees that goes to the protocol
     pub fee_share_protocol: Decimal,
     /// Share of fees that goes to the treasury
@@ -60,6 +67,8 @@ pub struct ExchangeConfigCompressed {
     pub max_price_age_seconds: u32,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
+    /// Maximum allowed number of collaterals per account
+    pub collaterals_max: u16,
     /// Maximum allowed number of active requests per account
     pub active_requests_max: u16,
     /// Maximum skew ratio allowed before skew increasing orders can not be made
@@ -70,8 +79,10 @@ pub struct ExchangeConfigCompressed {
     pub adl_a: DFloat16,
     /// ADL B calculation parameter
     pub adl_b: DFloat16,
-    /// Fee for adding and removing liquidity
-    pub fee_liquidity: DFloat16,
+    /// Fee for adding liquidity
+    pub fee_liquidity_add: DFloat16,
+    /// Fee for removing liquidity
+    pub fee_liquidity_remove: DFloat16,
     /// Share of fees that goes to the protocol
     pub fee_share_protocol: DFloat16,
     /// Share of fees that goes to the treasury
@@ -91,12 +102,14 @@ impl Default for ExchangeConfig {
         Self {
             max_price_age_seconds: 5,
             positions_max: 10,
+            collaterals_max: 5,
             active_requests_max: 30,
             skew_ratio_cap: dec!(0.15),
             adl_offset: dec!(0.2),
             adl_a: dec!(0.05),
             adl_b: dec!(0.01),
-            fee_liquidity: dec!(0.005),
+            fee_liquidity_add: dec!(0.0025),
+            fee_liquidity_remove: dec!(0.0025),
             fee_share_protocol: dec!(0.1),
             fee_share_treasury: dec!(0.1),
             fee_share_referral: dec!(1),
@@ -115,10 +128,12 @@ impl ExchangeConfig {
         assert!(self.adl_offset >= dec!(0), "Invalid adl offset");
         assert!(self.adl_a >= dec!(0), "Invalid adl a");
         assert!(self.adl_b >= dec!(0), "Invalid adl b");
-        assert!(self.fee_liquidity >= dec!(0), "Invalid liquidity fee");
+        assert!(self.fee_liquidity_add >= dec!(0), "Invalid liquidity fee");
+        assert!(self.fee_liquidity_remove >= dec!(0), "Invalid liquidity fee");
         assert!(self.fee_share_protocol >= dec!(0), "Invalid protocol fee");
         assert!(self.fee_share_treasury >= dec!(0), "Invalid treasury fee");
-        assert!(self.fee_share_referral >= dec!(0), "Invalid referral fee");
+        assert!(self.fee_share_protocol + self.fee_share_treasury <= dec!(0.5), "Invalid combined fee share");
+        assert!(self.fee_share_referral >= dec!(0) && self.fee_share_referral <= dec!(1), "Invalid referral fee");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
         assert!(self.protocol_burn_amount > dec!(0), "Invalid protocol burn amount");
         assert!(self.reward_keeper >= dec!(0), "Invalid keeper reward");
@@ -128,12 +143,14 @@ impl ExchangeConfig {
         ExchangeConfigCompressed {
             max_price_age_seconds: self.max_price_age_seconds as u32,
             positions_max: self.positions_max,
+            collaterals_max: self.collaterals_max,
             active_requests_max: self.active_requests_max,
             skew_ratio_cap: DFloat16::from(self.skew_ratio_cap),
             adl_offset: DFloat16::from(self.adl_offset),
             adl_a: DFloat16::from(self.adl_a),
             adl_b: DFloat16::from(self.adl_b),
-            fee_liquidity: DFloat16::from(self.fee_liquidity),
+            fee_liquidity_add: DFloat16::from(self.fee_liquidity_add),
+            fee_liquidity_remove: DFloat16::from(self.fee_liquidity_remove),
             fee_share_protocol: DFloat16::from(self.fee_share_protocol),
             fee_share_treasury: DFloat16::from(self.fee_share_treasury),
             fee_share_referral: DFloat16::from(self.fee_share_referral),
@@ -149,12 +166,14 @@ impl ExchangeConfigCompressed {
         ExchangeConfig {
             max_price_age_seconds: self.max_price_age_seconds as i64,
             positions_max: self.positions_max,
+            collaterals_max: self.collaterals_max,
             active_requests_max: self.active_requests_max,
             skew_ratio_cap: self.skew_ratio_cap.into(),
             adl_offset: self.adl_offset.into(),
             adl_a: self.adl_a.into(),
             adl_b: self.adl_b.into(),
-            fee_liquidity: self.fee_liquidity.into(),
+            fee_liquidity_add: self.fee_liquidity_add.into(),
+            fee_liquidity_remove: self.fee_liquidity_remove.into(),
             fee_share_protocol: self.fee_share_protocol.into(),
             fee_share_treasury: self.fee_share_treasury.into(),
             fee_share_referral: self.fee_share_referral.into(),
@@ -165,12 +184,12 @@ impl ExchangeConfigCompressed {
     }
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct PairConfig {
     /// Price feed id
     pub pair_id: PairId,
-    /// If the pair is disabled
-    pub disabled: bool,
+    /// Maximum allowed combined oi for the pair
+    pub oi_max: Decimal,
     /// Price delta ratio before updating a pair will be rewarded
     pub update_price_delta_ratio: Decimal,
     /// Time before updating a pair will be rewarded
@@ -201,8 +220,8 @@ pub struct PairConfig {
 pub struct PairConfigCompressed {
     /// Price feed id
     pub pair_id: PairId,
-    /// If the pair is disabled
-    pub disabled: bool,
+    /// Maximum allowed combined oi for the pair
+    pub oi_max: DFloat16,
     /// Price delta ratio before updating a pair will be rewarded
     pub update_price_delta_ratio: DFloat16,
     /// Time before updating a pair will be rewarded
@@ -231,6 +250,7 @@ pub struct PairConfigCompressed {
 
 impl PairConfig {
     pub fn validate(&self) {
+        assert!(self.oi_max >= dec!(0), "Invalid oi max");
         assert!(self.update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
         assert!(self.update_period_seconds >= 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0), "Invalid initial margin");
@@ -248,7 +268,7 @@ impl PairConfig {
     pub fn compress(&self) -> PairConfigCompressed {
         PairConfigCompressed {
             pair_id: self.pair_id.to_owned(),
-            disabled: self.disabled,
+            oi_max: DFloat16::from(self.oi_max),
             update_price_delta_ratio: DFloat16::from(self.update_price_delta_ratio),
             update_period_seconds: self.update_period_seconds as u16,
             margin_initial: DFloat16::from(self.margin_initial),
@@ -269,7 +289,7 @@ impl PairConfigCompressed {
     pub fn decompress(&self) -> PairConfig {
         PairConfig {
             pair_id: self.pair_id.to_owned(),
-            disabled: self.disabled,
+            oi_max: self.oi_max.into(),
             update_price_delta_ratio: self.update_price_delta_ratio.into(),
             update_period_seconds: self.update_period_seconds as i64,
             margin_initial: self.margin_initial.into(),
@@ -286,7 +306,7 @@ impl PairConfigCompressed {
     }
 }
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct CollateralConfig {
     /// Price feed id
     pub pair_id: PairId,

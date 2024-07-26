@@ -40,7 +40,7 @@ pub struct MarginAccountUpdates {
 
 pub type Status = u8;
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct KeeperRequest {
     pub request: Vec<u8>,
     pub submission: Instant,

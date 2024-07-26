@@ -5,48 +5,42 @@ use super::errors::*;
 use super::exchange_mod::Config;
 
 pub struct VirtualConfig {
-    config: Global<Config>,
-    config_info: ConfigInfo,
-    pair_configs: Option<HashMap<PairId, PairConfig>>,
+    exchange_config: ExchangeConfig,
+    pair_configs: HashMap<PairId, PairConfig>,
+    collateral_configs: HashMap<ResourceAddress, CollateralConfig>,
 }
 
 impl VirtualConfig {
-    pub fn new(config: Global<Config>) -> Self {
-        let config_info = config.get_info().decompress();
+    pub fn new(config: Global<Config>, pair_ids: HashSet<PairId>) -> Self {
+        let config_info = config.get_info(pair_ids).decompress();
+        let exchange_config = config_info.exchange;
+        let pair_configs = config_info.pair_configs.into_iter()
+            .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG))).collect();
+        let collateral_configs = config_info.collaterals;
 
         Self {
-            config,
-            config_info,
-            pair_configs: None,
+            exchange_config,
+            pair_configs,
+            collateral_configs,
         }
     }
 
-    pub fn load_pair_configs(&mut self, pair_ids: HashSet<PairId>) {
-        let pair_configs = self.config.get_pair_configs_by_ids(pair_ids).into_iter()
-            .map(|(k, v)| (k, v.expect(ERROR_MISSING_PAIR_CONFIG).decompress())).collect();
-        self.pair_configs = Some(pair_configs);
-    }
-
     pub fn exchange_config(&self) -> &ExchangeConfig {
-        &self.config_info.exchange
+        &self.exchange_config
     }
 
     pub fn pair_config(&self, pair_id: &PairId) -> &PairConfig {
-        match self.pair_configs.as_ref().expect(ERROR_PAIR_CONFIGS_NOT_LOADED).get(pair_id) {
+        match self.pair_configs.get(pair_id) {
             Some(ref config) => config,
             None => panic!("{}", ERROR_MISSING_PAIR_CONFIG),
         }
     }
 
     pub fn collateral_configs(&self) -> &HashMap<ResourceAddress, CollateralConfig> {
-        &self.config_info.collaterals
-    }
-
-    pub fn collaterals(&self) -> Vec<ResourceAddress> {
-        self.config_info.collaterals.keys().cloned().collect()
+        &self.collateral_configs
     }
 
     pub fn collateral_feeds(&self) -> HashMap<ResourceAddress, PairId> {
-        self.config_info.collaterals.iter().map(|(resource, config)| (*resource, config.pair_id.clone())).collect()
+        self.collateral_configs.iter().map(|(resource, config)| (*resource, config.pair_id.clone())).collect()
     }
 }
