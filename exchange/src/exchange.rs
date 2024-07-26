@@ -206,7 +206,6 @@ mod exchange_mod {
         }
     }
     
-
     enable_method_auth! { 
         roles {
             fee_delegator_admin => updatable_by: [OWNER];
@@ -1880,14 +1879,10 @@ mod exchange_mod {
             }
             let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee_paid);
 
-            self._save_funding_index(pool, account, pair_id);
-            self._update_pair_snaps(pool, oracle, pair_id);
-
-            let skew_1 = pool.skew_abs_snap();
-
             let activated_requests = account.try_set_keeper_requests_status(request.activate_requests, STATUS_ACTIVE);
             let cancelled_requests = account.try_set_keeper_requests_status(request.cancel_requests, STATUS_CANCELLED);
-
+            
+            let skew_1 = pool.skew_abs_snap();
             self._assert_pool_integrity(config, pool, skew_1 - skew_0);
 
             Runtime::emit_event(EventMarginOrder {
@@ -2060,9 +2055,6 @@ mod exchange_mod {
             let (pnl, fee_paid) = self._close_position(config, pool, account, oracle, pair_id, amount_close);
             let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee_paid);
 
-            self._save_funding_index(pool, account, pair_id);
-            self._update_pair_snaps(pool, oracle, pair_id);
-
             let skew_ratio_1 = self._skew_ratio(pool);
             assert!(
                 skew_ratio_1 < skew_ratio_0,
@@ -2126,6 +2118,9 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, oi_total, pair_config.oi_max
             );
 
+            self._save_funding_index(pool, account, pair_id);
+            self._update_pair_snaps(pool, oracle, pair_id);
+
             self._assert_position_limit(config, account);
             self._assert_account_integrity(config, pool, account, oracle);
 
@@ -2169,6 +2164,8 @@ mod exchange_mod {
             position.cost -= cost;
 
             self._settle_account(pool, account, pnl);
+            self._save_funding_index(pool, account, pair_id);
+            self._update_pair_snaps(pool, oracle, pair_id);
 
             (pnl, fee)
         }
@@ -2312,7 +2309,7 @@ mod exchange_mod {
                 let funding = if amount.is_positive() {
                     amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
-                    amount * (pool_position.funding_short_index - position.funding_index)            
+                    amount * (pool_position.funding_short_index - position.funding_index)
                 };
 
                 let pnl = value - cost - fee - funding;
