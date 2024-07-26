@@ -2111,6 +2111,11 @@ mod exchange_mod {
             
             position.amount += amount;
             position.cost += cost;
+            if position.amount.is_positive() {
+                position.funding_index = pool_position.funding_long_index
+            } else {
+                position.funding_index = pool_position.funding_short_index
+            };
 
             let oi_total = (pool_position.oi_long + pool_position.oi_short) * price;
             assert!(
@@ -2118,7 +2123,6 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, oi_total, pair_config.oi_max
             );
 
-            self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
 
             self._assert_position_limit(config, account);
@@ -2162,9 +2166,13 @@ mod exchange_mod {
 
             position.amount += amount;
             position.cost -= cost;
+            if position.amount.is_positive() {
+                position.funding_index = pool_position.funding_long_index
+            } else {
+                position.funding_index = pool_position.funding_short_index
+            };
 
             self._settle_account(pool, account, pnl);
-            self._save_funding_index(pool, account, pair_id);
             self._update_pair_snaps(pool, oracle, pair_id);
 
             (pnl, fee)
@@ -2516,23 +2524,6 @@ mod exchange_mod {
             account.reward_referral(fee_referral);
 
             (-fee_pool, -fee_protocol, -fee_treasury, -fee_referral)
-        }
-        
-        fn _save_funding_index(
-            &self,
-            pool: &VirtualLiquidityPool,
-            account: &mut VirtualMarginAccount,
-            pair_id: &PairId,
-        ) {
-            let pool_position = pool.position(pair_id);
-            let position: &mut AccountPosition = account.position_mut(pair_id);
-
-            let funding_index = if position.amount.is_positive() {
-                pool_position.funding_long_index
-            } else {
-                pool_position.funding_short_index
-            };
-            position.funding_index = funding_index;
         }
     }
 }
