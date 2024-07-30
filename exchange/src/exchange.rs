@@ -1131,7 +1131,7 @@ mod exchange_mod {
                 if let Some(price_limit_tp) = price_limit_tp {
                     let request_tp = Request::MarginOrder(RequestMarginOrder {
                         pair_id: pair_id.clone(),
-                        amount,
+                        amount: -amount,
                         reduce_only: true,
                         price_limit: price_limit_tp,
                         activate_requests: vec![],
@@ -1142,7 +1142,7 @@ mod exchange_mod {
                 if let Some(price_limit_sl) = price_limit_sl {
                     let request_sl = Request::MarginOrder(RequestMarginOrder {
                         pair_id: pair_id.clone(),
-                        amount,
+                        amount: -amount,
                         reduce_only: true,
                         price_limit: price_limit_sl,
                         activate_requests: vec![],
