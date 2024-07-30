@@ -81,3 +81,21 @@ if __name__ == '__main__':
 #     "remove_collateral_config"
 #     Address("resource_tdx_2_1tkr5t0zhag4w5evpcnsrya7tljeevqgmvd7l6r35ueqaca3amkl3wr")
 # ;
+
+# CALL_METHOD
+#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     "lock_fee"
+#     Decimal("100")
+# ;
+# CALL_METHOD
+#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     "create_proof_of_amount"
+#     Address("resource_tdx_2_1t5g9tl3mk3a0dvlkvy0l9lpynse3ftv9thz050wmqrj273mplzz88v")
+#     Decimal("1")
+# ;
+# CALL_METHOD
+#     Address("component_tdx_2_1cqg9uxlv8a0cuc8uvhn6putehdn0m4p0h62aqtr9kzpaqfhlz7auya")
+#     "add_key"
+#     1u64
+#     Bytes("b60f1610a172790598c1b4cd4a4dc34daa4e972bb7a9fa77245357eab78471c15927a28af8779e021236ab68ff0c8bd3")
+# ;
