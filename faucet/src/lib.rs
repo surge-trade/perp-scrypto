@@ -65,6 +65,14 @@ mod faucet_mod {
                         "info_url" => Url::of("https://assets.instabridge.io/tokens/info/xETH"), updatable;
                     }
                 })
+                .mint_roles(mint_roles! {
+                    minter => rule!(require(global_caller(this)));
+                    minter_updater => OWNER;
+                })
+                .recall_roles(recall_roles! {
+                    recaller => OWNER;
+                    recaller_updater => OWNER;
+                })
                 .create_with_no_initial_supply();
             let usdc_manager = ResourceBuilder::new_fungible(owner_role.clone())
                 .divisibility(6)

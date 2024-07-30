@@ -33,6 +33,8 @@ async def main():
 
         owner_resource = config_data['OWNER_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
+        btc_resource = config_data['BTC_RESOURCE']
+        eth_resource = config_data['ETH_RESOURCE']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -63,6 +65,22 @@ async def main():
                     ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['xrd']))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("XRD/USD"), # pair_id
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.8')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
+                    ])
+                ]),
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(btc_resource))),
+                    ret.ManifestBuilderValue.TUPLE_VALUE([
+                        ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # pair_id
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.9')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
+                    ])
+                ]),
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(eth_resource))),
+                    ret.ManifestBuilderValue.TUPLE_VALUE([
+                        ret.ManifestBuilderValue.STRING_VALUE("ETH/USD"), # pair_id
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.9')), # discount
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
                     ])

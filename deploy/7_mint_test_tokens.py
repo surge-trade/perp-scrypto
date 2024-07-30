@@ -37,9 +37,10 @@ async def main():
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
 
-        faucet_owner_resource = config_data['FAUCET_OWNER_RESOURCE']
         faucet_component = config_data['FAUCET_COMPONENT']
 
+        deposit_account = account
+        # deposit_account = ret.Address('')
         builder = ret.ManifestBuilder()
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
@@ -56,7 +57,7 @@ async def main():
             'free_tokens',
             []
         )
-        builder = deposit_all(builder, account)
+        builder = builder.account_try_deposit_entire_worktop_or_abort(deposit_account, None)
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
         print('Transaction id:', intent)

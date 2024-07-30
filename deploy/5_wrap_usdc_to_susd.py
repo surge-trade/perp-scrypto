@@ -49,7 +49,7 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
-        amount = '100000000';
+        amount = '10000000';
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -66,12 +66,9 @@ async def main():
                 ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal(amount)),
             ]
         )
-        builder = withdraw_to_bucket(
-            builder, 
-            account, 
-            ret.Address(usdc_resource), 
-            ret.Decimal(amount), 
-            'bucket1'
+        builder = builder.take_all_from_worktop(
+            ret.Address(usdc_resource),
+            ret.ManifestBuilderBucket('bucket1')
         )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(token_wrapper_component)),
