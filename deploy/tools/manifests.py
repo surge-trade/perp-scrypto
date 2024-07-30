@@ -108,7 +108,7 @@ def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resou
             role_updater=None
         ),
         burn_roles=ResourceManagerRole(
-            role=AccessRule.allow_all, 
+            role=AccessRule.allow_all(), 
             role_updater=None
         ),
         freeze_roles=None,
@@ -359,7 +359,7 @@ def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole) -> M
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=None,
         burn_roles=ResourceManagerRole(
-            role=AccessRule.allow_all, 
+            role=AccessRule.allow_all(), 
             role_updater=None
         ),
         freeze_roles=None,
@@ -395,7 +395,7 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
             role_updater=None
         ),
         burn_roles=ResourceManagerRole(
-            role=AccessRule.allow_all, 
+            role=AccessRule.allow_all(), 
             role_updater=None
         ),
         freeze_roles=None,
