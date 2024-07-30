@@ -33,7 +33,7 @@ async def main():
 
         owner_resource = config_data['OWNER_RESOURCE']
         token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        usd = config_data['USD_RESOURCE']
+        usd = config_data['USDC_RESOURCE']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
