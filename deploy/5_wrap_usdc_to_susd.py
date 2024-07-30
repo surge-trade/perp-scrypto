@@ -31,9 +31,10 @@ async def main():
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
 
-        owner_resource = config_data['OWNER_RESOURCE']
+        faucet_owner_resource = config_data['FAUCET_OWNER_RESOURCE']
+        faucet_component = config_data['FAUCET_COMPONENT']
         token_wrapper_component = config_data['TOKEN_WRAPPER_COMPONENT']
-        usd = config_data['USD_RESOURCE']
+        usdc_resource = config_data['USDC_RESOURCE']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -48,14 +49,28 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        amount = '100000000';
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
+        builder = builder.account_create_proof_of_amount(
+            account,
+            ret.Address(faucet_owner_resource),
+            ret.Decimal('1')
+        )
+        builder = builder.call_method(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(faucet_component)),
+            'admin_mint_token',
+            [
+                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(usdc_resource))),
+                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal(amount)),
+            ]
+        )
         builder = withdraw_to_bucket(
             builder, 
             account, 
-            ret.Address(usd), 
-            ret.Decimal('1000000'), 
+            ret.Address(usdc_resource), 
+            ret.Decimal(amount), 
             'bucket1'
         )
         builder = builder.call_method(

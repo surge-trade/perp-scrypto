@@ -254,6 +254,57 @@ async def main():
             envs.append(('KEEPER_REWARD_RESOURCE', keeper_reward_resource))
             print('KEEPER_REWARD_RESOURCE:', keeper_reward_resource)
 
+            if network_config['network_name'] == 'stokenet':
+                if 'FAUCET_PACKAGE' not in config_data:
+                    code, definition = build('faucet')
+                    payload, intent = await gateway.build_publish_transaction(
+                        account,
+                        code,
+                        definition,
+                        ret.OwnerRole.NONE,
+                        public_key,
+                        private_key,
+                    )
+                    await gateway.submit_transaction(payload)
+                    addresses = await gateway.get_new_addresses(intent)
+                    config_data['ORACLE_PACKAGE'] = addresses[0]
+
+                faucet_package = config_data['FAUCET_PACKAGE']
+                print('FAUCET_PACKAGE:', faucet_package)
+
+                if 'FAUCET_COMPONENT' not in config_data:
+                    builder = ret.ManifestBuilder()
+                    builder = lock_fee(builder, account, 100)
+                    builder = builder.call_function(
+                        ret.ManifestBuilderAddress.STATIC(ret.Address(faucet_package)),
+                        'Faucet',
+                        'new',
+                        []
+                    )
+                    builder = deposit_all(builder, account)
+                    payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                    await gateway.submit_transaction(payload)
+                    addresses = await gateway.get_new_addresses(intent)
+                    config_data['FAUCET_COMPONENT'] = addresses[0]
+                    config_data['FAUCET_OWNER_RESOURCE'] = addresses[1]
+                    config_data['BTC_RESOURCE'] = addresses[2]
+                    config_data['ETH_RESOURCE'] = addresses[3]
+                    config_data['USDC_RESOURCE'] = addresses[4]
+                    config_data['USDT_RESOURCE'] = addresses[5]
+
+                faucet_component = config_data['FAUCET_COMPONENT']
+                faucet_owner_resource = config_data['FAUCET_OWNER_RESOURCE']
+                btc_resource = config_data['BTC_RESOURCE']
+                eth_resource = config_data['ETH_RESOURCE']
+                usdc_resource = config_data['USDC_RESOURCE']
+                usdt_resource = config_data['USDT_RESOURCE']
+                print('FAUCET_COMPONENT:', faucet_component)
+                print('FAUCET_OWNER_RESOURCE:', faucet_owner_resource)
+                print('BTC_RESOURCE:', btc_resource)
+                print('ETH_RESOURCE:', eth_resource)
+                print('USDC_RESOURCE:', usdc_resource)
+                print('USDT_RESOURCE:', usdt_resource)
+
             if 'TOKEN_WRAPPER_PACKAGE' not in config_data:
                 code, definition = build('token_wrapper', envs, network_config['network_name'])
                 payload, intent = await gateway.build_publish_transaction(
