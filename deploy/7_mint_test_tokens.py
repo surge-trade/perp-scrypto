@@ -40,6 +40,7 @@ async def main():
         faucet_component = config_data['FAUCET_COMPONENT']
 
         deposit_account = account
+        # deposit_account = ret.Address('')
         builder = ret.ManifestBuilder()
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
