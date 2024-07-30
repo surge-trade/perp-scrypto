@@ -257,18 +257,18 @@ async def main():
 
             if network_config['network_name'] == 'stokenet':
                 if 'FAUCET_PACKAGE' not in config_data:
-                    code, definition = build('faucet')
+                    code, definition = build('faucet', envs, network_config['network_name'])
                     payload, intent = await gateway.build_publish_transaction(
                         account,
                         code,
                         definition,
-                        ret.OwnerRole.NONE,
+                        ret.OwnerRole.NONE(),
                         public_key,
                         private_key,
                     )
                     await gateway.submit_transaction(payload)
                     addresses = await gateway.get_new_addresses(intent)
-                    config_data['ORACLE_PACKAGE'] = addresses[0]
+                    config_data['FAUCET_PACKAGE'] = addresses[0]
 
                 faucet_package = config_data['FAUCET_PACKAGE']
                 print('FAUCET_PACKAGE:', faucet_package)
