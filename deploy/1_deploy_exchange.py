@@ -71,8 +71,9 @@ async def main():
         oracle_key = 'b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640'
 
         clean('common')
-        clean('oracle')
+        clean('faucet')
         clean('token_wrapper')
+        clean('oracle')
         clean('account')
         clean('config')
         clean('env_registry')
