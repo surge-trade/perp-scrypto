@@ -64,3 +64,20 @@ if __name__ == '__main__':
 #     Address("resource_tdx_2_1tkr5t0zhag4w5evpcnsrya7tljeevqgmvd7l6r35ueqaca3amkl3wr")
 #     Decimal("0")
 # ;
+
+# CALL_METHOD
+#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     "lock_fee"
+#     Decimal("100")
+# ;
+# CALL_METHOD
+#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     "create_proof_of_amount"
+#     Address("resource_tdx_2_1t5g9tl3mk3a0dvlkvy0l9lpynse3ftv9thz050wmqrj273mplzz88v")
+#     Decimal("1")
+# ;
+# CALL_METHOD
+#     Address("component_tdx_2_1crtp3jrth56qnas5lhyxjy0qjxmfl4wf8q57fw6mrhf6pdcxh4ptcr")
+#     "remove_collateral_config"
+#     Address("resource_tdx_2_1tkr5t0zhag4w5evpcnsrya7tljeevqgmvd7l6r35ueqaca3amkl3wr")
+# ;
