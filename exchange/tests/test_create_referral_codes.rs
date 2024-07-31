@@ -22,9 +22,9 @@ fn test_create_referral_codes_normal() {
     interface.create_referral_codes((referral_resource, referral_id), vec![(base_resource, base_input_0)], referral_hashes).expect_commit_success();
     
     let base_balance_1 = interface.test_account_balance(base_resource);
-    let base_output_1 = base_input_0 - base_balance_1 + base_balance_0;
+    let base_output_1 = base_balance_0 - base_balance_1;
 
-    assert_eq!(base_output_1, base_referral_0);
+    assert_eq!(base_output_1, base_input_0 - base_referral_0);
 }
 
 #[test]

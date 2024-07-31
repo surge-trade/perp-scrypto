@@ -16,7 +16,7 @@ fn test_margin_order_request_normal() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let delay_seconds_1 = 0;
+    let delay_seconds_1 = 10;
     let expiry_seconds_1 = 10;
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
@@ -39,6 +39,9 @@ fn test_margin_order_request_normal() {
     ).expect_commit_success().clone();
 
     let time = interface.ledger_time();
+    let expected_submission = time.add_seconds(delay_seconds_1 as i64).unwrap();
+    let expected_expiry = expected_submission.add_seconds(expiry_seconds_1 as i64).unwrap();
+
     let account_details = interface.get_account_details(margin_account_component, 10, None);
     assert_eq!(account_details.valid_requests_start, 0);
     assert_eq!(account_details.active_requests.len(), 1);
@@ -47,8 +50,8 @@ fn test_margin_order_request_normal() {
 
     let request_details = account_details.active_requests[0].clone();
     assert_eq!(request_details.index, 0);
-    assert_eq!(request_details.submission, time);
-    assert_eq!(request_details.expiry, time.add_seconds(expiry_seconds_1 as i64).unwrap());
+    assert_eq!(request_details.submission, expected_submission);
+    assert_eq!(request_details.expiry, expected_expiry);
     assert_eq!(request_details.status, status_1);
     if let Request::MarginOrder(margin_order_request) = request_details.request {
         assert_eq!(margin_order_request.pair_id, pair_id_1);

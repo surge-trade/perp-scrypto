@@ -130,7 +130,7 @@ fn test_create_referral_codes_from_allocation_code_already_exists() {
     let result = interface.mint_referral_with_allocation(
         dec!(0.05), 
         dec!(0.05), 
-        1,
+        2,
         vec![(base_resource, base_input_0)],
         vec![(base_resource, base_referral_0)],
         2

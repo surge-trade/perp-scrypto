@@ -42,7 +42,7 @@ fn test_cancel_requests_normal() {
 
     let result = interface.cancel_requests(
         margin_account_component,
-        [0 as ListIndex; 10].to_vec(),
+        (0..10).collect(),
     ).expect_commit_success().clone();
 
     let time = interface.ledger_time();
@@ -54,7 +54,7 @@ fn test_cancel_requests_normal() {
 
     for i in 0..10 {
         let request_details = account_details.requests_history[i].clone();
-        assert_eq!(request_details.index, i as ListIndex);
+        assert_eq!(request_details.index, (9 - i) as ListIndex);
         assert_eq!(request_details.submission, time);
         assert_eq!(request_details.expiry, time.add_seconds(expiry_seconds_1 as i64).unwrap());
         assert_eq!(request_details.status, STATUS_CANCELLED);
