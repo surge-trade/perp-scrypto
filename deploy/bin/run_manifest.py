@@ -94,7 +94,7 @@ if __name__ == '__main__':
 #     Decimal("1")
 # ;
 # CALL_METHOD
-#     Address("component_tdx_2_1cqg9uxlv8a0cuc8uvhn6putehdn0m4p0h62aqtr9kzpaqfhlz7auya")
+#     Address("component_tdx_2_1crp59cff90nhg32gesghh55gh44qut8ahuu5ayh2dkzjgt2f4esgrf")
 #     "add_key"
 #     1u64
 #     Bytes("b60f1610a172790598c1b4cd4a4dc34daa4e972bb7a9fa77245357eab78471c15927a28af8779e021236ab68ff0c8bd3")
