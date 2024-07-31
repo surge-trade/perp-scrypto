@@ -48,12 +48,12 @@ if __name__ == '__main__':
     asyncio.run(main())
 
 # CALL_METHOD
-#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "lock_fee"
 #     Decimal("100")
 # ;
 # CALL_METHOD
-#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "create_proof_of_amount"
 #     Address("resource_tdx_2_1t4d0yjchyssrj0q49swvp9sgl37qrg9z25th48sk0xltdatmdzvvzk")
 #     Decimal("1")
@@ -66,12 +66,12 @@ if __name__ == '__main__':
 # ;
 
 # CALL_METHOD
-#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "lock_fee"
 #     Decimal("100")
 # ;
 # CALL_METHOD
-#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "create_proof_of_amount"
 #     Address("resource_tdx_2_1t5g9tl3mk3a0dvlkvy0l9lpynse3ftv9thz050wmqrj273mplzz88v")
 #     Decimal("1")
@@ -83,14 +83,14 @@ if __name__ == '__main__':
 # ;
 
 # CALL_METHOD
-#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "lock_fee"
 #     Decimal("100")
 # ;
 # CALL_METHOD
-#     Address("account_tdx_2_12ylzgawnp489cv07k69fvgtwy9xv9y4v43smvwk0mpp0qps3dsnsnn")
+#     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "create_proof_of_amount"
-#     Address("resource_tdx_2_1t5g9tl3mk3a0dvlkvy0l9lpynse3ftv9thz050wmqrj273mplzz88v")
+#     Address("resource_tdx_2_1t48h0pc5rupvjy2q09cvunprk6lyxmuxvr543zy6qxk07fjqk8eg35")
 #     Decimal("1")
 # ;
 # CALL_METHOD
