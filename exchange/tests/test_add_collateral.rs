@@ -89,6 +89,14 @@ fn test_add_collateral_exceed_collaterals_max() {
         let token_input_1 = dec!(100);
         let token_resource_1 = interface.mint_test_token(token_input_1, DIVISIBILITY_MAXIMUM);
 
+        interface.update_collateral_configs(vec![(
+            token_resource_1,
+            CollateralConfig {
+                pair_id: "TEST/USD".into(),
+                discount: dec!(0.95),
+                margin: dec!(0.01),
+            }
+        )]).expect_commit_success();
         interface.add_collateral(
             margin_account_component,
             (token_resource_1, token_input_1),
@@ -97,6 +105,14 @@ fn test_add_collateral_exceed_collaterals_max() {
 
     let token_input_2 = dec!(100);
     let token_resource_2 = interface.mint_test_token(token_input_2, DIVISIBILITY_MAXIMUM);
+    interface.update_collateral_configs(vec![(
+        token_resource_2,
+        CollateralConfig {
+            pair_id: "TEST/USD".into(),
+            discount: dec!(0.95),
+            margin: dec!(0.01),
+        }
+    )]).expect_commit_success();
     interface.add_collateral(
         margin_account_component,
         (token_resource_2, token_input_2),

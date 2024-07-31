@@ -74,6 +74,25 @@ pub fn test_cancel_request_invalid_index() {
 pub fn test_cancel_request_not_active_or_dormant() {
     let mut interface = get_setup();
 
+    interface.update_pair_configs(vec![
+        PairConfig {
+            pair_id: "BTC/USD".into(),
+            oi_max: dec!(10000),
+            update_price_delta_ratio: dec!(0.001),
+            update_period_seconds: 600,
+            margin_initial: dec!(0.01),
+            margin_maintenance: dec!(0.005),
+            funding_1: dec!(0),
+            funding_2: dec!(0),
+            funding_2_delta: dec!(0),
+            funding_pool_0: dec!(0),
+            funding_pool_1: dec!(0),
+            funding_share: dec!(0),
+            fee_0: dec!(0.001),
+            fee_1: dec!(0),
+        }
+    ]).expect_commit_success();
+
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
