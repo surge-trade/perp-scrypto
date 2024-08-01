@@ -169,10 +169,10 @@ async def main():
                             if account != account_component:
                                 continue
 
-                            tokens = fields[1]['elements']
+                            tokens = fields[2]['elements']
                             for token in tokens:
                                 resource = token['fields'][0]['value']
-                                amount = token['fields'][2]['value']
+                                amount = token['fields'][1]['value']
 
                                 collateral_history.append({
                                     'type': 'Remove Collateral',
