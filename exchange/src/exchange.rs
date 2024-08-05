@@ -1262,13 +1262,11 @@ mod exchange_mod {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 
-                self._assert_valid_collateral(&config, resource);
-
                 let max_age = self._max_age(&config);
                 let collateral_feeds = HashMap::from([(resource, config.collateral_feeds().get(&resource).unwrap().clone())]);
                 let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), collateral_feeds, HashSet::new(), max_age, price_updates);
 
-                let (token, remainder) = self._swap_debt(&mut pool, &mut account, &oracle, &resource, payment);
+                let (token, remainder) = self._swap_debt(&config, &mut pool, &mut account, &oracle, &resource, payment);
     
                 account.realize();
                 pool.realize();
@@ -1758,11 +1756,15 @@ mod exchange_mod {
             mut tokens: Vec<Bucket>,
         ) {
             let amounts = tokens.iter().map(|token| (token.resource_address(), token.amount())).collect();
-            if let Some(index) = tokens.iter().position(|token| token.resource_address() == BASE_RESOURCE) {
-                let base_token = tokens.remove(index);
-                let value = base_token.amount();
-                pool.deposit(base_token);
-                self._settle_account(pool, account, value);
+            loop {
+                if let Some(index) = tokens.iter().position(|token| token.resource_address() == BASE_RESOURCE) {
+                    let base_token = tokens.remove(index);
+                    let value = base_token.amount();
+                    pool.deposit(base_token);
+                    self._settle_account(pool, account, value);
+                } else {
+                    break;
+                }
             }
             tokens.iter().for_each(|token| self._assert_valid_collateral(config, token.resource_address()));
 
@@ -1910,6 +1912,7 @@ mod exchange_mod {
 
         fn _swap_debt(
             &self, 
+            config: &VirtualConfig,
             pool: &mut VirtualLiquidityPool,
             account: &mut VirtualMarginAccount, 
             oracle: &VirtualOracle,
@@ -1917,6 +1920,7 @@ mod exchange_mod {
             mut payment_token: Bucket, 
         ) -> (Bucket, Bucket) {
             self._assert_base_resource(&payment_token.resource_address());      
+            self._assert_valid_collateral(config, *resource);
             assert!(
                 account.virtual_balance() < dec!(0),
                 "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_SWAP_NO_DEBT, account.virtual_balance(), dec!(0)
