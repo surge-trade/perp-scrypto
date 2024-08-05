@@ -46,7 +46,7 @@ impl ExchangeInterface {
             .call_method(
                 self.test_account, 
                 "set_default_deposit_rule",
-                manifest_args!(DefaultDepositRule::Accept)
+                manifest_args!(DefaultDepositRule::Reject)
             )
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
@@ -136,6 +136,57 @@ impl ExchangeInterface {
     ) -> Decimal {
         let pool_details = self.get_pool_details();
         pool_details.base_tokens_amount + pool_details.virtual_balance + pool_details.unrealized_pool_funding + pool_details.pnl_snap
+    }
+
+    pub fn make_open_interest(
+        &mut self,
+        pair_id: PairId,
+        amount_long: Decimal,
+        amount_short: Decimal,
+        price: Decimal,
+    ) {
+        let result = self.create_account(
+            rule!(allow_all), 
+            vec![(self.resources.base_resource, dec!(1000000))], 
+            None,
+        ).expect_commit_success().clone();
+        let margin_account_component = result.new_component_addresses()[0];
+        self.margin_order_request(
+            0, 
+            1, 
+            margin_account_component, 
+            pair_id.clone(), 
+            amount_long, 
+            false, 
+            Limit::None, 
+            vec![], 
+            vec![], 
+            STATUS_ACTIVE
+        ).expect_commit_success();
+        self.margin_order_request(
+            0, 
+            1, 
+            margin_account_component, 
+            pair_id.clone(), 
+            -amount_short, 
+            false, 
+            Limit::None, 
+            vec![], 
+            vec![], 
+            STATUS_ACTIVE
+        ).expect_commit_success();
+        let time = self.increment_ledger_time(1);
+            self.process_request(
+            margin_account_component,
+            0, 
+            Some(vec![
+                Price {
+                    pair: pair_id,
+                    quote: price,
+                    timestamp: time,
+                },
+            ])
+        ).expect_commit_success();
     }
 
     // Core exchange methods
@@ -532,7 +583,7 @@ impl ExchangeInterface {
             bucket_names.push(bucket_name.clone());
             builder = builder 
                 .withdraw_from_account(self.test_account, token.0, token.1)
-                .take_all_from_worktop(self.resources.base_resource, bucket_name);
+                .take_all_from_worktop(token.0, bucket_name);
         }
         let manifest = builder
             .with_name_lookup(|manifest, lookup| {
@@ -615,7 +666,7 @@ impl ExchangeInterface {
             bucket_names.push(bucket_name.clone());
             builder = builder 
                 .withdraw_from_account(self.test_account, token.0, token.1)
-                .take_all_from_worktop(self.resources.base_resource, bucket_name);
+                .take_all_from_worktop(token.0, bucket_name);
         }
         let manifest = builder
             .with_name_lookup(|manifest, lookup| {
@@ -724,22 +775,30 @@ impl ExchangeInterface {
     pub fn add_collateral(
         &mut self,
         margin_account_component: ComponentAddress,
-        token: (ResourceAddress, Decimal),
+        tokens: Vec<(ResourceAddress, Decimal)>,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
 
-        let manifest = ManifestBuilder::new()
-            .lock_fee_from_faucet()
-            .withdraw_from_account(self.test_account, token.0, token.1)
-            .take_all_from_worktop(token.0, "token")
-            .with_bucket("token", |manifest, bucket| {
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        let mut bucket_names = vec![];
+        for (i, token) in tokens.into_iter().enumerate() {
+            let bucket_name = format!("token{}", i);
+            bucket_names.push(bucket_name.clone());
+            builder = builder 
+                .withdraw_from_account(self.test_account, token.0, token.1)
+                .take_all_from_worktop(token.0, bucket_name);
+        }
+        let manifest = builder
+            .with_name_lookup(|manifest, lookup| {
+                let buckets: Vec<ManifestBucket> = bucket_names.into_iter().map(|n| lookup.bucket(n)).collect();
                 manifest.call_method(
                     self.components.exchange_component, 
                     "add_collateral", 
                     manifest_args!(
                         fee_oath,
                         margin_account_component, 
-                        vec![bucket]
+                        buckets
                     )
                 )
             })    

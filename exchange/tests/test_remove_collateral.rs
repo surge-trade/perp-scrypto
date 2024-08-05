@@ -112,6 +112,8 @@ fn test_remove_collateral_other() {
     let btc_output_3 = btc_balance_3 - btc_balance_2;
     assert_eq!(btc_output_3, btc_claim_1);
 
+    // TODO: check account collateral amounts
+
     let event: EventRemoveCollateral = interface.parse_event(&result);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.target_account, target_account_1);
@@ -259,12 +261,18 @@ fn test_remove_collateral_protected_target_account() {
                 timestamp: time_2,
             }
         ])
-    ).expect_auth_assertion_failure();
+    ).expect_specific_failure(|err| {
+        match err {
+            RuntimeError::ApplicationError(ApplicationError::AccountError(radix_engine::blueprints::account::AccountError::NotAnAuthorizedDepositor { depositor: _ })) => true,
+            _ => false,
+        }
+    });
 }
 
 #[test]
 fn test_remove_collateral_protected_target_account_with_authorized_depositor() {
     let mut interface = get_setup();
+    let authority_resource = interface.resources.authority_resource;
     let base_resource = interface.resources.base_resource;
     let btc_resource = interface.mint_test_token(dec!(100), 8);
 
@@ -296,7 +304,7 @@ fn test_remove_collateral_protected_target_account_with_authorized_depositor() {
     ).expect_commit_success();
 
     interface.test_account_restrict_deposits();
-    interface.test_account_add_authorized_depositor(base_resource);
+    interface.test_account_add_authorized_depositor(authority_resource);
 
     let time_2 = interface.increment_ledger_time(1);
     let base_balance_2 = interface.test_account_balance(base_resource);
@@ -409,7 +417,7 @@ fn test_remove_collateral_insufficient_margin() {
     let time_5 = interface.increment_ledger_time(1);
     interface.process_request(
         margin_account_component,
-        0, 
+        1, 
         Some(vec![
             Price {
                 pair: "BTC/USD".into(),
