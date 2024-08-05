@@ -9,9 +9,6 @@ fn test_add_collateral_base() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
-    let encoder = AddressBech32Encoder::for_simulator();
-    println!("base_resource: {}", base_resource.display(&encoder));
-
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
