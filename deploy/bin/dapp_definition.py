@@ -124,15 +124,24 @@ async def main():
             ;
         '''
         for entity in entities:
-            manifest += f'''
-                SET_METADATA
-                    {entity}
-                    "dapp_definitions"
-                    Enum<Metadata::AddressArray>(
-                        Array<Address>(Address("{dapp_definition}"))
-                    )
-                ;
-            '''
+            if 'component' in entity:
+                manifest += f'''
+                    SET_METADATA
+                        {entity}
+                        "dapp_definition"
+                        Enum<Metadata::Address>(Address("{dapp_definition}"))
+                    ;
+                '''
+            else:
+                manifest += f'''
+                    SET_METADATA
+                        {entity}
+                        "dapp_definitions"
+                        Enum<Metadata::AddressArray>(
+                            Array<Address>(Address("{dapp_definition}"))
+                        )
+                    ;
+                '''
         print(manifest)
 
         payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
