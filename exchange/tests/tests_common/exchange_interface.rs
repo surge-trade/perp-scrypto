@@ -38,6 +38,37 @@ impl ExchangeInterface {
         self.ledger.get_component_balance(self.test_account, resource)
     }
 
+    pub fn test_account_restrict_deposits(
+        &mut self,
+    ) {
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.test_account, 
+                "set_default_deposit_rule",
+                manifest_args!(DefaultDepositRule::Accept)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt.expect_commit_success();
+    }
+
+    pub fn test_account_add_authorized_depositor(
+        &mut self,
+        resource: ResourceAddress,
+    ) {
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.test_account, 
+                "add_authorized_depositor",
+                manifest_args!(ResourceOrNonFungible::Resource(resource))
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt.expect_commit_success();
+    }
+
     pub fn mint_test_token(
         &mut self,
         amount: Decimal,

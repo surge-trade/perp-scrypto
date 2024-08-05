@@ -1804,6 +1804,11 @@ mod exchange_mod {
                     tokens.push(base_token);
                     false
                 } else {
+                    assert!(
+                        *amount <= account.collateral_amount(&resource),
+                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_BALANCE, *amount, account.collateral_amount(&resource)
+                    );
+
                     true
                 }
             });

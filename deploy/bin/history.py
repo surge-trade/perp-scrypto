@@ -31,12 +31,13 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
         # account_component = config_data['ACCOUNT_COMPONENT']
-        account_component = "component_tdx_2_1cqlkqptfy6zx63fpw2wfs60dtha7hcldn6a7ksxrxakafrcp5d2htu"
+        account_component = "component_tdx_2_1cp9vsqn7s2lpxyqlsmr8r0v4rgf5vt8mzamjfmjh60qlxex3s27c5w"
         print(account_component)
 
         result = await gateway.get_component_history(account_component)
 
         trade_history = []
+        collateral_history = []
         
         for transaction in result['items']:
             txid = transaction['intent_hash']
@@ -146,10 +147,47 @@ async def main():
                                 'txid': txid,
                                 'timestamp': timestamp,
                             })
+                        case 'EventAddCollateral':
+                            account = fields[0]['value']
+                            if account != account_component:
+                                continue
+                            
+                            tokens = fields[1]['elements']
+                            for token in tokens:
+                                resource = token['fields'][0]['value']
+                                amount = token['fields'][1]['value']
+
+                                collateral_history.append({
+                                    'type': 'Add Collateral',
+                                    'resource': resource,
+                                    'amount': amount,
+                                    'txid': txid,
+                                    'timestamp': timestamp,
+                                })
+                        case 'EventRemoveCollateral':
+                            account = fields[0]['value']
+                            if account != account_component:
+                                continue
+
+                            tokens = fields[2]['elements']
+                            for token in tokens:
+                                resource = token['fields'][0]['value']
+                                amount = token['fields'][1]['value']
+
+                                collateral_history.append({
+                                    'type': 'Remove Collateral',
+                                    'resource': resource,
+                                    'amount': amount,
+                                    'txid': txid,
+                                    'timestamp': timestamp,
+                                })
                 except:
                     continue
 
         for event in trade_history:
+            print(json.dumps(event, indent=2))
+
+        for event in collateral_history:
             print(json.dumps(event, indent=2))
 
 if __name__ == '__main__':
