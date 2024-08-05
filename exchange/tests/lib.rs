@@ -12,6 +12,4 @@ mod test_cancel_request;
 mod test_cancel_requests;
 mod test_process_request;
 mod test_remove_collateral;
-
-
 mod test_margin_order;

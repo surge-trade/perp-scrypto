@@ -112,6 +112,8 @@ fn test_remove_collateral_other() {
     let btc_output_3 = btc_balance_3 - btc_balance_2;
     assert_eq!(btc_output_3, btc_claim_1);
 
+    // TODO: check account collateral amounts
+
     let event: EventRemoveCollateral = interface.parse_event(&result);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.target_account, target_account_1);
@@ -268,6 +270,10 @@ fn test_remove_collateral_protected_target_account_with_authorized_depositor() {
     let base_resource = interface.resources.base_resource;
     let btc_resource = interface.mint_test_token(dec!(100), 8);
 
+    let encoder = AddressBech32Encoder::for_simulator();
+    println!("base_resource: {}", base_resource.display(&encoder));
+    println!("btc_resource: {}", btc_resource.display(&encoder));
+
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
@@ -409,7 +415,7 @@ fn test_remove_collateral_insufficient_margin() {
     let time_5 = interface.increment_ledger_time(1);
     interface.process_request(
         margin_account_component,
-        0, 
+        1, 
         Some(vec![
             Price {
                 pair: "BTC/USD".into(),

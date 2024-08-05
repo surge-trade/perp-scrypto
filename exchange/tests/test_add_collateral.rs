@@ -8,7 +8,10 @@ use tests_common::*;
 fn test_add_collateral_base() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
-    
+
+    let encoder = AddressBech32Encoder::for_simulator();
+    println!("base_resource: {}", base_resource.display(&encoder));
+
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
@@ -20,7 +23,7 @@ fn test_add_collateral_base() {
     let base_input_1 = dec!(1000);
     let result = interface.add_collateral(
         margin_account_component,
-        (base_resource, base_input_1),
+        vec![(base_resource, base_input_1)],
     ).expect_commit_success().clone();
 
     let account_details = interface.get_account_details(margin_account_component, 10, None);
@@ -58,7 +61,7 @@ fn test_add_collateral_other_asset() {
     let btc_input_1 = dec!(1);
     let result = interface.add_collateral(
         margin_account_component,
-        (btc_resource, btc_input_1),
+        vec![(btc_resource, btc_input_1)],
     ).expect_commit_success().clone();
 
     let account_details = interface.get_account_details(margin_account_component, 10, None);
@@ -85,23 +88,23 @@ fn test_add_collateral_exceed_collaterals_max() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
+    let mut configs_1 = vec![];
+    let mut tokens_1 = vec![];
     for _ in 0..exchange_config.collaterals_max {
         let token_input_1 = dec!(100);
         let token_resource_1 = interface.mint_test_token(token_input_1, DIVISIBILITY_MAXIMUM);
-
-        interface.update_collateral_configs(vec![(
+        tokens_1.push((token_resource_1, token_input_1));
+        configs_1.push((
             token_resource_1,
             CollateralConfig {
                 pair_id: "TEST/USD".into(),
                 discount: dec!(0.95),
                 margin: dec!(0.01),
             }
-        )]).expect_commit_success();
-        interface.add_collateral(
-            margin_account_component,
-            (token_resource_1, token_input_1),
-        ).expect_commit_success();
+        )); 
     }
+    interface.update_collateral_configs(configs_1).expect_commit_success();
+    interface.add_collateral(margin_account_component, tokens_1).expect_commit_success();
 
     let token_input_2 = dec!(100);
     let token_resource_2 = interface.mint_test_token(token_input_2, DIVISIBILITY_MAXIMUM);
@@ -115,7 +118,7 @@ fn test_add_collateral_exceed_collaterals_max() {
     )]).expect_commit_success();
     interface.add_collateral(
         margin_account_component,
-        (token_resource_2, token_input_2),
+        vec![(token_resource_2, token_input_2)],
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_COLLATERALS_TOO_MANY));
 }
 
@@ -136,6 +139,6 @@ fn test_add_collateral_invalid_collateral() {
     let base_input_1 = dec!(1);
     interface.add_collateral(
         margin_account_component,
-        (btc_resource, base_input_1),
+        vec![(btc_resource, base_input_1)],
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_COLLATERAL))
 }

@@ -2,6 +2,45 @@ use scrypto_test::prelude::*;
 use super::Resources;
 use ::common::*;
 
+use std::path::Path;
+
+fn check_compile(
+    package_path: &str,
+    package_name: &str,
+    envs: &mut BTreeMap<String, String>,
+    use_coverage: bool,
+) -> (Vec<u8>, PackageDefinition) {
+    let tests_compiled_dir = Path::new("tests").join("compiled");
+    let wasm_path = tests_compiled_dir.join(format!("{}.wasm", package_name));
+    let rpd_path = tests_compiled_dir.join(format!("{}.rpd", package_name));
+
+    if wasm_path.exists() && rpd_path.exists() {
+        let code = std::fs::read(&wasm_path).expect("Failed to read WASM file");
+        let definition: PackageDefinition = manifest_decode(&std::fs::read(&rpd_path).expect("Failed to read RPD file"))
+            .expect("Failed to decode RPD file");
+        return (code, definition);
+    } else {
+        let (code, definition) = Compile::compile_with_env_vars(
+            package_path, 
+            envs.clone(), 
+            CompileProfile::Standard, 
+            use_coverage
+        );
+
+        let compiled_path = Path::new(package_path).join("target").join("wasm32-unknown-unknown").join("release");
+        let wasm_path = compiled_path.join(format!("{}.wasm", package_name));
+        let rpd_path = compiled_path.join(format!("{}.rpd", package_name));
+        
+        std::fs::create_dir_all(&tests_compiled_dir).expect("Failed to create tests/compiled directory");
+        std::fs::copy(&wasm_path, tests_compiled_dir.join(format!("{}.wasm", package_name)))
+            .expect("Failed to copy WASM file to tests/compiled");
+        std::fs::copy(&rpd_path, tests_compiled_dir.join(format!("{}.rpd", package_name)))
+            .expect("Failed to copy RPD file to tests/compiled");
+
+        return (code, definition);
+    }
+}
+
 #[derive(Clone)]
 pub struct Components {
     pub token_wrapper_package: PackageAddress,
@@ -96,12 +135,7 @@ fn create_token_wrapper(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let token_wrapper_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../token_wrapper", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../token_wrapper", "token_wrapper", envs, use_coverage)
     );
     
     let manifest = ManifestBuilder::new()
@@ -130,12 +164,7 @@ fn create_oracle(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let oracle_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../oracle", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../oracle", "oracle", envs, use_coverage)
     );
     let oracle_component = ledger.call_function(
         oracle_package, 
@@ -158,12 +187,7 @@ fn create_config(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let config_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../config", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../config", "config", envs, use_coverage)
     );
     let config_component = ledger.call_function(
         config_package, 
@@ -185,12 +209,7 @@ fn create_account(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> PackageAddress {
     let account_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../account", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../account", "account", envs, use_coverage)
     );
     envs.insert("ACCOUNT_PACKAGE".to_owned(), account_package.to_string(encoder));
     account_package
@@ -204,12 +223,7 @@ fn create_pool(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let pool_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../pool", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../pool", "pool", envs, use_coverage)
     );
     let pool_component = ledger.call_function(
         pool_package, 
@@ -232,12 +246,7 @@ fn create_referral_generator(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let referral_generator_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../referral_generator", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../referral_generator", "referral_generator", envs, use_coverage)
     );
     let referral_generator_component = ledger.call_function(
         referral_generator_package, 
@@ -260,12 +269,7 @@ fn create_fee_distributor(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let fee_distributor_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../fee_distributor", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../fee_distributor", "fee_distributor", envs, use_coverage)
     );
     let fee_distributor_component = ledger.call_function(
         fee_distributor_package, 
@@ -288,12 +292,7 @@ fn create_fee_delegator(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let fee_delegator_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../fee_delegator", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../fee_delegator", "fee_delegator", envs, use_coverage)
     );
     let fee_delegator_component = ledger.call_function(
         fee_delegator_package, 
@@ -316,12 +315,7 @@ fn create_permission_registry(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let permission_registry_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../permission_registry", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../permission_registry", "permission_registry", envs, use_coverage)
     );
     let permission_registry_component = ledger.call_function(
         permission_registry_package, 
@@ -344,12 +338,7 @@ fn _create_env_registry(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let env_registry_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../env_registry", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../env_registry", "env_registry", envs, use_coverage)
     );
     let env_registry_component = ledger.call_function(
         env_registry_package, 
@@ -374,12 +363,7 @@ fn create_exchange(
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
     let exchange_package = ledger.publish_package_simple(
-        Compile::compile_with_env_vars(
-            "../exchange", 
-            envs.clone(), 
-            CompileProfile::Standard, 
-            use_coverage
-        )
+        check_compile("../exchange", "exchange", envs, use_coverage)
     );
     
     let manifest = ManifestBuilder::new()
