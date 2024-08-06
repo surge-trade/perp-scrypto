@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 use common::{PairId, ListIndex};
 
-#[derive(ScryptoSbor, Clone, Debug, Default)]
+#[derive(ScryptoSbor, Default, Clone, Debug)]
 pub struct AccountPosition {
     pub amount: Decimal,
     pub cost: Decimal,
@@ -16,7 +16,7 @@ impl AccountPosition {
     }
 }
 
-#[derive(ScryptoSbor)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct MarginAccountInfo {
     pub positions: HashMap<PairId, AccountPosition>,
     pub collateral_balances: HashMap<ResourceAddress, Decimal>,
