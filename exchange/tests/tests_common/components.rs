@@ -59,6 +59,7 @@ pub struct Components {
     pub fee_distributor_component: ComponentAddress,
     pub fee_delegator_package: PackageAddress,
     pub fee_delegator_component: ComponentAddress,
+    pub fee_oath_resource: ResourceAddress,
     pub permission_registry_package: PackageAddress,
     pub permission_registry_component: ComponentAddress,
     pub exchange_package: PackageAddress,
@@ -93,11 +94,11 @@ pub fn create_components(
     let (token_wrapper_package, token_wrapper_component) = create_token_wrapper(account, public_key, resources, envs, use_coverage, encoder, ledger);
     let (oracle_package, oracle_component) = create_oracle(oracle_key, resources, envs, use_coverage, encoder, ledger);
     let (config_package, config_component) = create_config(resources, envs, use_coverage, encoder, ledger);
-    let account_package = create_account(envs, use_coverage, encoder, ledger);
+    let account_package = create_account(resources, envs, use_coverage, encoder, ledger);
     let (pool_package, pool_component) = create_pool(resources, envs, use_coverage, encoder, ledger);
     let (referral_generator_package, referral_generator_component) = create_referral_generator(resources, envs, use_coverage, encoder, ledger);
     let (fee_distributor_package, fee_distributor_component) = create_fee_distributor(resources, envs, use_coverage, encoder, ledger);
-    let (fee_delegator_package, fee_delegator_component) = create_fee_delegator(resources, envs, use_coverage, encoder, ledger);
+    let (fee_delegator_package, fee_delegator_component, fee_oath_resource) = create_fee_delegator(resources, envs, use_coverage, encoder, ledger);
     let (permission_registry_package, permission_registry_component) = create_permission_registry(resources, envs, use_coverage, encoder, ledger);
     let (exchange_package, exchange_component) = create_exchange(account, public_key, resources, envs, use_coverage, encoder, ledger);
 
@@ -118,6 +119,7 @@ pub fn create_components(
         fee_distributor_component,
         fee_delegator_package,
         fee_delegator_component,
+        fee_oath_resource,
         permission_registry_package,
         permission_registry_component,
         exchange_package,
@@ -134,8 +136,10 @@ fn create_token_wrapper(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let token_wrapper_package = ledger.publish_package_simple(
-        check_compile("../token_wrapper", "token_wrapper", envs, use_coverage)
+    let token_wrapper_package = ledger.publish_package(
+        check_compile("../token_wrapper", "token_wrapper", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     
     let manifest = ManifestBuilder::new()
@@ -163,8 +167,10 @@ fn create_oracle(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let oracle_package = ledger.publish_package_simple(
-        check_compile("../oracle", "oracle", envs, use_coverage)
+    let oracle_package = ledger.publish_package(
+        check_compile("../oracle", "oracle", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let oracle_component = ledger.call_function(
         oracle_package, 
@@ -186,8 +192,10 @@ fn create_config(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let config_package = ledger.publish_package_simple(
-        check_compile("../config", "config", envs, use_coverage)
+    let config_package = ledger.publish_package(
+        check_compile("../config", "config", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let config_component = ledger.call_function(
         config_package, 
@@ -203,13 +211,16 @@ fn create_config(
 }
 
 fn create_account(
+    resources: &Resources,
     envs: &mut BTreeMap<String, String>,
     use_coverage: bool,
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> PackageAddress {
-    let account_package = ledger.publish_package_simple(
-        check_compile("../account", "account", envs, use_coverage)
+    let account_package = ledger.publish_package(
+        check_compile("../account", "account", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     envs.insert("ACCOUNT_PACKAGE".to_owned(), account_package.to_string(encoder));
     account_package
@@ -222,8 +233,10 @@ fn create_pool(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let pool_package = ledger.publish_package_simple(
-        check_compile("../pool", "pool", envs, use_coverage)
+    let pool_package = ledger.publish_package(
+        check_compile("../pool", "pool", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let pool_component = ledger.call_function(
         pool_package, 
@@ -245,8 +258,10 @@ fn create_referral_generator(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let referral_generator_package = ledger.publish_package_simple(
-        check_compile("../referral_generator", "referral_generator", envs, use_coverage)
+    let referral_generator_package = ledger.publish_package(
+        check_compile("../referral_generator", "referral_generator", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let referral_generator_component = ledger.call_function(
         referral_generator_package, 
@@ -268,8 +283,10 @@ fn create_fee_distributor(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let fee_distributor_package = ledger.publish_package_simple(
-        check_compile("../fee_distributor", "fee_distributor", envs, use_coverage)
+    let fee_distributor_package = ledger.publish_package(
+        check_compile("../fee_distributor", "fee_distributor", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let fee_distributor_component = ledger.call_function(
         fee_distributor_package, 
@@ -290,21 +307,26 @@ fn create_fee_delegator(
     use_coverage: bool,
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
-) -> (PackageAddress, ComponentAddress) {
-    let fee_delegator_package = ledger.publish_package_simple(
-        check_compile("../fee_delegator", "fee_delegator", envs, use_coverage)
+) -> (PackageAddress, ComponentAddress, ResourceAddress) {
+    let fee_delegator_package = ledger.publish_package(
+        check_compile("../fee_delegator", "fee_delegator", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
-    let fee_delegator_component = ledger.call_function(
+    let result = ledger.call_function(
         fee_delegator_package, 
         "FeeDelegator", 
         "new", 
         manifest_args!(resources.owner_role.clone())
-    ).expect_commit_success().new_component_addresses()[0];
+    ).expect_commit_success().clone();
+
+    let fee_delegator_component = result.new_component_addresses()[0];
+    let fee_oath_resource = result.new_resource_addresses()[0];
 
     envs.insert("FEE_DELEGATOR_PACKAGE".to_owned(), fee_delegator_package.to_string(encoder));
     envs.insert("FEE_DELEGATOR_COMPONENT".to_owned(), fee_delegator_component.to_string(encoder));
 
-    (fee_delegator_package, fee_delegator_component)
+    (fee_delegator_package, fee_delegator_component, fee_oath_resource)
 }
 
 fn create_permission_registry(
@@ -314,8 +336,10 @@ fn create_permission_registry(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let permission_registry_package = ledger.publish_package_simple(
-        check_compile("../permission_registry", "permission_registry", envs, use_coverage)
+    let permission_registry_package = ledger.publish_package(
+        check_compile("../permission_registry", "permission_registry", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let permission_registry_component = ledger.call_function(
         permission_registry_package, 
@@ -337,8 +361,10 @@ fn _create_env_registry(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let env_registry_package = ledger.publish_package_simple(
-        check_compile("../env_registry", "env_registry", envs, use_coverage)
+    let env_registry_package = ledger.publish_package(
+        check_compile("../env_registry", "env_registry", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     let env_registry_component = ledger.call_function(
         env_registry_package, 
@@ -362,8 +388,10 @@ fn create_exchange(
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
 ) -> (PackageAddress, ComponentAddress) {
-    let exchange_package = ledger.publish_package_simple(
-        check_compile("../exchange", "exchange", envs, use_coverage)
+    let exchange_package = ledger.publish_package(
+        check_compile("../exchange", "exchange", envs, use_coverage),
+        BTreeMap::new(),
+        resources.owner_role.clone()
     );
     
     let manifest = ManifestBuilder::new()

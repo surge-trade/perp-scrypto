@@ -147,14 +147,14 @@ impl ExchangeInterface {
     ) {
         let result = self.create_account(
             rule!(allow_all), 
-            vec![(self.resources.base_resource, dec!(1000000))], 
+            vec![(self.resources.base_resource, dec!(100000))], 
             None,
         ).expect_commit_success().clone();
-        let margin_account_component = result.new_component_addresses()[0];
+        let margin_account_component_0 = result.new_component_addresses()[0];
         self.margin_order_request(
             0, 
-            1, 
-            margin_account_component, 
+            10, 
+            margin_account_component_0, 
             pair_id.clone(), 
             amount_long, 
             false, 
@@ -163,10 +163,16 @@ impl ExchangeInterface {
             vec![], 
             STATUS_ACTIVE
         ).expect_commit_success();
+        let result = self.create_account(
+            rule!(allow_all), 
+            vec![(self.resources.base_resource, dec!(100000))], 
+            None,
+        ).expect_commit_success().clone();
+        let margin_account_component_1 = result.new_component_addresses()[0];
         self.margin_order_request(
             0, 
-            1, 
-            margin_account_component, 
+            10, 
+            margin_account_component_1, 
             pair_id.clone(), 
             -amount_short, 
             false, 
@@ -176,12 +182,23 @@ impl ExchangeInterface {
             STATUS_ACTIVE
         ).expect_commit_success();
         let time = self.increment_ledger_time(1);
-            self.process_request(
-            margin_account_component,
+        self.process_request(
+            margin_account_component_0,
             0, 
             Some(vec![
                 Price {
-                    pair: pair_id,
+                    pair: pair_id.clone(),
+                    quote: price,
+                    timestamp: time,
+                },
+            ])
+        ).expect_commit_success();
+        self.process_request(
+            margin_account_component_1,
+            0, 
+            Some(vec![
+                Price {
+                    pair: pair_id.clone(),
                     quote: price,
                     timestamp: time,
                 },

@@ -98,7 +98,7 @@ mod exchange_mod {
         MARGIN_ACCOUNT_PACKAGE,
         MarginAccount {
             // Constructor
-            fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
+            fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, dapp_definition: GlobalAddress, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
 
             // Getter methods
             fn get_info(&self) -> MarginAccountInfo;
@@ -836,12 +836,16 @@ mod exchange_mod {
                     None
                 };
 
+                let dapp_definition: GlobalAddress = Runtime::global_component().get_metadata("dapp_definition")
+                    .expect(ERROR_MISSING_DAPP_DEFINITION)
+                    .expect(ERROR_MISSING_DAPP_DEFINITION);
                 let account_global = Blueprint::<MarginAccount>::new(
                     initial_rule.clone(),
                     initial_rule.clone(),
                     initial_rule.clone(),
                     referral_id.clone(),
-                    reservation
+                    dapp_definition,
+                    reservation,
                 );
                 let account_component = account_global.address();
 
@@ -1622,13 +1626,13 @@ mod exchange_mod {
             let pool_position = pool.position(pair_id);
             let oi_long = pool_position.oi_long;
             let oi_short = pool_position.oi_short;
-            let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
+            let funding_2 = pool_position.funding_2_rate;
 
             PairDetails {
                 pair_id: pair_id.clone(),
                 oi_long,
                 oi_short,
-                funding_2: funding_2_rate,
+                funding_2,
                 pair_config: pair_config.clone(),
             }
         }

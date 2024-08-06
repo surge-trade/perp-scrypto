@@ -59,7 +59,9 @@ pub mod margin_account {
             level_2: AccessRule, 
             level_3: AccessRule, 
             referral_id: Option<NonFungibleLocalId>,
-            reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount> {
+            dapp_definition: GlobalAddress,
+            reservation: Option<GlobalAddressReservation>,
+        ) -> Global<MarginAccount> {
             let component_reservation = match reservation {
                 Some(reservation) => reservation,
                 None => Runtime::allocate_component_address(MarginAccount::blueprint_id()).0
@@ -76,12 +78,17 @@ pub mod margin_account {
                 referral_id,
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::None)
+            .prepare_to_globalize(OwnerRole::Fixed(rule!(require(AUTHORITY_RESOURCE))))
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
                 level_1 => level_1;
                 level_2 => level_2;
                 level_3 => level_3;
+            })
+            .metadata(metadata! {
+                init {
+                    "dapp_definition" => dapp_definition, updatable;
+                }
             })
             .with_address(component_reservation)
             .globalize()

@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 use common::PairId;
 
-#[derive(ScryptoSbor, Clone)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct PoolPosition {
     pub oi_long: Decimal,
     pub oi_short: Decimal,
@@ -32,7 +32,7 @@ impl Default for PoolPosition {
     }
 }
 
-#[derive(ScryptoSbor)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct MarginPoolInfo {
     pub positions: HashMap<PairId, PoolPosition>,
     pub base_tokens_amount: Decimal,
