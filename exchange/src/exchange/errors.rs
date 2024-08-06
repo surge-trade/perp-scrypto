@@ -43,6 +43,7 @@ pub const ERROR_MISSING_PRICE: &str = "Price not found";
 pub const ERROR_MISSING_RESOURCE_FEED: &str = "Resource feed not found";
 pub const ERROR_MISSING_REQUEST: &str = "Request not found";
 pub const ERROR_MISSING_AUTH: &str = "Authorization role not found";
+pub const ERROR_MISSING_DAPP_DEFINITION: &str = "Dapp definition not found";
 
 pub const ERROR_ARITHMETIC: &str = "Arithmetic error";
 

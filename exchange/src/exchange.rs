@@ -98,7 +98,7 @@ mod exchange_mod {
         MARGIN_ACCOUNT_PACKAGE,
         MarginAccount {
             // Constructor
-            fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
+            fn new(level_1: AccessRule, level_2: AccessRule, level_3: AccessRule, referral_id: Option<NonFungibleLocalId>, dapp_definition: GlobalAddress, reservation: Option<GlobalAddressReservation>) -> Global<MarginAccount>;
 
             // Getter methods
             fn get_info(&self) -> MarginAccountInfo;
@@ -302,6 +302,7 @@ mod exchange_mod {
     impl Exchange {
         pub fn new(
             owner_role: OwnerRole,
+            dapp_definition: GlobalAddress,
             authority_token: Bucket,
             reservation: Option<GlobalAddressReservation>,
         ) -> Global<Exchange> {
@@ -347,6 +348,11 @@ mod exchange_mod {
                 keeper_liquidate => rule!(allow_all);
                 keeper_auto_deleverage => rule!(allow_all);
                 keeper_update_pairs => rule!(allow_all);
+            })
+            .metadata(metadata! {
+                init {
+                    "dapp_definition" => dapp_definition, updatable;
+                }
             })
             .with_address(component_reservation)
             .globalize()
@@ -836,12 +842,16 @@ mod exchange_mod {
                     None
                 };
 
+                let dapp_definition: GlobalAddress = Runtime::global_component().get_metadata("dapp_definition")
+                    .expect(ERROR_MISSING_DAPP_DEFINITION)
+                    .expect(ERROR_MISSING_DAPP_DEFINITION);
                 let account_global = Blueprint::<MarginAccount>::new(
                     initial_rule.clone(),
                     initial_rule.clone(),
                     initial_rule.clone(),
                     referral_id.clone(),
-                    reservation
+                    dapp_definition,
+                    reservation,
                 );
                 let account_component = account_global.address();
 

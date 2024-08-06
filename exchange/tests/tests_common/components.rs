@@ -59,6 +59,7 @@ pub struct Components {
     pub fee_distributor_component: ComponentAddress,
     pub fee_delegator_package: PackageAddress,
     pub fee_delegator_component: ComponentAddress,
+    pub fee_oath_resource: ResourceAddress,
     pub permission_registry_package: PackageAddress,
     pub permission_registry_component: ComponentAddress,
     pub exchange_package: PackageAddress,
@@ -97,7 +98,7 @@ pub fn create_components(
     let (pool_package, pool_component) = create_pool(resources, envs, use_coverage, encoder, ledger);
     let (referral_generator_package, referral_generator_component) = create_referral_generator(resources, envs, use_coverage, encoder, ledger);
     let (fee_distributor_package, fee_distributor_component) = create_fee_distributor(resources, envs, use_coverage, encoder, ledger);
-    let (fee_delegator_package, fee_delegator_component) = create_fee_delegator(resources, envs, use_coverage, encoder, ledger);
+    let (fee_delegator_package, fee_delegator_component, fee_oath_resource) = create_fee_delegator(resources, envs, use_coverage, encoder, ledger);
     let (permission_registry_package, permission_registry_component) = create_permission_registry(resources, envs, use_coverage, encoder, ledger);
     let (exchange_package, exchange_component) = create_exchange(account, public_key, resources, envs, use_coverage, encoder, ledger);
 
@@ -118,6 +119,7 @@ pub fn create_components(
         fee_distributor_component,
         fee_delegator_package,
         fee_delegator_component,
+        fee_oath_resource,
         permission_registry_package,
         permission_registry_component,
         exchange_package,
@@ -290,21 +292,24 @@ fn create_fee_delegator(
     use_coverage: bool,
     encoder: &AddressBech32Encoder,
     ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
-) -> (PackageAddress, ComponentAddress) {
+) -> (PackageAddress, ComponentAddress, ResourceAddress) {
     let fee_delegator_package = ledger.publish_package_simple(
         check_compile("../fee_delegator", "fee_delegator", envs, use_coverage)
     );
-    let fee_delegator_component = ledger.call_function(
+    let result = ledger.call_function(
         fee_delegator_package, 
         "FeeDelegator", 
         "new", 
         manifest_args!(resources.owner_role.clone())
-    ).expect_commit_success().new_component_addresses()[0];
+    ).expect_commit_success().clone();
+
+    let fee_delegator_component = result.new_component_addresses()[0];
+    let fee_oath_resource = result.new_resource_addresses()[0];
 
     envs.insert("FEE_DELEGATOR_PACKAGE".to_owned(), fee_delegator_package.to_string(encoder));
     envs.insert("FEE_DELEGATOR_COMPONENT".to_owned(), fee_delegator_component.to_string(encoder));
 
-    (fee_delegator_package, fee_delegator_component)
+    (fee_delegator_package, fee_delegator_component, fee_oath_resource)
 }
 
 fn create_permission_registry(
