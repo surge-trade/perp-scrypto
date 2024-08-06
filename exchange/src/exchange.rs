@@ -302,7 +302,6 @@ mod exchange_mod {
     impl Exchange {
         pub fn new(
             owner_role: OwnerRole,
-            dapp_definition: GlobalAddress,
             authority_token: Bucket,
             reservation: Option<GlobalAddressReservation>,
         ) -> Global<Exchange> {
@@ -348,11 +347,6 @@ mod exchange_mod {
                 keeper_liquidate => rule!(allow_all);
                 keeper_auto_deleverage => rule!(allow_all);
                 keeper_update_pairs => rule!(allow_all);
-            })
-            .metadata(metadata! {
-                init {
-                    "dapp_definition" => dapp_definition, updatable;
-                }
             })
             .with_address(component_reservation)
             .globalize()
