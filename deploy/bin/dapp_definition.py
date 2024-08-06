@@ -79,7 +79,7 @@ async def main():
         description = 'Feel the Surge!'
         icon_url = 'https://surge.trade/images/icon_dapp.png'
         claimed_entities = ', '.join(entities)
-        websites = ', '.join([f'"https://www.surge.trade"'])
+        websites = ', '.join([f'"https://www.surge.trade"', '"https://ilovetesting.surge.trade"'])
 
         manifest = f'''
             CALL_METHOD
