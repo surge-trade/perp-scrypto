@@ -1626,13 +1626,13 @@ mod exchange_mod {
             let pool_position = pool.position(pair_id);
             let oi_long = pool_position.oi_long;
             let oi_short = pool_position.oi_short;
-            let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
+            let funding_2 = pool_position.funding_2_rate;
 
             PairDetails {
                 pair_id: pair_id.clone(),
                 oi_long,
                 oi_short,
-                funding_2: funding_2_rate,
+                funding_2,
                 pair_config: pair_config.clone(),
             }
         }
