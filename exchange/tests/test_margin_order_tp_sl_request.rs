@@ -109,7 +109,7 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
     assert_eq!(account_details.requests_history.len(), 2);
     assert_eq!(account_details.requests_len, 2);
 
-    let request_details = account_details.active_requests[0].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 0).cloned().unwrap();
     assert_eq!(request_details.index, 0);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -125,7 +125,7 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
         panic!("Request is not a MarginOrder request");
     }
 
-    let request_details = account_details.active_requests[1].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 1).cloned().unwrap();
     assert_eq!(request_details.index, 1);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -188,7 +188,7 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
     assert_eq!(account_details.requests_history.len(), 2);
     assert_eq!(account_details.requests_len, 2);
 
-    let request_details = account_details.active_requests[0].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 0).cloned().unwrap();
     assert_eq!(request_details.index, 0);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -204,7 +204,7 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
         panic!("Request is not a MarginOrder request");
     }
 
-    let request_details = account_details.active_requests[1].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 1).cloned().unwrap();
     assert_eq!(request_details.index, 1);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -267,7 +267,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
     assert_eq!(account_details.requests_history.len(), 3);
     assert_eq!(account_details.requests_len, 3);
 
-    let request_details = account_details.active_requests[0].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 0).cloned().unwrap();
     assert_eq!(request_details.index, 0);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -283,7 +283,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
         panic!("Request is not a MarginOrder request");
     }
 
-    let request_details = account_details.active_requests[1].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 1).cloned().unwrap();
     assert_eq!(request_details.index, 1);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -299,7 +299,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
         panic!("Request is not a MarginOrder request");
     }
 
-    let request_details = account_details.active_requests[1].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 2).cloned().unwrap();
     assert_eq!(request_details.index, 2);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -362,7 +362,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
     assert_eq!(account_details.requests_history.len(), 3);
     assert_eq!(account_details.requests_len, 3);
 
-    let request_details = account_details.active_requests[0].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 0).cloned().unwrap();
     assert_eq!(request_details.index, 0);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -378,7 +378,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
         panic!("Request is not a MarginOrder request");
     }
 
-    let request_details = account_details.active_requests[1].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 1).cloned().unwrap();
     assert_eq!(request_details.index, 1);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
@@ -394,7 +394,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
         panic!("Request is not a MarginOrder request");
     }
 
-    let request_details = account_details.active_requests[1].clone();
+    let request_details = account_details.active_requests.iter().find(|request| request.index == 2).cloned().unwrap();
     assert_eq!(request_details.index, 2);
     assert_eq!(request_details.submission, expected_submission);
     assert_eq!(request_details.expiry, expected_expiry);
