@@ -65,7 +65,8 @@ fn test_margin_order_long_open() {
         Some(dec!(50000)),
     ).expect_commit_success();
 
-    let pool_value_5 = interface.get_pool_value();
+    let pool_details_5 = interface.get_pool_details();
+    let pool_value_5 = pool_details_5.base_tokens_amount + pool_details_5.virtual_balance + pool_details_5.unrealized_pool_funding + pool_details_5.pnl_snap;
     let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     let result_5 = interface.process_request(
@@ -92,6 +93,12 @@ fn test_margin_order_long_open() {
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_5.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_5.virtual_balance - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_5.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_5.pnl_snap + fee);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, trade_size_4);
@@ -204,7 +211,8 @@ fn test_margin_order_long_close_reduce_only() {
         ])
     ).expect_commit_success();
 
-    let pool_value_6 = interface.get_pool_value();
+    let pool_details_6 = interface.get_pool_details();
+    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(60000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -234,6 +242,12 @@ fn test_margin_order_long_close_reduce_only() {
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let pnl = value - cost_6 - fee;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_6.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_6.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_6.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -333,7 +347,8 @@ fn test_margin_order_long_close_profit() {
         ])
     ).expect_commit_success();
 
-    let pool_value_6 = interface.get_pool_value();
+    let pool_details_6 = interface.get_pool_details();
+    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(70000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -349,7 +364,8 @@ fn test_margin_order_long_close_profit() {
         ])
     ).expect_commit_success().clone();
 
-    let pool_value = pool_value_6 - trade_size_4 * (price_6 - price_5);
+    let trade_delta = trade_size_4 * (price_6 - price_5);
+    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
     let skew_delta = -value_abs; 
@@ -364,6 +380,12 @@ fn test_margin_order_long_close_profit() {
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let pnl = value - cost_6 - fee;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_6.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_6.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_6.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -463,7 +485,9 @@ fn test_margin_order_long_close_loss() {
         ])
     ).expect_commit_success();
 
-    let pool_value_6 = interface.get_pool_value();
+    
+    let pool_details_6 = interface.get_pool_details();
+    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(50000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -479,7 +503,8 @@ fn test_margin_order_long_close_loss() {
         ])
     ).expect_commit_success().clone();
 
-    let pool_value = pool_value_6 - trade_size_4 * (price_6 - price_5);
+    let trade_delta = trade_size_4 * (price_6 - price_5);
+    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
     let skew_delta = -value_abs; 
@@ -496,7 +521,10 @@ fn test_margin_order_long_close_loss() {
     let pnl = value - cost_6 - fee;
 
     let pool_details = interface.get_pool_details();
-    println!("pool_details: {:?}", pool_details);
+    assert_eq!(pool_details.base_tokens_amount, pool_details_6.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_6.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_6.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -612,7 +640,8 @@ fn test_margin_order_long_close_funding_positive() {
         ])
     ).expect_commit_success();
 
-    let pool_value_7 = interface.get_pool_value();
+    let pool_details_7 = interface.get_pool_details();
+    let pool_value_7 = pool_details_7.base_tokens_amount + pool_details_7.virtual_balance + pool_details_7.unrealized_pool_funding + pool_details_7.pnl_snap;
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_7 = dec!(60000);
@@ -667,6 +696,12 @@ fn test_margin_order_long_close_funding_positive() {
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let pnl = value - cost_7 - fee - funding;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_7.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_7.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_7.unrealized_pool_funding + funding_pool + funding_share - funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + (value - cost_7));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, amount_long_3);
@@ -752,7 +787,8 @@ fn test_margin_order_short_open() {
         Some(dec!(70000)),
     ).expect_commit_success();
 
-    let pool_value_5 = interface.get_pool_value();
+    let pool_details_5 = interface.get_pool_details();
+    let pool_value_5 = pool_details_5.base_tokens_amount + pool_details_5.virtual_balance + pool_details_5.unrealized_pool_funding + pool_details_5.pnl_snap;
     let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     let result_5 = interface.process_request(
@@ -779,6 +815,12 @@ fn test_margin_order_short_open() {
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_5.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_5.virtual_balance - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_5.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_5.pnl_snap + fee);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -891,7 +933,8 @@ fn test_margin_order_short_close_reduce_only() {
         ])
     ).expect_commit_success();
 
-    let pool_value_6 = interface.get_pool_value();
+    let pool_details_6 = interface.get_pool_details();
+    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(60000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -921,6 +964,12 @@ fn test_margin_order_short_close_reduce_only() {
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let pnl = value - cost_6 - fee;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_6.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_6.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_6.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -1020,7 +1069,8 @@ fn test_margin_order_short_close_profit() {
         ])
     ).expect_commit_success();
 
-    let pool_value_6 = interface.get_pool_value();
+    let pool_details_6 = interface.get_pool_details();
+    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(50000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -1036,7 +1086,8 @@ fn test_margin_order_short_close_profit() {
         ])
     ).expect_commit_success().clone();
 
-    let pool_value = pool_value_6 - trade_size_4 * (price_6 - price_5);
+    let trade_delta = trade_size_4 * (price_6 - price_5);
+    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
     let skew_delta = -value_abs; 
@@ -1051,6 +1102,12 @@ fn test_margin_order_short_close_profit() {
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let pnl = value - cost_6 - fee;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_6.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_6.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_6.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -1150,7 +1207,8 @@ fn test_margin_order_short_close_loss() {
         ])
     ).expect_commit_success();
 
-    let pool_value_6 = interface.get_pool_value();
+    let pool_details_6 = interface.get_pool_details();
+    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(70000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -1166,7 +1224,8 @@ fn test_margin_order_short_close_loss() {
         ])
     ).expect_commit_success().clone();
 
-    let pool_value = pool_value_6 - trade_size_4 * (price_6 - price_5);
+    let trade_delta = trade_size_4 * (price_6 - price_5);
+    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
     let skew_delta = -value_abs; 
@@ -1181,6 +1240,12 @@ fn test_margin_order_short_close_loss() {
     let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let pnl = value - cost_6 - fee;
+
+    let pool_details = interface.get_pool_details();
+    assert_eq!(pool_details.base_tokens_amount, pool_details_6.base_tokens_amount);
+    assert_eq!(pool_details.virtual_balance, pool_details_6.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
+    assert_eq!(pool_details.unrealized_pool_funding, pool_details_6.unrealized_pool_funding);
+    assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, dec!(0));
@@ -1355,7 +1420,7 @@ fn test_margin_order_short_close_funding_positive() {
 
     let pool_details = interface.get_pool_details();
     assert_eq!(pool_details.base_tokens_amount, pool_details_7.base_tokens_amount);
-    // assert_eq!(pool_details.virtual_balance, pool_details_7.virtual_balance - (pnl - fee_protocol - fee_treasury - fee_referral));
+    assert_eq!(pool_details.virtual_balance, pool_details_7.virtual_balance - pnl - fee_protocol - fee_treasury - fee_referral);
     assert_eq!(pool_details.unrealized_pool_funding, pool_details_7.unrealized_pool_funding + funding_pool + funding_share - funding);
     assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + (value - cost_7));
     
@@ -1367,8 +1432,6 @@ fn test_margin_order_short_close_funding_positive() {
     assert_eq!(account_positions.len(), 0);
 
     let event: EventMarginOrder = interface.parse_event(&result_7);
-    println!("funding: {:?}", event.funding);
-    println!("fee: {:?}", event.fee_pool + event.fee_protocol + event.fee_treasury + event.fee_referral);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.pair_id, pair_config.pair_id.clone());
     assert_eq!(event.price, price_7);
