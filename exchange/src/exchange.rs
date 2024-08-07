@@ -1524,7 +1524,7 @@ mod exchange_mod {
                 let funding = if position.amount.is_positive() {
                     position.amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
-                    position.amount * (pool_position.funding_short_index - position.funding_index)            
+                    -position.amount * (pool_position.funding_short_index - position.funding_index)            
                 };
                 let margin_initial = position.amount.checked_abs().expect(ERROR_ARITHMETIC) * pair_config.margin_initial;
                 let margin_maintenance = position.amount.checked_abs().expect(ERROR_ARITHMETIC) * pair_config.margin_maintenance;
@@ -2179,11 +2179,6 @@ mod exchange_mod {
 
             position.amount += amount;
             position.cost -= cost;
-            if position.amount.is_positive() {
-                position.funding_index = pool_position.funding_long_index
-            } else {
-                position.funding_index = pool_position.funding_short_index
-            };
 
             self._settle_account(pool, account, pnl);
             self._update_pair_snaps(pool, oracle, pair_id);
@@ -2330,7 +2325,7 @@ mod exchange_mod {
                 let funding = if amount.is_positive() {
                     amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
-                    amount * (pool_position.funding_short_index - position.funding_index)
+                    -amount * (pool_position.funding_short_index - position.funding_index)
                 };
 
                 let pnl = value - cost - fee - funding;
@@ -2379,7 +2374,7 @@ mod exchange_mod {
                     amount * (pool_position.funding_long_index - position.funding_index)
                 } else {
                     pool_position.oi_short += amount;
-                    amount * (pool_position.funding_short_index - position.funding_index)            
+                    -amount * (pool_position.funding_short_index - position.funding_index)            
                 };
                 pool_position.cost -= cost;
 
@@ -2485,12 +2480,15 @@ mod exchange_mod {
             pair_id: &PairId,
         ) -> Decimal {
             let pool_position = pool.position(pair_id);
-
-            let funding = if let Some(position) = account.positions().get(pair_id) {
+            let funding = if let Some(position) = account.positions_mut().get_mut(pair_id) {
                 if position.amount.is_positive() {
-                    position.amount * (pool_position.funding_long_index - position.funding_index)
+                    let funding = position.amount * (pool_position.funding_long_index - position.funding_index);
+                    position.funding_index = pool_position.funding_long_index;
+                    funding
                 } else {
-                    position.amount * (pool_position.funding_short_index - position.funding_index)            
+                    let funding = -position.amount * (pool_position.funding_short_index - position.funding_index);
+                    position.funding_index = pool_position.funding_short_index;
+                    funding
                 }
             } else {
                 dec!(0)
