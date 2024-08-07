@@ -656,8 +656,8 @@ fn test_margin_order_long_close_funding_positive() {
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     let funding_pool_index = funding_pool / oi_net;
-
     let funding = (funding_index_long + funding_pool_index) * trade_size_5;
+
     let pnl = value - cost_7 - fee - funding;
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
@@ -1307,21 +1307,9 @@ fn test_margin_order_short_close_funding_positive() {
     let oi_short = pair_details_7.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
-    let skew_abs = skew.checked_abs().unwrap();
+    let skew_abs = ((oi_long - oi_short) * price_7).checked_abs().unwrap();
     let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
     let skew_delta = skew_abs_after - skew_abs;
-
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value_7 * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
-
-    let value = trade_size_5 * price_6;
-    let value_abs = value.checked_abs().unwrap();
-    let fee = value_abs * fee_rate;
-    let fee_protocol = fee * exchange_config.fee_share_protocol;
-    let fee_treasury = fee * exchange_config.fee_share_treasury;
-    let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
-    let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
 
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
@@ -1335,24 +1323,30 @@ fn test_margin_order_short_close_funding_positive() {
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     let funding_pool_index = funding_pool / oi_net;
-
-    println!("funding_1_rate: {}", funding_1_rate);
-    println!("funding_2_rate_delta: {}", funding_2_rate_delta);
-    println!("funding_2_rate: {}", funding_2_rate);
-    println!("funding_short: {}", funding_short);
-    println!("funding_pool_0_rate: {}", funding_pool_0_rate);
-    println!("funding_pool_1_rate: {}", funding_pool_1_rate);
-    println!("funding_pool_rate: {}", funding_pool_rate);
-    println!("funding_pool: {}", funding_pool);
-    println!("funding_index_short: {}", funding_index_short);
-    println!("funding_pool_index: {}", funding_pool_index);
-
     let funding = (funding_index_short + funding_pool_index) * -trade_size_5;
+
+    let pool_value = pool_value_7 + funding;
+    let value = trade_size_5 * price_6;
+    let value_abs = value.checked_abs().unwrap();
+
+    let fee_rate_0 = pair_config.fee_0;
+    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
+    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+
+    let fee = value_abs * fee_rate;
+    let fee_protocol = fee * exchange_config.fee_share_protocol;
+    let fee_treasury = fee * exchange_config.fee_share_treasury;
+    let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
+    let fee_pool = fee - fee_protocol - fee_treasury - fee_referral;
+
     println!("value: {}", value);
     println!("cost_7: {}", cost_7);
     println!("funding: {}", funding);
     println!("fee: {}", fee);
     let pnl = value - cost_7 - fee - funding;
+
+    let pool_details = interface.get_pool_details();
+    println!("pool_details: {:?}", pool_details);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     assert_eq!(pair_details.oi_long, amount_long_3);
@@ -1362,6 +1356,7 @@ fn test_margin_order_short_close_funding_positive() {
     assert_eq!(account_positions.len(), 0);
 
     let event: EventMarginOrder = interface.parse_event(&result_7);
+    println!("fee: {:?}", event.fee_pool + event.fee_protocol + event.fee_treasury + event.fee_referral);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.pair_id, pair_config.pair_id.clone());
     assert_eq!(event.price, price_7);
