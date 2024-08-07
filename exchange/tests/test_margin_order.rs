@@ -52,7 +52,7 @@ fn test_margin_order_long_open() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(0.12);
+    let trade_size_4 = dec!(0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -166,7 +166,7 @@ fn test_margin_order_long_close_reduce_only() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(0.12);
+    let trade_size_4 = dec!(0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -306,7 +306,7 @@ fn test_margin_order_long_close_profit() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(0.12);
+    let trade_size_4 = dec!(0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -435,7 +435,7 @@ fn test_margin_order_long_close_loss() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(0.12);
+    let trade_size_4 = dec!(0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -569,7 +569,7 @@ fn test_margin_order_long_close_funding_positive() {
     ).expect_commit_success().clone();
     let margin_account_component = result_4.new_component_addresses()[0];
 
-    let trade_size_5 = dec!(0.12);
+    let trade_size_5 = dec!(0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -628,8 +628,9 @@ fn test_margin_order_long_close_funding_positive() {
     let oi_short = pair_details_7.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
-    let skew_after = (oi_long - oi_short - trade_size_5) * price_7;
-    let skew_delta = skew_after - skew;
+    let skew_abs = skew.checked_abs().unwrap();
+    let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
+    let skew_delta = skew_abs_after - skew_abs;
 
     let fee_rate_0 = pair_config.fee_0;
     let fee_rate_1 = skew_delta / pool_value_7 * pair_config.fee_1;
@@ -651,7 +652,7 @@ fn test_margin_order_long_close_funding_positive() {
     let funding_index_long = funding_long / oi_long;
 
     let funding_pool_0_rate = oi_net * price_7 * pair_config.funding_pool_0;
-    let funding_pool_1_rate = skew * pair_config.funding_pool_1;
+    let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     let funding_pool_index = funding_pool / oi_net;
@@ -669,7 +670,7 @@ fn test_margin_order_long_close_funding_positive() {
     let event: EventMarginOrder = interface.parse_event(&result_7);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.pair_id, pair_config.pair_id.clone());
-    assert_eq!(event.price, price_6);
+    assert_eq!(event.price, price_7);
     assert_eq!(event.amount_close, -trade_size_5);
     assert_eq!(event.amount_open, dec!(0));
     assert_eq!(event.pnl, pnl);
@@ -730,7 +731,7 @@ fn test_margin_order_short_open() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(-0.12);
+    let trade_size_4 = dec!(-0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -844,7 +845,7 @@ fn test_margin_order_short_close_reduce_only() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(-0.12);
+    let trade_size_4 = dec!(-0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -984,7 +985,7 @@ fn test_margin_order_short_close_profit() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(-0.12);
+    let trade_size_4 = dec!(-0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -1113,7 +1114,7 @@ fn test_margin_order_short_close_loss() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(-0.12);
+    let trade_size_4 = dec!(-0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -1235,8 +1236,8 @@ fn test_margin_order_short_close_funding_positive() {
     interface.add_liquidity((base_resource, base_input_2)).expect_commit_success();
 
     let price_3 = dec!(60000);
-    let amount_long_3 = dec!(1);
-    let amount_short_3 = dec!(0.8);
+    let amount_long_3 = dec!(0.8);
+    let amount_short_3 = dec!(1);
     interface.make_open_interest(pair_config.pair_id.clone(), amount_long_3, amount_short_3, price_3);
 
     let base_input_4 = dec!(1000);
@@ -1247,7 +1248,7 @@ fn test_margin_order_short_close_funding_positive() {
     ).expect_commit_success().clone();
     let margin_account_component = result_4.new_component_addresses()[0];
 
-    let trade_size_5 = dec!(-0.12);
+    let trade_size_5 = dec!(-0.02);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -1306,8 +1307,9 @@ fn test_margin_order_short_close_funding_positive() {
     let oi_short = pair_details_7.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
-    let skew_after = (oi_long - oi_short - trade_size_5) * price_7;
-    let skew_delta = skew_after - skew;
+    let skew_abs = skew.checked_abs().unwrap();
+    let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
+    let skew_delta = skew_abs_after - skew_abs;
 
     let fee_rate_0 = pair_config.fee_0;
     let fee_rate_1 = skew_delta / pool_value_7 * pair_config.fee_1;
@@ -1325,16 +1327,31 @@ fn test_margin_order_short_close_funding_positive() {
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
-    let funding_short = (funding_1_rate + funding_2_rate) * period;
+    let funding_short = -(funding_1_rate + funding_2_rate) * period;
     let funding_index_short = funding_short / oi_short;
 
     let funding_pool_0_rate = oi_net * price_7 * pair_config.funding_pool_0;
-    let funding_pool_1_rate = skew * pair_config.funding_pool_1;
+    let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     let funding_pool_index = funding_pool / oi_net;
 
+    println!("funding_1_rate: {}", funding_1_rate);
+    println!("funding_2_rate_delta: {}", funding_2_rate_delta);
+    println!("funding_2_rate: {}", funding_2_rate);
+    println!("funding_short: {}", funding_short);
+    println!("funding_pool_0_rate: {}", funding_pool_0_rate);
+    println!("funding_pool_1_rate: {}", funding_pool_1_rate);
+    println!("funding_pool_rate: {}", funding_pool_rate);
+    println!("funding_pool: {}", funding_pool);
+    println!("funding_index_short: {}", funding_index_short);
+    println!("funding_pool_index: {}", funding_pool_index);
+
     let funding = (funding_index_short + funding_pool_index) * -trade_size_5;
+    println!("value: {}", value);
+    println!("cost_7: {}", cost_7);
+    println!("funding: {}", funding);
+    println!("fee: {}", fee);
     let pnl = value - cost_7 - fee - funding;
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
@@ -1347,7 +1364,7 @@ fn test_margin_order_short_close_funding_positive() {
     let event: EventMarginOrder = interface.parse_event(&result_7);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.pair_id, pair_config.pair_id.clone());
-    assert_eq!(event.price, price_6);
+    assert_eq!(event.price, price_7);
     assert_eq!(event.amount_close, -trade_size_5);
     assert_eq!(event.amount_open, dec!(0));
     assert_eq!(event.pnl, pnl);
