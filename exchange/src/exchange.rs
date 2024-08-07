@@ -1790,7 +1790,11 @@ mod exchange_mod {
             request: RequestRemoveCollateral,
         ) {
             let target_account_component = request.target_account;
-            let mut claims = request.claims.clone();
+            let mut claims: Vec<(ResourceAddress, Decimal)> = request.claims.iter()
+                .fold(HashMap::new(), |mut claims, (resource, amount)| {
+                    claims.entry(*resource).and_modify(|a| *a += *amount).or_insert(*amount);
+                    claims
+                }).into_iter().collect();
 
             let mut tokens = Vec::new();
             claims.retain(|(resource, amount)| {
