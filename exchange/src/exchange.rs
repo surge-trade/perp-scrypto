@@ -2494,7 +2494,7 @@ mod exchange_mod {
                 dec!(0)
             };
 
-            pool.add_unrealized_pool_funding(funding);
+            pool.add_unrealized_pool_funding(-funding);
             self._settle_account(pool, account, -funding);
 
             -funding
