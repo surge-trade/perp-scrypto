@@ -284,8 +284,22 @@ CREATE_NON_FUNGIBLE_RESOURCE
                 Enum<0u8>()
             )
         ),
-        Enum<0u8>(),
-        Enum<0u8>(),
+        Enum<1u8>(
+            Tuple(
+                Enum<1u8>(
+                    Enum<1u8>()
+                ),
+                Enum<0u8>()
+            )
+        ),
+        Enum<1u8>(
+            Tuple(
+                Enum<1u8>(
+                    Enum<1u8>()
+                ),
+                Enum<0u8>()
+            )
+        ),
         Enum<1u8>(
             Tuple(
                 Enum<1u8>(
