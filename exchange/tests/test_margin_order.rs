@@ -2191,3 +2191,173 @@ fn test_margin_order_adl_mode_skew_reducing() {
         ])
     ).expect_commit_success();
 }
+
+#[test]
+fn test_margin_order_insufficient_margin() {
+    let mut interface = get_setup();
+    let base_resource = interface.resources.base_resource;
+    let referral_resource = interface.resources.referral_resource;
+    
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(200000),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.1),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
+    let fee_referral_0 = dec!(0.10);
+    let fee_rebate_0 = dec!(0.05);
+    let result_0 = interface.mint_referral(fee_referral_0, fee_rebate_0, 1).expect_commit_success().clone();
+    
+    let referral_id_1 = parse_added_nft_ids(&result_0, referral_resource).first().unwrap().clone();
+    let referral_code_1 = "test".to_string();
+    let referral_hash_1 = keccak256_hash(referral_code_1.clone().into_bytes());
+    let referral_hashes_1 = hashmap!(
+        referral_hash_1 => (vec![], 1u64),
+    );
+    interface.create_referral_codes((referral_resource, referral_id_1), vec![], referral_hashes_1).expect_commit_success();
+
+    let base_input_2 = dec!(1000000);
+    interface.add_liquidity((base_resource, base_input_2)).expect_commit_success();
+
+    let base_input_3 = dec!(59);
+    let result_3 = interface.create_account(
+        rule!(allow_all), 
+        vec![(base_resource, base_input_3)], 
+        Some(referral_code_1),
+    ).expect_commit_success().clone();
+    let margin_account_component = result_3.new_component_addresses()[0];
+
+    let trade_size_4 = dec!(1);
+    interface.margin_order_tp_sl_request(
+        0,
+        10000000000,
+        margin_account_component,
+        pair_config.pair_id.clone(),
+        trade_size_4,
+        false,
+        Limit::None,
+        Some(dec!(70000)),
+        Some(dec!(50000)),
+    ).expect_commit_success();
+
+    let price_5 = dec!(60000);
+    let time_5 = interface.increment_ledger_time(1);
+    interface.process_request(
+        margin_account_component,
+        0, 
+        Some(vec![
+            Price {
+                pair: pair_config.pair_id.clone(),
+                quote: price_5,
+                timestamp: time_5,
+            },
+        ])
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INSUFFICIENT_MARGIN));
+}
+
+#[test]
+fn test_margin_order_exceed_positions_max() {
+    let mut interface = get_setup();
+    let exchange_config = interface.get_exchange_config();
+    let base_resource = interface.resources.base_resource;
+
+    let base_input_0 = dec!(1000000);
+    interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
+
+    let base_input_1 = dec!(100000);
+    let result_1= interface.create_account(
+        rule!(allow_all), 
+        vec![(base_resource, base_input_1)], 
+        None,
+    ).expect_commit_success().clone();
+    let margin_account_component = result_1.new_component_addresses()[0];
+    
+    let mut pair_ids = vec![];
+    let mut pair_configs = vec![];
+    for i in 0..exchange_config.positions_max + 1 {
+        let pair_config_2 = PairConfig {
+            pair_id: format!("TEST{}/USD", i).into(),
+            oi_max: dec!(200000),
+            update_price_delta_ratio: dec!(0.005),
+            update_period_seconds: 3600,
+            margin_initial: dec!(0.01),
+            margin_maintenance: dec!(0.005),
+            funding_1: dec!(0.0000000317),
+            funding_2: dec!(0.0000000317),
+            funding_2_delta: dec!(0.000000827),
+            funding_pool_0: dec!(0.0000000159),
+            funding_pool_1: dec!(0.0000000317),
+            funding_share: dec!(0.1),
+            fee_0: dec!(0.0005),
+            fee_1: dec!(0.1),
+        };
+        pair_ids.push(pair_config_2.pair_id.clone());
+        pair_configs.push(pair_config_2);
+    }
+    interface.update_pair_configs(pair_configs).expect_commit_success();
+    
+        for (i, pair_id) in pair_ids[..pair_ids.len() -1].iter().enumerate() {
+        let trade_size_3 = dec!(1);
+        interface.margin_order_tp_sl_request(
+            0,
+            10000000000,
+            margin_account_component,
+            pair_id.clone(),
+            trade_size_3,
+            false,
+            Limit::None,
+            None,
+            None,
+        ).expect_commit_success();
+
+        let time_4 = interface.increment_ledger_time(1);
+        let prices_4 = pair_ids.iter().map(|pair_id| Price {
+            pair: pair_id.clone(),
+            quote: dec!(10),
+            timestamp: time_4,
+        }).collect();
+        interface.process_request(
+            margin_account_component,
+            i as ListIndex, 
+            Some(prices_4),
+        ).expect_commit_success();
+    }
+
+    let trade_size_5 = dec!(1);
+    let result_5 = interface.margin_order_tp_sl_request(
+        0,
+        10000000000,
+        margin_account_component,
+        pair_ids.last().unwrap().clone(),
+        trade_size_5,
+        false,
+        Limit::None,
+        None,
+        None,
+    ).expect_commit_success().clone();
+    
+    let (index_6, _, _): (ListIndex, Option<ListIndex>, Option<ListIndex>) = result_5.output(1);
+    let time_6 = interface.increment_ledger_time(1);
+    let prices_6 = pair_ids.iter().map(|pair_id| Price {
+        pair: pair_id.clone(),
+        quote: dec!(10),
+        timestamp: time_6,
+    }).collect();
+    interface.process_request(
+        margin_account_component,
+        index_6, 
+        Some(prices_6),
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_POSITIONS_TOO_MANY));
+}

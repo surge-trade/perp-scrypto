@@ -4,7 +4,7 @@ use scrypto::prelude::*;
 use common::{PairId, ListIndex, _AUTHORITY_RESOURCE};
 pub use self::errors::*;
 
-#[derive(ScryptoSbor)]
+#[derive(ScryptoSbor, Clone, Debug)]
 pub struct Price {
     pub pair: String,
     pub quote: Decimal,
