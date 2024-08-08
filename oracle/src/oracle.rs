@@ -75,7 +75,7 @@ mod oracle_mod {
         pub fn add_key(&mut self, id: ListIndex, public_key: Bls12381G1PublicKey) {
             assert!(
                 !self.keys.contains_key(&id),
-                "{}", ERROR_KEY_ID_ALREADY_EXISTS
+                "{}, VALUE:{}, REQUIRED:{:?}, OP:!contains |", ERROR_KEY_ID_ALREADY_EXISTS, id, self.keys.keys()
             );
 
             self.keys.insert(id, public_key);
@@ -112,7 +112,7 @@ mod oracle_mod {
             let key = *self.keys.get(&key_id).expect(ERROR_INVALID_KEY_ID);
             assert!(
                 CryptoUtils::bls12381_v1_verify(hash.clone(), key, signature),
-                "{}", ERROR_INVALID_SIGNATURE
+                "{}, VALUE:{}, REQUIRED:{}, OP:verify |", ERROR_INVALID_SIGNATURE, signature, key
             );
 
             prices.into_iter().for_each(|p1| {
@@ -133,7 +133,7 @@ mod oracle_mod {
                 let (quote, timestamp) = *self.prices.get(&pair_id).expect(ERROR_MISSING_PAIR);
                 assert!(
                     timestamp.compare(max_age, TimeComparisonOperator::Gt),
-                    "{}", ERROR_PRICE_TOO_OLD
+                    "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PRICE_TOO_OLD, timestamp.seconds_since_unix_epoch, max_age.seconds_since_unix_epoch
                 );
                 (pair_id, quote)
             }).collect()

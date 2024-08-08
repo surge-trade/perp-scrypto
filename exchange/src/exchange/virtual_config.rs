@@ -32,7 +32,7 @@ impl VirtualConfig {
     pub fn pair_config(&self, pair_id: &PairId) -> &PairConfig {
         match self.pair_configs.get(pair_id) {
             Some(ref config) => config,
-            None => panic!("{}", ERROR_MISSING_PAIR_CONFIG),
+            None => panic!("{}, VALUE:None, REQUIRED:Some, OP:== |", ERROR_MISSING_PAIR_CONFIG),
         }
     }
 

@@ -485,9 +485,12 @@ mod exchange_mod {
             authorize!(self, {
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 assert!(
-                    fee_referral >= dec!(0) && fee_referral <= dec!(0.1) &&
+                    fee_referral >= dec!(0) && fee_referral <= dec!(0.1),
+                    "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_referral, "[0, 0.1]"
+                );
+                assert!(
                     fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
-                    "{}", ERROR_INVALID_REFERRAL_DATA
+                    "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_rebate, "[0, 0.1]"
                 );
 
                 let referral_data = ReferralData {
@@ -534,14 +537,14 @@ mod exchange_mod {
                 if let Some(fee_referral) = fee_referral {
                     assert!(
                         fee_referral >= dec!(0) && fee_referral <= dec!(0.1),
-                        "{}", ERROR_INVALID_REFERRAL_DATA
+                        "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_referral, "[0, 0.1]"
                     );
                     referral_manager.update_non_fungible_data(&referral_id, "fee_referral", fee_referral);
                 }
                 if let Some(fee_rebate) = fee_rebate {
                     assert!(
                         fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
-                        "{}", ERROR_INVALID_REFERRAL_DATA
+                        "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_rebate, "[0, 0.1]"
                     );
                     referral_manager.update_non_fungible_data(&referral_id, "fee_rebate", fee_rebate);
                 }
@@ -564,7 +567,7 @@ mod exchange_mod {
 
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
-                    "{}", ERROR_REFERRAL_LIMIT_REACHED
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REFERRAL_LIMIT_REACHED, referral_data.referrals + count, referral_data.max_referrals
                 );
 
                 referral_manager.update_non_fungible_data(&referral_id, "referrals", referral_data.referrals + count);
@@ -762,7 +765,7 @@ mod exchange_mod {
 
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
-                    "{}", ERROR_REFERRAL_LIMIT_REACHED
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REFERRAL_LIMIT_REACHED, referral_data.referrals + count, referral_data.max_referrals
                 );
 
                 referral_manager.update_non_fungible_data(referral_id, "referrals", referral_data.referrals + count);

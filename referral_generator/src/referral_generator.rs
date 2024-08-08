@@ -95,14 +95,14 @@ mod referral_generator_mod {
                 if let Some(token) = mapped_tokens.get_mut(&resource) {
                     assert!(
                         total_claim <= token.amount(),
-                        "{}", ERROR_INSUFFICIENT_TOKEN
+                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_INSUFFICIENT_TOKEN, total_claim, token.amount()
                     );
                     let referral_token = token.take_advanced(total_claim, TO_INFINITY);
                     referral_tokens.push(referral_token);
                 } else {
                     assert!(
                         total_claim.is_zero(),
-                        "{}", ERROR_INSUFFICIENT_TOKEN
+                        "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INSUFFICIENT_TOKEN, total_claim, dec!(0)
                     );
                 }
             }
@@ -155,14 +155,14 @@ mod referral_generator_mod {
                 if let Some(token) = mapped_tokens.get_mut(&resource) {
                     assert!(
                         total_claim <= token.amount(),
-                        "{}", ERROR_INSUFFICIENT_TOKEN
+                        "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_INSUFFICIENT_TOKEN, total_claim, token.amount()
                     );
                     let referral_token = token.take_advanced(total_claim, TO_INFINITY);
                     referral_tokens.push(referral_token);
                 } else {
                     assert!(
                         total_claim.is_zero(),
-                        "{}", ERROR_INSUFFICIENT_TOKEN
+                        "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INSUFFICIENT_TOKEN, total_claim, dec!(0)
                     );
                 }
             }
@@ -171,7 +171,7 @@ mod referral_generator_mod {
             for (hash, (claims, count)) in referral_hashes.into_iter() {
                 assert!(
                     self.referral_codes.get(&hash).is_none(),
-                    "{}", ERROR_REFERRAL_CODE_ALREADY_EXISTS
+                    "{}, VALUE:{:?}, REQUIRED:None, OP:== |", ERROR_REFERRAL_CODE_ALREADY_EXISTS, Some(hash)
                 );
                 self.referral_codes.insert(hash, ReferralCode {
                     referral_id: referral_id.clone(),
@@ -200,14 +200,14 @@ mod referral_generator_mod {
 
             assert!(
                 referral_allocation.count <= referral_allocation.max_count,
-                "{}", ERROR_ALLOCATION_LIMIT_REACHED
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_ALLOCATION_LIMIT_REACHED, referral_allocation.count, referral_allocation.max_count
             );
 
             let claims = &referral_allocation.claims;
             for (hash, count) in referral_hashes.into_iter() {
                 assert!(
                     self.referral_codes.get(&hash).is_none(),
-                    "{}", ERROR_REFERRAL_CODE_ALREADY_EXISTS
+                    "{}, VALUE:{:?}, REQUIRED:None, OP:== |", ERROR_REFERRAL_CODE_ALREADY_EXISTS, Some(hash)
                 );
                 self.referral_codes.insert(hash, ReferralCode {
                     referral_id: referral_id.clone(),
@@ -223,7 +223,7 @@ mod referral_generator_mod {
 
             assert!(
                 referral_code.count < referral_code.max_count,
-                "{}", ERROR_REFERRAL_CODE_ALREADY_CLAIMED
+                "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_REFERRAL_CODE_ALREADY_CLAIMED, referral_code.count, referral_code.max_count
             );
 
             referral_code.count += 1;

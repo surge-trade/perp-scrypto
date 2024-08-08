@@ -423,7 +423,7 @@ impl VirtualMarginAccount {
             STATUS_ACTIVE => vec![STATUS_DORMANT],
             STATUS_EXECUTED => vec![STATUS_ACTIVE],
             STATUS_CANCELLED => vec![STATUS_ACTIVE, STATUS_DORMANT],
-            _ => panic!("{}", ERROR_INVALID_REQUEST_STATUS),
+            _ => panic!("{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_REQUEST_STATUS, status, vec![STATUS_ACTIVE, STATUS_DORMANT, STATUS_CANCELLED]),
         }
     }
 }
