@@ -1496,20 +1496,24 @@ mod exchange_mod {
             );
         }
 
-        fn _calculate_fee_rate(
+        fn _calculate_fee(
             &self,
+            exchange_config: &ExchangeConfig,
             pair_config: &PairConfig,
             pool_position: &PoolPosition,
-            pool_value: Decimal,
+            fee_rebate: Decimal,
             price: Decimal,
-            amount: Decimal, 
+            value: Decimal, 
         ) -> Decimal {
-            let skew_abs_0 = ((pool_position.oi_long - pool_position.oi_short) * price).checked_abs().expect(ERROR_ARITHMETIC);
-            let skew_abs_1 = ((pool_position.oi_long - pool_position.oi_short + amount) * price).checked_abs().expect(ERROR_ARITHMETIC);
-            let skew_abs_delta = skew_abs_1 - skew_abs_0;
-            let fee_rate_0 = pair_config.fee_0;
-            let fee_rate_1 = skew_abs_delta / pool_value.max(dec!(1)) * pair_config.fee_1;
-            fee_rate_0 + fee_rate_1
+            let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
+            let skew = (pool_position.oi_long - pool_position.oi_short) * price;
+
+            let fee_0 = value_abs * pair_config.fee_0;
+            let fee_1 = value * (dec!(2) * skew + value) * pair_config.fee_1;
+            let fee_max = value_abs * exchange_config.fee_max;
+            let fee = ((fee_0 + fee_1) * fee_rebate).clamp(dec!(0), fee_max);
+            
+            fee
         }
 
         fn _account_details(
@@ -2112,20 +2116,25 @@ mod exchange_mod {
 
             let price = oracle.price(pair_id);
             let value = amount * price;
-            let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
-            let pool_value = self._pool_value(pool);
 
             let pool_position = pool.position_mut(pair_id);
             let position = account.position_mut(pair_id);
             
-            let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
-            let fee = value_abs * (fee_rate * fee_rebate).clamp(dec!(0), exchange_config.fee_max);
+            let fee = self._calculate_fee(exchange_config, pair_config, pool_position, fee_rebate, price, value);
             let cost = value + fee;
 
             if amount.is_positive() {
                 pool_position.oi_long += amount;
+                assert!(
+                    pool_position.oi_long * price <= pair_config.oi_max / dec!(2), 
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, pool_position.oi_long * price, pair_config.oi_max / dec!(2)
+                );
             } else {
                 pool_position.oi_short -= amount;
+                assert!(
+                    pool_position.oi_short * price <= pair_config.oi_max / dec!(2), 
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, pool_position.oi_short * price, pair_config.oi_max / dec!(2)
+                );
             }
             pool_position.cost += cost;
             
@@ -2136,12 +2145,6 @@ mod exchange_mod {
             } else {
                 position.funding_index = pool_position.funding_short_index
             };
-
-            let oi_total = (pool_position.oi_long + pool_position.oi_short) * price;
-            assert!(
-                oi_total <= pair_config.oi_max, 
-                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, oi_total, pair_config.oi_max
-            );
 
             self._update_pair_snaps(pool, oracle, pair_id);
 
@@ -2166,14 +2169,11 @@ mod exchange_mod {
 
             let price = oracle.price(pair_id);
             let value = amount * price;
-            let value_abs = value.checked_abs().unwrap();
-            let pool_value = self._pool_value(pool);
 
             let pool_position = pool.position_mut(pair_id);
             let position = account.position_mut(pair_id);
 
-            let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
-            let fee = value_abs * (fee_rate * fee_rebate).clamp(dec!(0), exchange_config.fee_max);
+            let fee = self._calculate_fee(exchange_config, pair_config, pool_position, fee_rebate, price, value);
             let cost = -amount / position.amount * position.cost;
             let pnl = -value - cost - fee;
         
@@ -2313,7 +2313,7 @@ mod exchange_mod {
             oracle: &VirtualOracle,
         ) -> ResultValuePositions {
             let exchange_config = config.exchange_config();
-            let pool_value = self._pool_value(pool);
+            let fee_rebate = account.fee_rebate();
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
@@ -2326,8 +2326,7 @@ mod exchange_mod {
 
                 let pool_position = pool.position(pair_id);
 
-                let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
-                let fee = value_abs * (fee_rate * account.fee_rebate()).clamp(dec!(0), exchange_config.fee_max);
+                let fee = self._calculate_fee(exchange_config, pair_config, pool_position, fee_rebate, price, value);
                 let cost = position.cost;
                 let funding = if amount.is_positive() {
                     amount * (pool_position.funding_long_index - position.funding_index)
@@ -2355,7 +2354,6 @@ mod exchange_mod {
             oracle: &VirtualOracle,
         ) -> ResultLiquidatePositions {
             let exchange_config = config.exchange_config();
-            let pool_value = self._pool_value(pool);
             let fee_rebate = account.fee_rebate();
             
             let mut total_pnl = dec!(0);
@@ -2373,8 +2371,7 @@ mod exchange_mod {
 
                 let pool_position = pool.position_mut(pair_id);
 
-                let fee_rate = self._calculate_fee_rate(pair_config, pool_position, pool_value, price, amount);
-                let fee = value_abs * (fee_rate * fee_rebate).clamp(dec!(0), exchange_config.fee_max);
+                let fee = self._calculate_fee(exchange_config, pair_config, pool_position, fee_rebate, price, value);
                 let cost = position.cost;
                 let funding = if amount.is_positive() {
                     pool_position.oi_long -= amount;

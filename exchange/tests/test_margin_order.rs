@@ -25,7 +25,7 @@ fn test_margin_order_long_open() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -66,7 +66,6 @@ fn test_margin_order_long_open() {
     ).expect_commit_success();
 
     let pool_details_5 = interface.get_pool_details();
-    let pool_value_5 = pool_details_5.base_tokens_amount + pool_details_5.virtual_balance + pool_details_5.unrealized_pool_funding + pool_details_5.pnl_snap;
     let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     let result_5 = interface.process_request(
@@ -83,12 +82,11 @@ fn test_margin_order_long_open() {
 
     let value = trade_size_4 * price_5;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value_5 * pair_config.fee_1;
-    let fee_rate = (fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0);
-
-    let fee = value_abs * fee_rate;
+    let skew_2_delta = value * value; 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
+    
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -146,7 +144,7 @@ fn test_margin_order_long_close_reduce_only() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -212,7 +210,6 @@ fn test_margin_order_long_close_reduce_only() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(60000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -230,12 +227,11 @@ fn test_margin_order_long_close_reduce_only() {
 
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = -value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value_6 * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+    let skew_2_delta = -(value * value); 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -293,7 +289,7 @@ fn test_margin_order_long_close_profit() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -348,7 +344,6 @@ fn test_margin_order_long_close_profit() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(70000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -365,15 +360,13 @@ fn test_margin_order_long_close_profit() {
     ).expect_commit_success().clone();
 
     let trade_delta = trade_size_4 * (price_6 - price_5);
-    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = -value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
-
-    let fee = value_abs * fee_rate;
+    let skew_2_delta = -(value * value); 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
+    
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -431,7 +424,7 @@ fn test_margin_order_long_close_loss() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -484,10 +477,8 @@ fn test_margin_order_long_close_loss() {
             },
         ])
     ).expect_commit_success();
-
     
     let pool_details_6 = interface.get_pool_details();
-    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(50000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -504,15 +495,13 @@ fn test_margin_order_long_close_loss() {
     ).expect_commit_success().clone();
 
     let trade_delta = trade_size_4 * (price_6 - price_5);
-    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = -value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+    let skew_2_delta = -(value * value); 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -570,7 +559,7 @@ fn test_margin_order_long_close_funding_positive() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -641,7 +630,6 @@ fn test_margin_order_long_close_funding_positive() {
     ).expect_commit_success();
 
     let pool_details_7 = interface.get_pool_details();
-    let pool_value_7 = pool_details_7.base_tokens_amount + pool_details_7.virtual_balance + pool_details_7.unrealized_pool_funding + pool_details_7.pnl_snap;
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_7 = dec!(60000);
@@ -663,8 +651,10 @@ fn test_margin_order_long_close_funding_positive() {
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
-    let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
-    let skew_delta = skew_abs_after - skew_abs;
+    let skew_after = (oi_long - oi_short - trade_size_5) * price_7;
+    let skew_2 = skew * skew;
+    let skew_2_after = skew_after * skew_after;
+    let skew_2_delta = skew_2_after - skew_2;
 
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
@@ -681,15 +671,13 @@ fn test_margin_order_long_close_funding_positive() {
     let funding_pool_index = funding_pool / oi_net;
     let funding = (funding_index_long + funding_pool_index) * trade_size_5;
 
-    let pool_value = pool_value_7 + funding_pool + funding_share;
     let value = trade_size_5 * price_6;
     let value_abs = value.checked_abs().unwrap();
 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
-
-    let fee = value_abs * fee_rate;
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
+    
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -747,7 +735,7 @@ fn test_margin_order_long_close_funding_negative() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -818,7 +806,6 @@ fn test_margin_order_long_close_funding_negative() {
     ).expect_commit_success();
 
     let pool_details_7 = interface.get_pool_details();
-    let pool_value_7 = pool_details_7.base_tokens_amount + pool_details_7.virtual_balance + pool_details_7.unrealized_pool_funding + pool_details_7.pnl_snap;
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_7 = dec!(60000);
@@ -840,8 +827,10 @@ fn test_margin_order_long_close_funding_negative() {
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
-    let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
-    let skew_delta = skew_abs_after - skew_abs;
+    let skew_after = (oi_long - oi_short - trade_size_5) * price_7;
+    let skew_2 = skew * skew;
+    let skew_2_after = skew_after * skew_after;
+    let skew_2_delta = skew_2_after - skew_2;
 
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
@@ -859,15 +848,13 @@ fn test_margin_order_long_close_funding_negative() {
     let funding_pool_index = funding_pool / oi_net;
     let funding = (funding_index_long + funding_pool_index) * trade_size_5;
 
-    let pool_value = pool_value_7 + funding_pool + funding_share;
     let value = trade_size_5 * price_6;
     let value_abs = value.checked_abs().unwrap();
 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -925,7 +912,7 @@ fn test_margin_order_short_open() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -966,7 +953,6 @@ fn test_margin_order_short_open() {
     ).expect_commit_success();
 
     let pool_details_5 = interface.get_pool_details();
-    let pool_value_5 = pool_details_5.base_tokens_amount + pool_details_5.virtual_balance + pool_details_5.unrealized_pool_funding + pool_details_5.pnl_snap;
     let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     let result_5 = interface.process_request(
@@ -983,12 +969,11 @@ fn test_margin_order_short_open() {
 
     let value = trade_size_4 * price_5;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value_5 * pair_config.fee_1;
-    let fee_rate = (fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0);
+    let skew_2_delta = value * value; 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -1046,7 +1031,7 @@ fn test_margin_order_short_close_reduce_only() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1112,7 +1097,6 @@ fn test_margin_order_short_close_reduce_only() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(60000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -1130,12 +1114,11 @@ fn test_margin_order_short_close_reduce_only() {
 
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = -value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value_6 * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+    let skew_2_delta = -(value * value); 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -1193,7 +1176,7 @@ fn test_margin_order_short_close_profit() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1248,7 +1231,6 @@ fn test_margin_order_short_close_profit() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(50000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -1265,15 +1247,13 @@ fn test_margin_order_short_close_profit() {
     ).expect_commit_success().clone();
 
     let trade_delta = trade_size_4 * (price_6 - price_5);
-    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = -value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+    let skew_2_delta = -(value * value); 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -1331,7 +1311,7 @@ fn test_margin_order_short_close_loss() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1386,7 +1366,6 @@ fn test_margin_order_short_close_loss() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let pool_value_6 = pool_details_6.base_tokens_amount + pool_details_6.virtual_balance + pool_details_6.unrealized_pool_funding + pool_details_6.pnl_snap;
     let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_6 = dec!(70000);
     let time_6 = interface.increment_ledger_time(10000);
@@ -1403,15 +1382,13 @@ fn test_margin_order_short_close_loss() {
     ).expect_commit_success().clone();
 
     let trade_delta = trade_size_4 * (price_6 - price_5);
-    let pool_value = pool_value_6 - trade_delta;
     let value = trade_size_4 * price_6;
     let value_abs = value.checked_abs().unwrap();
-    let skew_delta = -value_abs; 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
+    let skew_2_delta = -(value * value); 
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
 
-    let fee = value_abs * fee_rate;
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -1469,7 +1446,7 @@ fn test_margin_order_short_close_funding_positive() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1540,7 +1517,6 @@ fn test_margin_order_short_close_funding_positive() {
     ).expect_commit_success();
 
     let pool_details_7 = interface.get_pool_details();
-    let pool_value_7 = pool_details_7.base_tokens_amount + pool_details_7.virtual_balance + pool_details_7.unrealized_pool_funding + pool_details_7.pnl_snap;
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_7 = dec!(60000);
@@ -1561,9 +1537,11 @@ fn test_margin_order_short_close_funding_positive() {
     let oi_short = pair_details_7.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
-    let skew_abs = ((oi_long - oi_short) * price_7).checked_abs().unwrap();
-    let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
-    let skew_delta = skew_abs_after - skew_abs;
+    let skew_abs = skew.checked_abs().unwrap();
+    let skew_after = (oi_long - oi_short - trade_size_5) * price_7;
+    let skew_2 = skew * skew;
+    let skew_2_after = skew_after * skew_after;
+    let skew_2_delta = skew_2_after - skew_2;
 
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
@@ -1580,15 +1558,13 @@ fn test_margin_order_short_close_funding_positive() {
     let funding_pool_index = funding_pool / oi_net;
     let funding = (funding_index_short + funding_pool_index) * -trade_size_5;
 
-    let pool_value = pool_value_7 + funding_pool + funding_share;
     let value = trade_size_5 * price_6;
     let value_abs = value.checked_abs().unwrap();
 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
-
-    let fee = value_abs * fee_rate;
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
+    
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -1646,7 +1622,7 @@ fn test_margin_order_short_close_funding_negative() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1717,7 +1693,6 @@ fn test_margin_order_short_close_funding_negative() {
     ).expect_commit_success();
 
     let pool_details_7 = interface.get_pool_details();
-    let pool_value_7 = pool_details_7.base_tokens_amount + pool_details_7.virtual_balance + pool_details_7.unrealized_pool_funding + pool_details_7.pnl_snap;
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
     let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
     let price_7 = dec!(60000);
@@ -1738,9 +1713,11 @@ fn test_margin_order_short_close_funding_negative() {
     let oi_short = pair_details_7.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
-    let skew_abs = ((oi_long - oi_short) * price_7).checked_abs().unwrap();
-    let skew_abs_after = ((oi_long - oi_short - trade_size_5) * price_7).checked_abs().unwrap();
-    let skew_delta = skew_abs_after - skew_abs;
+    let skew_abs = skew.checked_abs().unwrap();
+    let skew_after = (oi_long - oi_short - trade_size_5) * price_7;
+    let skew_2 = skew * skew;
+    let skew_2_after = skew_after * skew_after;
+    let skew_2_delta = skew_2_after - skew_2;
 
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
@@ -1758,15 +1735,13 @@ fn test_margin_order_short_close_funding_negative() {
     let funding_pool_index = funding_pool / oi_net;
     let funding = (funding_index_short + funding_pool_index) * -trade_size_5;
 
-    let pool_value = pool_value_7 + funding_pool + funding_share;
     let value = trade_size_5 * price_6;
     let value_abs = value.checked_abs().unwrap();
 
-    let fee_rate_0 = pair_config.fee_0;
-    let fee_rate_1 = skew_delta / pool_value * pair_config.fee_1;
-    let fee_rate = ((fee_rate_0 + fee_rate_1) * (dec!(1) - fee_rebate_0)).clamp(dec!(0), exchange_config.fee_max);
-
-    let fee = value_abs * fee_rate;
+    let fee_0 = value_abs * pair_config.fee_0;
+    let fee_1 = skew_2_delta * pair_config.fee_1;
+    
+    let fee = (fee_0 + fee_1) * (dec!(1) - fee_rebate_0);
     let fee_protocol = fee * exchange_config.fee_share_protocol;
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_referral = fee * fee_referral_0 * exchange_config.fee_share_referral;
@@ -1823,7 +1798,7 @@ fn test_margin_order_gte_limit_not_met() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1899,7 +1874,7 @@ fn test_margin_order_lte_limit_not_met() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -1956,7 +1931,7 @@ fn test_margin_order_lte_limit_not_met() {
 }
 
 #[test]
-fn test_margin_order_exceed_oi_max() {
+fn test_margin_order_long_exceed_oi_max() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
@@ -1975,7 +1950,7 @@ fn test_margin_order_exceed_oi_max() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -2031,6 +2006,81 @@ fn test_margin_order_exceed_oi_max() {
 }
 
 #[test]
+fn test_margin_order_short_exceed_oi_max() {
+    let mut interface = get_setup();
+    let base_resource = interface.resources.base_resource;
+    let referral_resource = interface.resources.referral_resource;
+    
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
+    let fee_referral_0 = dec!(0.10);
+    let fee_rebate_0 = dec!(0.05);
+    let result_0 = interface.mint_referral(fee_referral_0, fee_rebate_0, 1).expect_commit_success().clone();
+    
+    let referral_id_1 = parse_added_nft_ids(&result_0, referral_resource).first().unwrap().clone();
+    let referral_code_1 = "test".to_string();
+    let referral_hash_1 = keccak256_hash(referral_code_1.clone().into_bytes());
+    let referral_hashes_1 = hashmap!(
+        referral_hash_1 => (vec![], 1u64),
+    );
+    interface.create_referral_codes((referral_resource, referral_id_1), vec![], referral_hashes_1).expect_commit_success();
+
+    let base_input_2 = dec!(1000000);
+    interface.add_liquidity((base_resource, base_input_2)).expect_commit_success();
+
+    let base_input_3 = dec!(1000);
+    let result_3 = interface.create_account(
+        rule!(allow_all), 
+        vec![(base_resource, base_input_3)], 
+        Some(referral_code_1),
+    ).expect_commit_success().clone();
+    let margin_account_component = result_3.new_component_addresses()[0];
+
+    let trade_size_4 = dec!(-1);
+    interface.margin_order_tp_sl_request(
+        0,
+        10000000000,
+        margin_account_component,
+        pair_config.pair_id.clone(),
+        trade_size_4,
+        false,
+        Limit::None,
+        None,
+        None,
+    ).expect_commit_success();
+
+    let price_5 = pair_config.oi_max + dec!(1);
+    let time_5 = interface.increment_ledger_time(1);
+    interface.process_request(
+        margin_account_component,
+        0, 
+        Some(vec![
+            Price {
+                pair: pair_config.pair_id.clone(),
+                quote: price_5,
+                timestamp: time_5,
+            },
+        ])
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_PAIR_OI_TOO_HIGH));
+}
+
+#[test]
 fn test_margin_order_exceed_skew_cap() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
@@ -2051,7 +2101,7 @@ fn test_margin_order_exceed_skew_cap() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -2132,7 +2182,7 @@ fn test_margin_order_adl_mode_skew_reducing() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -2212,7 +2262,7 @@ fn test_margin_order_insufficient_margin() {
         funding_pool_1: dec!(0.0000000317),
         funding_share: dec!(0.1),
         fee_0: dec!(0.0005),
-        fee_1: dec!(0.1),
+        fee_1: dec!(0.0000000005),
     };
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
@@ -2301,7 +2351,7 @@ fn test_margin_order_exceed_positions_max() {
             funding_pool_1: dec!(0.0000000317),
             funding_share: dec!(0.1),
             fee_0: dec!(0.0005),
-            fee_1: dec!(0.1),
+            fee_1: dec!(0.0000000005),
         };
         pair_ids.push(pair_config_2.pair_id.clone());
         pair_configs.push(pair_config_2);
