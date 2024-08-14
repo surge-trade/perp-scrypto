@@ -1270,8 +1270,7 @@ mod exchange_mod {
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
                 
                 let max_age = self._max_age(&config);
-                let collateral_feeds = HashMap::from([(resource, config.collateral_feeds().get(&resource).unwrap().clone())]);
-                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), collateral_feeds, HashSet::new(), max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), max_age, price_updates);
 
                 let (token, remainder) = self._swap_debt(&config, &mut pool, &mut account, &oracle, &resource, payment);
     
