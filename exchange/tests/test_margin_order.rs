@@ -66,6 +66,7 @@ fn test_margin_order_long_open() {
     ).expect_commit_success();
 
     let pool_details_5 = interface.get_pool_details();
+    let account_details_5 = interface.get_account_details(margin_account_component, 0, None);
     let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     let result_5 = interface.process_request(
@@ -102,7 +103,11 @@ fn test_margin_order_long_open() {
     assert_eq!(pair_details.oi_long, trade_size_4);
     assert_eq!(pair_details.oi_short, dec!(0));
 
-    let account_position = interface.get_account_details(margin_account_component, 0, None).positions[0].clone();
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 1);
+    assert_eq!(account_details.virtual_balance, account_details_5.virtual_balance);
+
+    let account_position = account_details.positions[0].clone();
     assert_eq!(account_position.amount, trade_size_4);
     assert_eq!(account_position.cost, value + fee);
     assert_eq!(account_position.funding, dec!(0));
@@ -210,7 +215,8 @@ fn test_margin_order_long_close_reduce_only() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_6 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(60000);
     let time_6 = interface.increment_ledger_time(10000);
     let result_6 = interface.process_request(
@@ -249,8 +255,9 @@ fn test_margin_order_long_close_reduce_only() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, dec!(0));
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
@@ -344,7 +351,8 @@ fn test_margin_order_long_close_profit() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_6 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(70000);
     let time_6 = interface.increment_ledger_time(10000);
     let result_6 = interface.process_request(
@@ -384,8 +392,9 @@ fn test_margin_order_long_close_profit() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, dec!(0));
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
@@ -479,7 +488,8 @@ fn test_margin_order_long_close_loss() {
     ).expect_commit_success();
     
     let pool_details_6 = interface.get_pool_details();
-    let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_6 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(50000);
     let time_6 = interface.increment_ledger_time(10000);
     let result_6 = interface.process_request(
@@ -519,8 +529,9 @@ fn test_margin_order_long_close_loss() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, dec!(0));
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
@@ -631,7 +642,8 @@ fn test_margin_order_long_close_funding_positive() {
 
     let pool_details_7 = interface.get_pool_details();
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_7 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_7 = account_details_7.positions[0].cost;
     let price_7 = dec!(60000);
     let time_7 = interface.increment_ledger_time(10000);
     let result_7 = interface.process_request(
@@ -695,8 +707,9 @@ fn test_margin_order_long_close_funding_positive() {
     assert_eq!(pair_details.oi_long, amount_long_3);
     assert_eq!(pair_details.oi_short, amount_short_3);
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_7.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_7);
     assert_eq!(event.account, margin_account_component);
@@ -807,7 +820,8 @@ fn test_margin_order_long_close_funding_negative() {
 
     let pool_details_7 = interface.get_pool_details();
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_7 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_7 = account_details_7.positions[0].cost;
     let price_7 = dec!(60000);
     let time_7 = interface.increment_ledger_time(10000);
     let result_7 = interface.process_request(
@@ -872,8 +886,9 @@ fn test_margin_order_long_close_funding_negative() {
     assert_eq!(pair_details.oi_long, amount_long_3);
     assert_eq!(pair_details.oi_short, amount_short_3);
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_7.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_7);
     assert_eq!(event.account, margin_account_component);
@@ -953,6 +968,7 @@ fn test_margin_order_short_open() {
     ).expect_commit_success();
 
     let pool_details_5 = interface.get_pool_details();
+    let account_details_5 = interface.get_account_details(margin_account_component, 0, None);
     let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     let result_5 = interface.process_request(
@@ -989,7 +1005,11 @@ fn test_margin_order_short_open() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, -trade_size_4);
 
-    let account_position = interface.get_account_details(margin_account_component, 0, None).positions[0].clone();
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 1);
+    assert_eq!(account_details.virtual_balance, account_details_5.virtual_balance);
+
+    let account_position = account_details.positions[0].clone();
     assert_eq!(account_position.amount, trade_size_4);
     assert_eq!(account_position.cost, value + fee);
     assert_eq!(account_position.funding, dec!(0));
@@ -1097,7 +1117,8 @@ fn test_margin_order_short_close_reduce_only() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_6 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(60000);
     let time_6 = interface.increment_ledger_time(10000);
     let result_6 = interface.process_request(
@@ -1136,8 +1157,9 @@ fn test_margin_order_short_close_reduce_only() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, dec!(0));
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
@@ -1231,7 +1253,8 @@ fn test_margin_order_short_close_profit() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_6 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(50000);
     let time_6 = interface.increment_ledger_time(10000);
     let result_6 = interface.process_request(
@@ -1271,8 +1294,9 @@ fn test_margin_order_short_close_profit() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, dec!(0));
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
@@ -1366,7 +1390,8 @@ fn test_margin_order_short_close_loss() {
     ).expect_commit_success();
 
     let pool_details_6 = interface.get_pool_details();
-    let cost_6 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_6 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(70000);
     let time_6 = interface.increment_ledger_time(10000);
     let result_6 = interface.process_request(
@@ -1406,8 +1431,9 @@ fn test_margin_order_short_close_loss() {
     assert_eq!(pair_details.oi_long, dec!(0));
     assert_eq!(pair_details.oi_short, dec!(0));
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
@@ -1518,7 +1544,8 @@ fn test_margin_order_short_close_funding_positive() {
 
     let pool_details_7 = interface.get_pool_details();
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_7 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_7 = account_details_7.positions[0].cost;
     let price_7 = dec!(60000);
     let time_7 = interface.increment_ledger_time(10000);
     let result_7 = interface.process_request(
@@ -1582,8 +1609,9 @@ fn test_margin_order_short_close_funding_positive() {
     assert_eq!(pair_details.oi_long, amount_long_3);
     assert_eq!(pair_details.oi_short, amount_short_3);
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_7.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_7);
     assert_eq!(event.account, margin_account_component);
@@ -1694,7 +1722,8 @@ fn test_margin_order_short_close_funding_negative() {
 
     let pool_details_7 = interface.get_pool_details();
     let pair_details_7 = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    let cost_7 = interface.get_account_details(margin_account_component, 0, None).positions[0].cost;
+    let account_details_7 = interface.get_account_details(margin_account_component, 0, None);
+    let cost_7 = account_details_7.positions[0].cost;
     let price_7 = dec!(60000);
     let time_7 = interface.increment_ledger_time(10000);
     let result_7 = interface.process_request(
@@ -1759,8 +1788,9 @@ fn test_margin_order_short_close_funding_negative() {
     assert_eq!(pair_details.oi_long, amount_long_3);
     assert_eq!(pair_details.oi_short, amount_short_3);
     
-    let account_positions = interface.get_account_details(margin_account_component, 0, None).positions;
-    assert_eq!(account_positions.len(), 0);
+    let account_details = interface.get_account_details(margin_account_component, 0, None);
+    assert_eq!(account_details.positions.len(), 0);
+    assert_eq!(account_details.virtual_balance, account_details_7.virtual_balance + pnl);
 
     let event: EventMarginOrder = interface.parse_event(&result_7);
     assert_eq!(event.account, margin_account_component);

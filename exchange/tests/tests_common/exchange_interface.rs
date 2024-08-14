@@ -995,7 +995,7 @@ impl ExchangeInterface {
         &mut self,
         margin_account_component: ComponentAddress,
         resource: ResourceAddress,
-        payment_amount: Decimal,
+        payment: (ResourceAddress, Decimal),
         prices: Option<Vec<Price>>,
     ) -> TransactionReceiptV1 {
         let price_updates = if let Some(prices) = prices {
@@ -1009,8 +1009,8 @@ impl ExchangeInterface {
 
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.test_account, self.resources.base_resource, payment_amount)
-            .take_all_from_worktop(self.resources.base_resource, "token")
+            .withdraw_from_account(self.test_account, payment.0, payment.1)
+            .take_all_from_worktop(payment.0, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
                     self.components.exchange_component, 
