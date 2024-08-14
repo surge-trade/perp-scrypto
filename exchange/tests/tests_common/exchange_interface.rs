@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use scrypto_test::prelude::*;
 use super::*;
 

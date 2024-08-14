@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use scrypto_test::prelude::*;
 use once_cell::sync::OnceCell;
 use super::*;

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use referral_generator::ReferralData;
 use scrypto::prelude::Url;
 use scrypto_test::prelude::*;
