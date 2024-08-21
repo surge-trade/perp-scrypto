@@ -110,6 +110,7 @@ fn test_set_level_3_auth() {
     assert_eq!(permissions_b.level_3, indexset!(margin_account_component));
 }
 
+#[test]
 fn test_set_level_1_auth_invalid_auth() {
     let mut interface = get_setup();
 
@@ -134,6 +135,7 @@ fn test_set_level_1_auth_invalid_auth() {
     ).expect_auth_assertion_failure();
 }
 
+#[test]
 fn test_set_level_2_auth_invalid_auth() {
     let mut interface = get_setup();
 
@@ -158,6 +160,7 @@ fn test_set_level_2_auth_invalid_auth() {
     ).expect_auth_assertion_failure();
 }
 
+#[test]
 fn test_set_level_3_auth_invalid_auth() {
     let mut interface = get_setup();
 
