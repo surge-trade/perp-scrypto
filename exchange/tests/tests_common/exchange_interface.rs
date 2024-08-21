@@ -453,6 +453,18 @@ impl ExchangeInterface {
         receipt.expect_commit_success().output(1)
     }
 
+    pub fn get_pool_position(
+        &mut self,
+        pair_id: PairId,
+    ) -> PoolPosition {
+        let receipt = self.ledger.call_method(
+            self.components.pool_component, 
+            "get_position", 
+            manifest_args!(pair_id)
+        );
+        receipt.expect_commit_success().output(1)
+    }
+
     pub fn get_referral_details(
         &mut self,
         referral_id: NonFungibleLocalId,
