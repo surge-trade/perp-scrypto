@@ -1739,9 +1739,15 @@ mod exchange_mod {
             let lp_price = pool_value / lp_supply;
             let value = lp_amount * lp_price;
             let fee = value * config.exchange_config().fee_liquidity_remove;
+            let withdraw_amount = value - fee;
+
+            assert!(
+                withdraw_amount <= pool.base_tokens_amount(),
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS, withdraw_amount, pool.base_tokens_amount()
+            );
             
             lp_token.burn();
-            let token = pool.withdraw(value - fee, TO_ZERO);
+            let token = pool.withdraw(withdraw_amount, TO_ZERO);
             let (fee_pool, fee_protocol, fee_treasury) = self._settle_fees_basic(config, pool, fee);
             
             self._assert_pool_integrity(config, pool, dec!(0));
