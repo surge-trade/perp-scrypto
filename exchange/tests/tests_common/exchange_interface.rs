@@ -1127,12 +1127,12 @@ impl ExchangeInterface {
 
     pub fn swap_protocol_fee(
         &mut self,
-        payment_amount: Decimal,
+        token: (ResourceAddress, Decimal),
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
-            .withdraw_from_account(self.test_account, self.resources.protocol_resource, payment_amount)
-            .take_all_from_worktop(self.resources.protocol_resource, "token")
+            .withdraw_from_account(self.test_account, token.0, token.1)
+            .take_all_from_worktop(token.0, "token")
             .with_bucket("token", |manifest, bucket| {
                 manifest.call_method(
                     self.components.exchange_component, 

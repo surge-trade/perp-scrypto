@@ -80,7 +80,7 @@ fn test_add_liquidity_invalid_token() {
 
     let fake_base_input_0 = dec!(100000);
     interface.add_liquidity((fake_base_resource, fake_base_input_0))
-        .expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_PAYMENT));
+        .expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_PAYMENT_TOKEN));
 }
 
 // TODO: pool value below 1

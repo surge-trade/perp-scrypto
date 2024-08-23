@@ -612,7 +612,7 @@ fn test_liquidate_invalid_payment_token() {
                 timestamp: time_6,
             },
         ]),
-    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_PAYMENT));
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_PAYMENT_TOKEN));
 }
 
 #[test]
@@ -820,7 +820,7 @@ fn test_liquidate_insufficient_payment() {
                 timestamp: time_6,
             },
         ]),
-    ).expect_specific_failure(|err| check_error_msg(err, ERROR_LIQUIDATION_INSUFFICIENT_PAYMENT));
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INSUFFICIENT_PAYMENT));
 }
 
 // TODO: test funding

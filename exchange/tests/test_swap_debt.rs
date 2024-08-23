@@ -735,5 +735,5 @@ fn test_swap_debt_invalid_payment() {
         btc_resource, 
         (btc_resource, btc_input_6), 
         None,
-    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_PAYMENT));
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_INVALID_PAYMENT_TOKEN));
 }
