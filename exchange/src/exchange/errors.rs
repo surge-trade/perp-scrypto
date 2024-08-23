@@ -19,7 +19,7 @@ pub const ERROR_LIQUIDATION_SUFFICIENT_MARGIN: &str = "Sufficient margin, can no
 pub const ERROR_LIQUIDATION_INSUFFICIENT_PAYMENT: &str = "Insufficient payment for liquidation";
 
 pub const ERROR_ADL_SKEW_TOO_LOW: &str = "Skew ratio is too low for ADL";
-pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL not positive";
+pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL below threshold";
 pub const ERROR_ADL_SKEW_NOT_REDUCED: &str = "Skew ratio not reduced";
 pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 
