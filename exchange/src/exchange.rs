@@ -697,10 +697,14 @@ mod exchange_mod {
 
                 assert!(
                     payment.resource_address() == PROTOCOL_RESOURCE,
-                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(PROTOCOL_RESOURCE)
+                    "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PROTOCOL_TOKEN, Runtime::bech32_encode_address(payment.resource_address()), Runtime::bech32_encode_address(PROTOCOL_RESOURCE)
                 );
 
                 let burn_amount = config.exchange_config().protocol_burn_amount;
+                assert!(
+                    payment.amount() >= burn_amount,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_INSUFFICIENT_PAYMENT, payment.amount(), burn_amount
+                );
                 payment.take_advanced(burn_amount, TO_INFINITY).burn();
                 
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
@@ -1408,7 +1412,7 @@ mod exchange_mod {
         ) {
             assert!(
                 *resource == BASE_RESOURCE,
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT, Runtime::bech32_encode_address(*resource), Runtime::bech32_encode_address(BASE_RESOURCE)
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT_TOKEN, Runtime::bech32_encode_address(*resource), Runtime::bech32_encode_address(BASE_RESOURCE)
             );
         }
 
@@ -1997,7 +2001,7 @@ mod exchange_mod {
             let value = ResourceManager::from(BASE_RESOURCE).amount_for_withdrawal(result_collateral.collateral_value_discounted, TO_INFINITY);
             assert!(
                 payment_token.amount() >= value,
-                "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_LIQUIDATION_INSUFFICIENT_PAYMENT, payment_token.amount(), value
+                "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_INSUFFICIENT_PAYMENT, payment_token.amount(), value
             );
             
             let mut tokens = account.withdraw_collateral_batch(result_collateral.collateral_amounts.clone(), TO_ZERO);

@@ -9,17 +9,18 @@ pub const ERROR_PAIR_DISABLED: &str = "Pair disabled";
 
 pub const ERROR_MARGIN_ORDER_PRICE_LIMIT: &str = "Price limit not met";
 
-pub const ERROR_INVALID_PAYMENT: &str = "Invalid payment resource";
+pub const ERROR_INVALID_PAYMENT_TOKEN: &str = "Invalid payment token";
+pub const ERROR_INVALID_PROTOCOL_TOKEN: &str = "Invalid protocol token";
 pub const ERROR_INVALID_LP_TOKEN: &str = "Invalid LP token";
 
+pub const ERROR_INSUFFICIENT_PAYMENT: &str = "Insufficient payment amount";
 pub const ERROR_WITHDRAWAL_INSUFFICIENT_BALANCE: &str = "Insufficient balance for withdrawal";
 pub const ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS: &str = "Insufficient pool balance for withdrawal";
 
 pub const ERROR_LIQUIDATION_SUFFICIENT_MARGIN: &str = "Sufficient margin, can not liquidate";
-pub const ERROR_LIQUIDATION_INSUFFICIENT_PAYMENT: &str = "Insufficient payment for liquidation";
 
 pub const ERROR_ADL_SKEW_TOO_LOW: &str = "Skew ratio is too low for ADL";
-pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL below threshold";
+pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL below required threshold";
 pub const ERROR_ADL_SKEW_NOT_REDUCED: &str = "Skew ratio not reduced";
 pub const ERROR_ADL_NO_POSITION: &str = "No position to close";
 
