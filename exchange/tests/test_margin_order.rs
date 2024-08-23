@@ -58,7 +58,8 @@ fn test_margin_order_long_open() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(70000)),
         Some(dec!(50000)),
     ).expect_commit_success();
@@ -182,7 +183,8 @@ fn test_margin_order_long_close_reduce_only() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -193,7 +195,8 @@ fn test_margin_order_long_close_reduce_only() {
         pair_config.pair_id.clone(),
         -trade_size_4 * dec!(2),
         true,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -329,7 +332,8 @@ fn test_margin_order_long_close_profit() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(70000)),
         Some(dec!(50000)),
     ).expect_commit_success();
@@ -466,7 +470,8 @@ fn test_margin_order_long_close_loss() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(70000)),
         Some(dec!(50000)),
     ).expect_commit_success();
@@ -608,7 +613,8 @@ fn test_margin_order_long_close_funding_positive() {
         pair_config.pair_id.clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -619,7 +625,8 @@ fn test_margin_order_long_close_funding_positive() {
         pair_config.pair_id.clone(),
         -trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -786,7 +793,8 @@ fn test_margin_order_long_close_funding_negative() {
         pair_config.pair_id.clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -797,7 +805,8 @@ fn test_margin_order_long_close_funding_negative() {
         pair_config.pair_id.clone(),
         -trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -960,7 +969,8 @@ fn test_margin_order_short_open() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(50000)),
         Some(dec!(70000)),
     ).expect_commit_success();
@@ -1084,7 +1094,8 @@ fn test_margin_order_short_close_reduce_only() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1095,7 +1106,8 @@ fn test_margin_order_short_close_reduce_only() {
         pair_config.pair_id.clone(),
         -trade_size_4 * dec!(2),
         true,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1231,7 +1243,8 @@ fn test_margin_order_short_close_profit() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(50000)),
         Some(dec!(70000)),
     ).expect_commit_success();
@@ -1368,7 +1381,8 @@ fn test_margin_order_short_close_loss() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(50000)),
         Some(dec!(70000)),
     ).expect_commit_success();
@@ -1510,7 +1524,8 @@ fn test_margin_order_short_close_funding_positive() {
         pair_config.pair_id.clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1521,7 +1536,8 @@ fn test_margin_order_short_close_funding_positive() {
         pair_config.pair_id.clone(),
         -trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1688,7 +1704,8 @@ fn test_margin_order_short_close_funding_negative() {
         pair_config.pair_id.clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1699,7 +1716,8 @@ fn test_margin_order_short_close_funding_negative() {
         pair_config.pair_id.clone(),
         -trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1862,7 +1880,8 @@ fn test_margin_order_gte_limit_not_met() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::Lte(price_4),
+        PriceLimit::Lte(price_4),
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -1938,7 +1957,8 @@ fn test_margin_order_lte_limit_not_met() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::Gte(dec!(60000)),
+        PriceLimit::Gte(dec!(60000)),
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -2013,7 +2033,8 @@ fn test_margin_order_long_exceed_oi_max() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -2088,7 +2109,8 @@ fn test_margin_order_short_exceed_oi_max() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -2169,7 +2191,8 @@ fn test_margin_order_exceed_skew_cap() {
         pair_config.pair_id.clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -2250,7 +2273,8 @@ fn test_margin_order_adl_mode_skew_reducing() {
         pair_config.pair_id.clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -2325,7 +2349,8 @@ fn test_margin_order_insufficient_margin() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         Some(dec!(70000)),
         Some(dec!(50000)),
     ).expect_commit_success();
@@ -2395,7 +2420,8 @@ fn test_margin_order_exceed_positions_max() {
             pair_id.clone(),
             trade_size_3,
             false,
-            Limit::None,
+            PriceLimit::None,
+            SlippageLimit::None,
             None,
             None,
         ).expect_commit_success();
@@ -2421,7 +2447,8 @@ fn test_margin_order_exceed_positions_max() {
         pair_ids.last().unwrap().clone(),
         trade_size_5,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success().clone();
@@ -2439,3 +2466,5 @@ fn test_margin_order_exceed_positions_max() {
         Some(prices_6),
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_POSITIONS_TOO_MANY));
 }
+
+// TODO: test slippage limit

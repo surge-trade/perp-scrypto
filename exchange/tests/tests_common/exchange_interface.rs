@@ -160,7 +160,8 @@ impl ExchangeInterface {
             pair_id.clone(), 
             amount_long, 
             false, 
-            Limit::None, 
+            PriceLimit::None, 
+            SlippageLimit::None,
             vec![], 
             vec![], 
             STATUS_ACTIVE
@@ -178,7 +179,8 @@ impl ExchangeInterface {
             pair_id.clone(), 
             -amount_short, 
             false, 
-            Limit::None, 
+            PriceLimit::None, 
+            SlippageLimit::None,
             vec![], 
             vec![], 
             STATUS_ACTIVE
@@ -867,9 +869,10 @@ impl ExchangeInterface {
         pair_id: PairId,
         amount: Decimal,
         reduce_only: bool,
-        price_limit: Limit,
-        activate_requests: Vec<ListIndex>,
-        cancel_requests: Vec<ListIndex>,
+        price_limit: PriceLimit,
+        slippage_limit: SlippageLimit,
+        activate_requests: Vec<RequestIndexRef>,
+        cancel_requests: Vec<RequestIndexRef>,
         status: Status,
     ) -> TransactionReceiptV1 {
         let fee_oath: Option<ManifestBucket> = None;
@@ -888,6 +891,7 @@ impl ExchangeInterface {
                     amount,
                     reduce_only,
                     price_limit,
+                    slippage_limit,
                     activate_requests,
                     cancel_requests,
                     status,
@@ -906,7 +910,8 @@ impl ExchangeInterface {
         pair_id: PairId,
         amount: Decimal,
         reduce_only: bool,
-        price_limit: Limit,
+        price_limit: PriceLimit,
+        slippage_limit: SlippageLimit,
         price_tp: Option<Decimal>,
         price_sl: Option<Decimal>,
     ) -> TransactionReceiptV1 {
@@ -926,6 +931,7 @@ impl ExchangeInterface {
                     amount, 
                     reduce_only, 
                     price_limit, 
+                    slippage_limit,
                     price_tp, 
                     price_sl
                 )

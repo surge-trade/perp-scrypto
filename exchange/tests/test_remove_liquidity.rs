@@ -104,7 +104,8 @@ fn test_remove_liquidity_exceed_skew_cap() {
         "TEST/USD".into(),
         amount_1,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         vec![],
         vec![],
         STATUS_ACTIVE

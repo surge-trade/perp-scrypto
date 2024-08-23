@@ -1033,9 +1033,10 @@ mod exchange_mod {
             pair_id: PairId,
             amount: Decimal,
             reduce_only: bool,
-            price_limit: Limit,
-            activate_requests: Vec<ListIndex>,
-            cancel_requests: Vec<ListIndex>,
+            price_limit: PriceLimit,
+            slippage_limit: SlippageLimit,
+            activate_requests: Vec<RequestIndexRef>,
+            cancel_requests: Vec<RequestIndexRef>,
             status: Status,
         ) -> ListIndex {
             authorize!(self, {
@@ -1052,11 +1053,15 @@ mod exchange_mod {
                     "{}, VALUE:{}, REQUIRED:{}, OP:<= ", ERROR_EFFECTED_REQUESTS_TOO_MANY, cancel_requests.len(), 2
                 );
 
+                let request_index = account.requests_len();
+                let activate_requests = activate_requests.iter().map(|r| r.resolve(request_index)).collect();
+                let cancel_requests = cancel_requests.iter().map(|r| r.resolve(request_index)).collect();
                 let request = Request::MarginOrder(RequestMarginOrder {
                     pair_id,
                     amount,
                     reduce_only,
                     price_limit,
+                    slippage_limit,
                     activate_requests,
                     cancel_requests,
                 });
@@ -1080,7 +1085,8 @@ mod exchange_mod {
             pair_id: PairId,
             amount: Decimal,
             reduce_only: bool,
-            price_limit: Limit,
+            price_limit: PriceLimit,
+            slippage_limit: SlippageLimit,
             price_tp: Option<Decimal>,
             price_sl: Option<Decimal>,
         ) -> (ListIndex, Option<ListIndex>, Option<ListIndex>) {
@@ -1104,9 +1110,9 @@ mod exchange_mod {
                     cancel_requests_sl.push(index_tp);
 
                     let price_limit_tp = if amount.is_positive() {
-                        Limit::Gte(price)
+                        PriceLimit::Gte(price)
                     } else {
-                        Limit::Lte(price)
+                        PriceLimit::Lte(price)
                     };
 
                     (Some(price_limit_tp), Some(index_tp))
@@ -1119,9 +1125,9 @@ mod exchange_mod {
                     cancel_requests_tp.push(index_sl);
 
                     let price_limit_sl = if amount.is_positive() {
-                        Limit::Lte(price)
+                        PriceLimit::Lte(price)
                     } else {
-                        Limit::Gte(price)
+                        PriceLimit::Gte(price)
                     };
 
                     (Some(price_limit_sl), Some(index_sl))
@@ -1134,6 +1140,7 @@ mod exchange_mod {
                     amount,
                     reduce_only,
                     price_limit,
+                    slippage_limit,
                     activate_requests: activate_requests_order,
                     cancel_requests: vec![],
                 });
@@ -1145,6 +1152,7 @@ mod exchange_mod {
                         amount: -amount,
                         reduce_only: true,
                         price_limit: price_limit_tp,
+                        slippage_limit,
                         activate_requests: vec![],
                         cancel_requests: cancel_requests_tp,
                     });
@@ -1156,6 +1164,7 @@ mod exchange_mod {
                         amount: -amount,
                         reduce_only: true,
                         price_limit: price_limit_sl,
+                        slippage_limit,
                         activate_requests: vec![],
                         cancel_requests: cancel_requests_sl,
                     });
@@ -1865,6 +1874,9 @@ mod exchange_mod {
             let amount = request.amount;
             let reduce_only = request.reduce_only;
             let price_limit = request.price_limit;
+            let slippage_limit = request.slippage_limit;
+            let activate_requests = request.activate_requests;
+            let cancel_requests = request.cancel_requests;
 
             let price = oracle.price(pair_id);
             assert!(
@@ -1908,10 +1920,15 @@ mod exchange_mod {
                 let fee_open = self._open_position(config, pool, account, oracle, pair_id, amount_open);
                 fee_paid += fee_open;
             }
+            assert!(
+                slippage_limit.compare(fee_paid, amount_open + amount_close),
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_MARGIN_ORDER_SLIPPAGE_LIMIT, fee_paid, slippage_limit.allowed_slippage(amount_open + amount_close),
+            );
+
             let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee_paid);
 
-            let activated_requests = account.try_set_keeper_requests_status(request.activate_requests, STATUS_ACTIVE);
-            let cancelled_requests = account.try_set_keeper_requests_status(request.cancel_requests, STATUS_CANCELLED);
+            let activated_requests = account.try_set_keeper_requests_status(activate_requests, STATUS_ACTIVE);
+            let cancelled_requests = account.try_set_keeper_requests_status(cancel_requests, STATUS_CANCELLED);
             
             let skew_1 = pool.skew_abs_snap();
             self._assert_pool_integrity(config, pool, skew_1 - skew_0);

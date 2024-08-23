@@ -72,7 +72,8 @@ fn test_liquidate_long() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -241,7 +242,8 @@ fn test_liquidate_short() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -410,7 +412,8 @@ fn test_liquidate_pool_loss() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -580,7 +583,8 @@ fn test_liquidate_invalid_payment_token() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -684,7 +688,8 @@ fn test_liquidate_sufficient_margin() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -788,7 +793,8 @@ fn test_liquidate_insufficient_payment() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();

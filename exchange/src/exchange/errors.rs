@@ -8,6 +8,7 @@ pub const ERROR_INSUFFICIENT_MARGIN: &str = "Insufficient margin";
 pub const ERROR_PAIR_DISABLED: &str = "Pair disabled";
 
 pub const ERROR_MARGIN_ORDER_PRICE_LIMIT: &str = "Price limit not met";
+pub const ERROR_MARGIN_ORDER_SLIPPAGE_LIMIT: &str = "Slippage limit exceeded";
 
 pub const ERROR_INVALID_PAYMENT_TOKEN: &str = "Invalid payment token";
 pub const ERROR_INVALID_PROTOCOL_TOKEN: &str = "Invalid protocol token";

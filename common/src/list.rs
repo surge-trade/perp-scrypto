@@ -1,6 +1,7 @@
 use scrypto::prelude::*;
 
 pub type ListIndex = u64;
+pub type ListIndexOffset = i64;
 
 #[derive(ScryptoSbor)]
 pub struct List<T: ScryptoSbor + Clone> {

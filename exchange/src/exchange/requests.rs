@@ -1,37 +1,80 @@
 use scrypto::prelude::*;
 use account::Status;
-use common::{PairId, ListIndex};
+use common::{PairId, ListIndex, ListIndexOffset};
 use super::errors::*;
 
 #[derive(ScryptoSbor, ManifestSbor, Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Limit {
+pub enum PriceLimit {
+    None,
     Gte(Decimal),
     Lte(Decimal),
-    None,
 }
 
-impl Limit {
+impl PriceLimit {
     pub fn compare(&self, value: Decimal) -> bool {
         match self {
-            Limit::Gte(limit) => value >= *limit,
-            Limit::Lte(limit) => value <= *limit,
-            Limit::None => true,
+            PriceLimit::None => true,
+            PriceLimit::Gte(limit) => value >= *limit,
+            PriceLimit::Lte(limit) => value <= *limit,
         }
     }
 
     pub fn price(&self) -> Decimal {
         match self {
-            Limit::Gte(limit) => *limit,
-            Limit::Lte(limit) => *limit,
-            Limit::None => Decimal::ZERO,
+            PriceLimit::None => Decimal::ZERO,
+            PriceLimit::Gte(limit) => *limit,
+            PriceLimit::Lte(limit) => *limit,
         }
     }
 
     pub fn op(&self) -> &'static str {
         match self {
-            Limit::Gte(_) => ">=",
-            Limit::Lte(_) => "<=",
-            Limit::None => "True",
+            PriceLimit::None => "True",
+            PriceLimit::Gte(_) => ">=",
+            PriceLimit::Lte(_) => "<=",
+        }
+    }
+}
+
+#[derive(ScryptoSbor, ManifestSbor, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SlippageLimit {
+    None,
+    Percent(Decimal),
+    Absolute(Decimal),
+}
+
+impl SlippageLimit {
+    pub fn compare(&self, slippage: Decimal, amount: Decimal) -> bool {
+        match self {
+            SlippageLimit::None => true,
+            SlippageLimit::Percent(limit) => slippage <= amount * *limit / dec!(100),
+            SlippageLimit::Absolute(limit) => slippage <= *limit,
+        }
+    }
+
+    pub fn allowed_slippage(&self, amount: Decimal) -> Decimal {
+        match self {
+            SlippageLimit::None => Decimal::MAX,
+            SlippageLimit::Percent(limit) => amount * *limit / dec!(100),
+            SlippageLimit::Absolute(limit) => *limit,
+        }
+    }
+}
+
+#[derive(ScryptoSbor, ManifestSbor, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RequestIndexRef {
+    Index(ListIndex),
+    RelativeIndex(ListIndexOffset),
+}
+
+impl RequestIndexRef {
+    pub fn resolve(&self, request_index: ListIndex) -> ListIndex {
+        match self {
+            RequestIndexRef::Index(index) => *index,
+            RequestIndexRef::RelativeIndex(offset) => {
+                let offset = ListIndex::try_from(*offset).expect(ERROR_ARITHMETIC);
+                request_index.checked_add(offset).expect(ERROR_ARITHMETIC)
+            }
         }
     }
 }
@@ -47,7 +90,8 @@ pub struct RequestMarginOrder {
     pub pair_id: PairId,
     pub amount: Decimal,
     pub reduce_only: bool,
-    pub price_limit: Limit,
+    pub price_limit: PriceLimit,
+    pub slippage_limit: SlippageLimit,
     pub activate_requests: Vec<ListIndex>,
     pub cancel_requests: Vec<ListIndex>,
 }

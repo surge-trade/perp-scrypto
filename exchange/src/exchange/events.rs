@@ -3,7 +3,7 @@ use account::KeeperRequest;
 use common::{PairId, ListIndex};
 use pool::PoolPosition;
 use config::*;
-use super::requests::Limit;
+use super::requests::PriceLimit;
 
 #[derive(ScryptoSbor, ScryptoEvent, Clone, Debug)]
 pub struct EventSignalUpgrade {
@@ -83,7 +83,7 @@ pub struct EventMarginOrder {
     pub account: ComponentAddress,
     pub pair_id: PairId,
     pub price: Decimal,
-    pub price_limit: Limit,
+    pub price_limit: PriceLimit,
     pub amount_close: Decimal,
     pub amount_open: Decimal,
     pub pnl: Decimal,

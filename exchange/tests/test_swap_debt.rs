@@ -54,7 +54,8 @@ fn test_swap_debt_more_than_debt() {
         pair_config.pair_id.clone(),
         trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -65,7 +66,8 @@ fn test_swap_debt_more_than_debt() {
         pair_config.pair_id.clone(),
         -trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -191,7 +193,8 @@ fn test_swap_debt_less_than_debt() {
         pair_config.pair_id.clone(),
         trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -202,7 +205,8 @@ fn test_swap_debt_less_than_debt() {
         pair_config.pair_id.clone(),
         -trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -339,7 +343,8 @@ fn test_swap_debt_more_than_token() {
         pair_config.pair_id.clone(),
         trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -350,7 +355,8 @@ fn test_swap_debt_more_than_token() {
         pair_config.pair_id.clone(),
         -trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -556,7 +562,8 @@ fn test_swap_debt_invalid_token() {
         pair_config.pair_id.clone(),
         trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -567,7 +574,8 @@ fn test_swap_debt_invalid_token() {
         pair_config.pair_id.clone(),
         -trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -673,7 +681,8 @@ fn test_swap_debt_invalid_payment() {
         pair_config.pair_id.clone(),
         trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -684,7 +693,8 @@ fn test_swap_debt_invalid_payment() {
         pair_config.pair_id.clone(),
         -trade_size_3,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();

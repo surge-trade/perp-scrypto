@@ -19,7 +19,8 @@ fn test_cancel_requests_normal() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let activate_requests_1 = vec![];
     let cancel_requests_1 = vec![];
     let status_1 = STATUS_ACTIVE;
@@ -32,6 +33,7 @@ fn test_cancel_requests_normal() {
             amount_1,
             reduce_only_1,
             price_limit_1,
+            slippage_limit_1,
             activate_requests_1.clone(),
             cancel_requests_1.clone(),
             status_1,
@@ -83,7 +85,8 @@ fn test_cancel_requests_duplicate() {
         "BTC/USD".into(),
         dec!(100),
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         vec![],
         vec![],
         STATUS_ACTIVE,
@@ -172,7 +175,8 @@ pub fn test_cancel_request_not_active_or_dormant() {
         pair_id_1.into(),
         amount_1,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         vec![],
         vec![],
         STATUS_ACTIVE,
@@ -214,7 +218,8 @@ fn test_cancel_request_invalid_auth() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let activate_requests_1 = vec![];
     let cancel_requests_1 = vec![];
     let status_1 = STATUS_ACTIVE;
@@ -226,6 +231,7 @@ fn test_cancel_request_invalid_auth() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         activate_requests_1.clone(),
         cancel_requests_1.clone(),
         status_1,

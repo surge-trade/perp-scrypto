@@ -58,7 +58,8 @@ fn test_auto_deleverage() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -231,7 +232,8 @@ fn test_auto_deleverage_skew_too_low() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -318,7 +320,7 @@ fn test_auto_deleverage_no_position() {
     let margin_account_component = result_3.new_component_addresses()[0];
 
     let price_4 = dec!(60000);
-    let amount_long_4 = dec!(0.2);
+    let amount_long_4 = dec!(0.23);
     let amount_short_4 = dec!(0.01);
     interface.make_open_interest(pair_config.pair_id.clone(), amount_long_4, amount_short_4, price_4);
 
@@ -392,7 +394,8 @@ fn test_auto_deleverage_below_threshold() {
         pair_config.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();
@@ -502,7 +505,8 @@ fn test_auto_deleverage_skew_not_reduced() {
         pair_config_btc.pair_id.clone(),
         trade_size_4,
         false,
-        Limit::None,
+        PriceLimit::None,
+        SlippageLimit::None,
         None,
         None,
     ).expect_commit_success();

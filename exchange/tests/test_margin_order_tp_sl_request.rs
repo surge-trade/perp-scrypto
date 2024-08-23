@@ -19,7 +19,8 @@ fn test_margin_order_tp_sl_request_no_tp_no_sl() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let price_tp_1 = None;
     let price_sl_1 = None;
     let result = interface.margin_order_tp_sl_request(
@@ -30,6 +31,7 @@ fn test_margin_order_tp_sl_request_no_tp_no_sl() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         price_tp_1,
         price_sl_1,
     ).expect_commit_success().clone();
@@ -82,7 +84,8 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let price_tp_1 = Some(dec!(70000));
     let price_sl_1 = None;
     let result = interface.margin_order_tp_sl_request(
@@ -93,6 +96,7 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         price_tp_1,
         price_sl_1,
     ).expect_commit_success().clone();
@@ -132,7 +136,7 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, -amount_1);
         assert_eq!(margin_order_request.reduce_only, true);
-        assert_eq!(margin_order_request.price_limit, Limit::Gte(price_tp_1.unwrap()));
+        assert_eq!(margin_order_request.price_limit, PriceLimit::Gte(price_tp_1.unwrap()));
         assert_eq!(margin_order_request.activate_requests, Vec::<ListIndex>::new());
         assert_eq!(margin_order_request.cancel_requests, Vec::<ListIndex>::new());
     } else {
@@ -161,7 +165,8 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let price_tp_1 = None;
     let price_sl_1 = Some(dec!(50000));
     let result = interface.margin_order_tp_sl_request(
@@ -172,6 +177,7 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         price_tp_1,
         price_sl_1,
     ).expect_commit_success().clone();
@@ -211,7 +217,7 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, -amount_1);
         assert_eq!(margin_order_request.reduce_only, true);
-        assert_eq!(margin_order_request.price_limit, Limit::Lte(price_sl_1.unwrap()));
+        assert_eq!(margin_order_request.price_limit, PriceLimit::Lte(price_sl_1.unwrap()));
         assert_eq!(margin_order_request.activate_requests, Vec::<ListIndex>::new());
         assert_eq!(margin_order_request.cancel_requests, Vec::<ListIndex>::new());
     } else {
@@ -240,7 +246,8 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let price_tp_1 = Some(dec!(70000));
     let price_sl_1 = Some(dec!(50000));
     let result = interface.margin_order_tp_sl_request(
@@ -251,6 +258,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         price_tp_1,
         price_sl_1,
     ).expect_commit_success().clone();
@@ -290,7 +298,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, -amount_1);
         assert_eq!(margin_order_request.reduce_only, true);
-        assert_eq!(margin_order_request.price_limit, Limit::Gte(price_tp_1.unwrap()));
+        assert_eq!(margin_order_request.price_limit, PriceLimit::Gte(price_tp_1.unwrap()));
         assert_eq!(margin_order_request.activate_requests, Vec::<ListIndex>::new());
         assert_eq!(margin_order_request.cancel_requests, vec![2]);
     } else {
@@ -306,7 +314,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, -amount_1);
         assert_eq!(margin_order_request.reduce_only, true);
-        assert_eq!(margin_order_request.price_limit, Limit::Lte(price_sl_1.unwrap()));
+        assert_eq!(margin_order_request.price_limit, PriceLimit::Lte(price_sl_1.unwrap()));
         assert_eq!(margin_order_request.activate_requests, Vec::<ListIndex>::new());
         assert_eq!(margin_order_request.cancel_requests, vec![1]);
     } else {
@@ -335,7 +343,8 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(-100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let price_tp_1 = Some(dec!(50000));
     let price_sl_1 = Some(dec!(70000));
     let result = interface.margin_order_tp_sl_request(
@@ -346,6 +355,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         price_tp_1,
         price_sl_1,
     ).expect_commit_success().clone();
@@ -385,7 +395,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, -amount_1);
         assert_eq!(margin_order_request.reduce_only, true);
-        assert_eq!(margin_order_request.price_limit, Limit::Lte(price_tp_1.unwrap()));
+        assert_eq!(margin_order_request.price_limit, PriceLimit::Lte(price_tp_1.unwrap()));
         assert_eq!(margin_order_request.activate_requests, Vec::<ListIndex>::new());
         assert_eq!(margin_order_request.cancel_requests, vec![2]);
     } else {
@@ -401,7 +411,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
         assert_eq!(margin_order_request.pair_id, pair_id_1);
         assert_eq!(margin_order_request.amount, -amount_1);
         assert_eq!(margin_order_request.reduce_only, true);
-        assert_eq!(margin_order_request.price_limit, Limit::Gte(price_sl_1.unwrap()));
+        assert_eq!(margin_order_request.price_limit, PriceLimit::Gte(price_sl_1.unwrap()));
         assert_eq!(margin_order_request.activate_requests, Vec::<ListIndex>::new());
         assert_eq!(margin_order_request.cancel_requests, vec![1]);
     } else {
@@ -431,7 +441,8 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
     let pair_id_1 = "BTC/USD";
     let amount_1 = dec!(100);
     let reduce_only_1 = false;
-    let price_limit_1 = Limit::None;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
     let price_tp_1 = Some(dec!(70000));
     let price_sl_1 = Some(dec!(50000));
     for _ in 0..exchange_config.active_requests_max / 3 {
@@ -443,6 +454,7 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
             amount_1,
             reduce_only_1,
             price_limit_1,
+            slippage_limit_1,
             price_tp_1,
             price_sl_1,
         ).expect_commit_success();
@@ -456,6 +468,7 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
         amount_1,
         reduce_only_1,
         price_limit_1,
+        slippage_limit_1,
         price_tp_1,
         price_sl_1,
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_ACTIVE_REQUESTS_TOO_MANY));
@@ -482,7 +495,8 @@ fn test_margin_order_tp_sl_request_invalid_auth() {
     let pair_id_2 = "BTC/USD";
     let amount_2 = dec!(100);
     let reduce_only_2 = false;
-    let price_limit_2 = Limit::None;
+    let price_limit_2 = PriceLimit::None;
+    let slippage_limit_2 = SlippageLimit::None;
     let price_tp_2 = Some(dec!(70000));
     let price_sl_2 = Some(dec!(50000));
     interface.margin_order_tp_sl_request(
@@ -493,6 +507,7 @@ fn test_margin_order_tp_sl_request_invalid_auth() {
         amount_2,
         reduce_only_2,
         price_limit_2,
+        slippage_limit_2,
         price_tp_2,
         price_sl_2,
     ).expect_auth_assertion_failure();
