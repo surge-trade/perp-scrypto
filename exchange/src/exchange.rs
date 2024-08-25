@@ -2347,7 +2347,7 @@ mod exchange_mod {
                 let pair_config = config.pair_config(pair_id);
                 let price = oracle.price(pair_id);
                 let amount = position.amount;
-                let value = amount * price;
+                let value = -amount * price;
                 let value_abs = value.checked_abs().expect(ERROR_ARITHMETIC);
 
                 let pool_position = pool.position(pair_id);
@@ -2360,7 +2360,7 @@ mod exchange_mod {
                     -amount * (pool_position.funding_short_index - position.funding_index)
                 };
 
-                let pnl = value - cost - fee - funding;
+                let pnl = -value - cost - fee - funding;
                 let margin = value_abs * pair_config.margin_initial;
                 total_pnl += pnl;
                 total_margin += margin;
