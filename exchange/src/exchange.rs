@@ -2383,6 +2383,11 @@ mod exchange_mod {
         ) -> ResultLiquidatePositions {
             let exchange_config = config.exchange_config();
             let fee_rebate = account.fee_rebate();
+
+            let pair_ids: Vec<PairId> = account.positions().keys().cloned().collect();
+            pair_ids.iter().for_each(|pair_id| {
+                self._update_pair(config, pool, oracle, pair_id);
+            });
             
             let mut total_pnl = dec!(0);
             let mut total_margin = dec!(0);
@@ -2423,6 +2428,9 @@ mod exchange_mod {
                 position.remove();
             }
             pool.add_unrealized_pool_funding(-total_funding);
+            pair_ids.iter().for_each(|pair_id| {
+                self._update_pair_snaps(pool, oracle, pair_id);
+            });
 
             ResultLiquidatePositions {
                 pnl: total_pnl,
