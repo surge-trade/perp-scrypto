@@ -3,6 +3,12 @@ use account::Status;
 use common::{PairId, ListIndex, ListIndexOffset};
 use super::errors::*;
 
+pub const STATUS_DORMANT: Status = 0;
+pub const STATUS_ACTIVE: Status = 1;
+pub const STATUS_EXECUTED: Status = 2;
+pub const STATUS_CANCELLED: Status = 3;
+pub const STATUS_EXPIRED: Status = 4;
+
 #[derive(ScryptoSbor, ManifestSbor, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PriceLimit {
     None,
@@ -44,18 +50,15 @@ pub enum SlippageLimit {
 }
 
 impl SlippageLimit {
-    pub fn compare(&self, slippage: Decimal, amount: Decimal) -> bool {
-        match self {
-            SlippageLimit::None => true,
-            SlippageLimit::Percent(limit) => slippage <= amount * *limit / dec!(100),
-            SlippageLimit::Absolute(limit) => slippage <= *limit,
-        }
+    pub fn compare(&self, slippage: Decimal, value: Decimal) -> bool {
+        let allowed_slippage = self.allowed_slippage(value);
+        slippage <= allowed_slippage
     }
 
-    pub fn allowed_slippage(&self, amount: Decimal) -> Decimal {
+    pub fn allowed_slippage(&self, value: Decimal) -> Decimal {
         match self {
             SlippageLimit::None => Decimal::MAX,
-            SlippageLimit::Percent(limit) => amount * *limit / dec!(100),
+            SlippageLimit::Percent(limit) => value * *limit / dec!(100),
             SlippageLimit::Absolute(limit) => *limit,
         }
     }
@@ -112,9 +115,3 @@ impl Request {
         scrypto_decode(data).expect(ERROR_REQUEST_DECODING)
     }
 }
-
-pub const STATUS_DORMANT: Status = 0;
-pub const STATUS_ACTIVE: Status = 1;
-pub const STATUS_EXECUTED: Status = 2;
-pub const STATUS_CANCELLED: Status = 3;
-pub const STATUS_EXPIRED: Status = 4;

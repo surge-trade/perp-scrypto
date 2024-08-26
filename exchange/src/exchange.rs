@@ -1920,9 +1920,11 @@ mod exchange_mod {
                 let fee_open = self._open_position(config, pool, account, oracle, pair_id, amount_open);
                 fee_paid += fee_open;
             }
+            
+            let trade_value = price * (amount_open + amount_close).checked_abs().expect(ERROR_ARITHMETIC);
             assert!(
-                slippage_limit.compare(fee_paid, amount_open + amount_close),
-                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_MARGIN_ORDER_SLIPPAGE_LIMIT, fee_paid, slippage_limit.allowed_slippage(amount_open + amount_close),
+                slippage_limit.compare(fee_paid, trade_value),
+                "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_MARGIN_ORDER_SLIPPAGE_LIMIT, fee_paid, slippage_limit.allowed_slippage(trade_value),
             );
 
             let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, fee_paid);
