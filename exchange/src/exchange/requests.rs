@@ -74,10 +74,7 @@ impl RequestIndexRef {
     pub fn resolve(&self, request_index: ListIndex) -> ListIndex {
         match self {
             RequestIndexRef::Index(index) => *index,
-            RequestIndexRef::RelativeIndex(offset) => {
-                let offset = ListIndex::try_from(*offset).expect(ERROR_ARITHMETIC);
-                request_index.checked_add(offset).expect(ERROR_ARITHMETIC)
-            }
+            RequestIndexRef::RelativeIndex(offset) => (request_index as ListIndexOffset + offset) as ListIndex
         }
     }
 }
