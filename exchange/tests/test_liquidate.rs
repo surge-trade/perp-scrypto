@@ -151,25 +151,30 @@ fn test_liquidate_long() {
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
     assert_eq!(account_details.virtual_balance, account_value);
+    assert_eq!(account_details.valid_requests_start, 1);
 
-    let event: EventLiquidate = interface.parse_event(&result_6);
-    assert_eq!(event.account, margin_account_component);
-    assert_eq!(event.position_prices, vec![(pair_config.pair_id.clone(), price_6)]);
-    assert_eq!(event.collateral_prices, vec![(btc_resource, price_6)]);
-    assert_eq!(event.account_value, account_value);
-    assert_eq!(event.margin, margin);
-    assert_eq!(event.virtual_balance, account_details_6.virtual_balance);
-    assert_eq!(event.position_amounts, vec![(pair_config.pair_id.clone(), trade_size_4)]);
-    assert_eq!(event.positions_pnl, pnl);
-    assert_eq!(event.collateral_amounts, vec![(btc_resource, btc_input_3)]);
-    assert_eq!(event.collateral_value, collateral_value);
-    assert_eq!(event.collateral_value_discounted, collateral_value_discounted);
-    assert_eq!(event.funding, dec!(0));
-    assert_eq!(event.fee_pool, -fee_pool);
-    assert_eq!(event.fee_protocol, -fee_protocol);
-    assert_eq!(event.fee_treasury, -fee_treasury);
-    assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.pool_loss, dec!(0));
+    let event_liquidate: EventLiquidate = interface.parse_event(&result_6);
+    assert_eq!(event_liquidate.account, margin_account_component);
+    assert_eq!(event_liquidate.position_prices, vec![(pair_config.pair_id.clone(), price_6)]);
+    assert_eq!(event_liquidate.collateral_prices, vec![(btc_resource, price_6)]);
+    assert_eq!(event_liquidate.account_value, account_value);
+    assert_eq!(event_liquidate.margin, margin);
+    assert_eq!(event_liquidate.virtual_balance, account_details_6.virtual_balance);
+    assert_eq!(event_liquidate.position_amounts, vec![(pair_config.pair_id.clone(), trade_size_4)]);
+    assert_eq!(event_liquidate.positions_pnl, pnl);
+    assert_eq!(event_liquidate.collateral_amounts, vec![(btc_resource, btc_input_3)]);
+    assert_eq!(event_liquidate.collateral_value, collateral_value);
+    assert_eq!(event_liquidate.collateral_value_discounted, collateral_value_discounted);
+    assert_eq!(event_liquidate.funding, dec!(0));
+    assert_eq!(event_liquidate.fee_pool, -fee_pool);
+    assert_eq!(event_liquidate.fee_protocol, -fee_protocol);
+    assert_eq!(event_liquidate.fee_treasury, -fee_treasury);
+    assert_eq!(event_liquidate.fee_referral, -fee_referral);
+    assert_eq!(event_liquidate.pool_loss, dec!(0));
+
+    let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
+    assert_eq!(event_requests_start.account, margin_account_component);
+    assert_eq!(event_requests_start.valid_requests_start, 1);
 }
 
 #[test]
@@ -321,25 +326,30 @@ fn test_liquidate_short() {
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
     assert_eq!(account_details.virtual_balance, account_value);
+    assert_eq!(account_details.valid_requests_start, 1);
 
-    let event: EventLiquidate = interface.parse_event(&result_6);
-    assert_eq!(event.account, margin_account_component);
-    assert_eq!(event.position_prices, vec![(pair_config.pair_id.clone(), price_6)]);
-    assert_eq!(event.collateral_prices, vec![(btc_resource, price_6)]);
-    assert_eq!(event.account_value, account_value);
-    assert_eq!(event.margin, margin);
-    assert_eq!(event.virtual_balance, account_details_6.virtual_balance);
-    assert_eq!(event.position_amounts, vec![(pair_config.pair_id.clone(), trade_size_4)]);
-    assert_eq!(event.positions_pnl, pnl);
-    assert_eq!(event.collateral_amounts, vec![(btc_resource, btc_input_3)]);
-    assert_eq!(event.collateral_value, collateral_value);
-    assert_eq!(event.collateral_value_discounted, collateral_value_discounted);
-    assert_eq!(event.funding, dec!(0));
-    assert_eq!(event.fee_pool, -fee_pool);
-    assert_eq!(event.fee_protocol, -fee_protocol);
-    assert_eq!(event.fee_treasury, -fee_treasury);
-    assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.pool_loss, dec!(0));
+    let event_liquidate: EventLiquidate = interface.parse_event(&result_6);
+    assert_eq!(event_liquidate.account, margin_account_component);
+    assert_eq!(event_liquidate.position_prices, vec![(pair_config.pair_id.clone(), price_6)]);
+    assert_eq!(event_liquidate.collateral_prices, vec![(btc_resource, price_6)]);
+    assert_eq!(event_liquidate.account_value, account_value);
+    assert_eq!(event_liquidate.margin, margin);
+    assert_eq!(event_liquidate.virtual_balance, account_details_6.virtual_balance);
+    assert_eq!(event_liquidate.position_amounts, vec![(pair_config.pair_id.clone(), trade_size_4)]);
+    assert_eq!(event_liquidate.positions_pnl, pnl);
+    assert_eq!(event_liquidate.collateral_amounts, vec![(btc_resource, btc_input_3)]);
+    assert_eq!(event_liquidate.collateral_value, collateral_value);
+    assert_eq!(event_liquidate.collateral_value_discounted, collateral_value_discounted);
+    assert_eq!(event_liquidate.funding, dec!(0));
+    assert_eq!(event_liquidate.fee_pool, -fee_pool);
+    assert_eq!(event_liquidate.fee_protocol, -fee_protocol);
+    assert_eq!(event_liquidate.fee_treasury, -fee_treasury);
+    assert_eq!(event_liquidate.fee_referral, -fee_referral);
+    assert_eq!(event_liquidate.pool_loss, dec!(0));
+
+    let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
+    assert_eq!(event_requests_start.account, margin_account_component);
+    assert_eq!(event_requests_start.valid_requests_start, 1);
 }
 
 #[test]
@@ -492,25 +502,30 @@ fn test_liquidate_pool_loss() {
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
     assert_eq!(account_details.virtual_balance, dec!(0));
+    assert_eq!(account_details.valid_requests_start, 1);
 
-    let event: EventLiquidate = interface.parse_event(&result_6);
-    assert_eq!(event.account, margin_account_component);
-    assert_eq!(event.position_prices, vec![(pair_config.pair_id.clone(), price_6)]);
-    assert_eq!(event.collateral_prices, vec![(btc_resource, price_6)]);
-    assert_eq!(event.account_value, account_value);
-    assert_eq!(event.margin, margin);
-    assert_eq!(event.virtual_balance, account_details_6.virtual_balance);
-    assert_eq!(event.position_amounts, vec![(pair_config.pair_id.clone(), trade_size_4)]);
-    assert_eq!(event.positions_pnl, pnl);
-    assert_eq!(event.collateral_amounts, vec![(btc_resource, btc_input_3)]);
-    assert_eq!(event.collateral_value, collateral_value);
-    assert_eq!(event.collateral_value_discounted, collateral_value_discounted);
-    assert_eq!(event.funding, dec!(0));
-    assert_eq!(event.fee_pool, -fee_pool);
-    assert_eq!(event.fee_protocol, -fee_protocol);
-    assert_eq!(event.fee_treasury, -fee_treasury);
-    assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.pool_loss, pool_loss);
+    let event_liquidate: EventLiquidate = interface.parse_event(&result_6);
+    assert_eq!(event_liquidate.account, margin_account_component);
+    assert_eq!(event_liquidate.position_prices, vec![(pair_config.pair_id.clone(), price_6)]);
+    assert_eq!(event_liquidate.collateral_prices, vec![(btc_resource, price_6)]);
+    assert_eq!(event_liquidate.account_value, account_value);
+    assert_eq!(event_liquidate.margin, margin);
+    assert_eq!(event_liquidate.virtual_balance, account_details_6.virtual_balance);
+    assert_eq!(event_liquidate.position_amounts, vec![(pair_config.pair_id.clone(), trade_size_4)]);
+    assert_eq!(event_liquidate.positions_pnl, pnl);
+    assert_eq!(event_liquidate.collateral_amounts, vec![(btc_resource, btc_input_3)]);
+    assert_eq!(event_liquidate.collateral_value, collateral_value);
+    assert_eq!(event_liquidate.collateral_value_discounted, collateral_value_discounted);
+    assert_eq!(event_liquidate.funding, dec!(0));
+    assert_eq!(event_liquidate.fee_pool, -fee_pool);
+    assert_eq!(event_liquidate.fee_protocol, -fee_protocol);
+    assert_eq!(event_liquidate.fee_treasury, -fee_treasury);
+    assert_eq!(event_liquidate.fee_referral, -fee_referral);
+    assert_eq!(event_liquidate.pool_loss, pool_loss);
+
+    let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
+    assert_eq!(event_requests_start.account, margin_account_component);
+    assert_eq!(event_requests_start.valid_requests_start, 1);
 }
 
 #[test]
