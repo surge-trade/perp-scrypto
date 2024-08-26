@@ -2620,5 +2620,3 @@ fn test_margin_order_exceed_positions_max() {
         Some(prices_6),
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_POSITIONS_TOO_MANY));
 }
-
-// TODO: test slippage limit
