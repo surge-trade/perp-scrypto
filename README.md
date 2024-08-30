@@ -67,3 +67,116 @@ The `env registry` component is acts an on ledger store for variables used by th
 - `keeper reward token`: Reward token for the keeper to incentivize submitting transactions.
 - `authority token`: Controls the peripheral components as well as the `LP token` and `referral NFT`.
 - `base authority token`: Controls the `base token`.
+
+## Actions
+
+### Owner Actions
+
+- `deposit_authority`: Deposit authority tokens into the exchange component (restricted to owner).
+- `withdraw_authority`: Withdraw authority tokens from the exchange component (restricted to owner).
+- `signal_upgrade`: Signal an upgrade to a new exchange component (restricted to owner).
+- `update_exchange_config`: Update the exchange configuration (restricted to owner).
+- `update_pair_configs`: Update the configuration for trading pairs (restricted to owner).
+- `update_collateral_configs`: Update the configuration for collateral assets (restricted to owner).
+- `remove_collateral_config`: Remove a collateral asset configuration (restricted to owner).
+
+### Admin Actions
+
+- `collect_treasury`: Collect funds from the treasury (restricted to treasury admin).
+- `collect_fee_delegator`: Collect fees from the fee delegator (restricted to fee delegator admin).
+- `mint_referral`: Mint a new referral NFT (restricted to referral admin).
+- `mint_referral_with_allocation`: Mint a new referral NFT with allocation (restricted to referral admin).
+- `update_referral`: Update an existing referral (restricted to referral admin).
+- `add_referral_allocation`: Add allocation to an existing referral (restricted to referral admin).
+
+### User Actions
+
+- `swap_protocol_fee`: Swap protocol token for protocol fees.
+- `add_liquidity`: Add liquidity to the pool.
+- `remove_liquidity`: Remove liquidity from the pool.
+- `create_referral_codes`: Create referral codes.
+- `create_referral_codes_from_allocation`: Create referral codes from referral allocation.
+- `collect_referral_rewards`: Collect referral rewards.
+- `create_account`: Create a new margin account.
+- `set_level_1_auth`, `set_level_2_auth`, `set_level_3_auth`: Set different levels of authentication for an account.
+- `add_collateral`: Add collateral to an account.
+- `remove_collateral_request`: Request to remove collateral.
+- `margin_order_request`: Request to trade.
+- `margin_order_tp_sl_request`: Combination of requests to trade with take profit and stop loss attached.
+- `cancel_requests`: Cancel requests.
+
+### Keeper Actions
+
+- `process_request`: Process a pending request.
+- `swap_debt`: Swap debt to pay off an account debt in return for collateral.
+- `liquidate`: Liquidate an account.
+- `auto_deleverage`: Automatically deleverage positions.
+- `update_pairs`: Update trading pair information.
+
+### Public Methods
+
+- `get_pairs`: Get information about trading pairs.
+- `get_permissions`: Get permission information.
+- `get_account_details`: Get details of a margin account.
+- `get_pool_details`: Get details of the liquidity pool.
+- `get_pair_details`: Get details of a specific trading pair.
+- `get_referral_details`: Get details of a referral.
+- `get_exchange_config`: Get the current exchange configuration.
+- `get_pair_configs`: Get configurations of all trading pairs.
+- `get_pair_configs_len`: Get the number of trading pair configurations.
+- `get_collateral_configs`: Get configurations of all collateral assets.
+- `get_collaterals`: Get a list of all collateral assets.
+- `get_protocol_balance`: Get the balance of the protocol.
+- `get_treasury_balance`: Get the balance of the treasury.
+
+### Adding and Removing Liquidity
+
+Users can provide liquidity to the pool in the form of `base tokens`. Liquidity providers take the opposite position of every trade and collect fees and a share of funding. In the ideal state where the combined open interest is high but the skew is zero, the pool is delta neutral and liquidity providers are assured to make a profit. Add and remove liquidity is atomic but has a small fee to prevent arbitrage.
+
+### Adding and Removing Collateral
+
+Before a user can trade they must first add collateral to their account. Adding collateral is an atomic action but removing collateral requires submitting a request that is then executed by a keeper. This is to insure the user meets all margin requirements.
+
+### Margin Orders
+
+In order to trade a user submits a margin order request. The request is then executed by a keeper when possible, creating a position within the users margin account.
+
+Key features of margin orders:
+
+- Leverage: Trade using cross margin collateral.
+- Execution Price: Directional price limit for the order.
+- Reduce Only: Option to ensure an order only reduces an existing position.
+- Slippage Protection: Set maximum allowed slippage to protect against unexpected fees.
+- Delayed Execution: Option to delay order execution for a specified time.
+- Expiry: Set an expiration time for orders to be automatically cancelled if not filled.
+- FSM and Chaining: Orders can be submitted as either dormant or active. The execution of one order can then activate or cancel other orders.
+
+Using these features traders can easily create complex orders while specifying the precise conditions for order execution. The `margin_order_request` method allows for maximum flexibility while the `margin_order_tp_sl_request` method allows for the easy creation of take profit and stop loss orders.
+
+### Auto-Deleveraging
+
+Auto-deleveraging is a feature that allows for the automatic closing of positions in the case the pool is out of balance. This feature helps to ensure the system remains in a healthy state in the case of large price movements. Positions with the highest ROI are closed first. The ROI threshold required for auto-deleveraging deceases as the skew increases.
+
+### Liquidations
+
+Liquidations occur when an account's margin falls below the required maintenance margin. All positions are closed and all collateral in the account is sold at a discounted rate to pay off the debt. If the value of the collateral is not enough to pay off the debt the remaining debt is forgiven and realized as a loss by the pool.
+
+### Fees
+
+Trade fees are applied whenever a position is opened or closed either by a order, auto deleveraging, or liquidation. Fees calculations include:
+
+1. Flat percentage fee
+2. Price impact fee
+
+The price impact fee determined from the skew increase squared, but maybe negative in the case the trade reduces the skew. The total fee is clamped between 0% and maximum fee to prevent excessive fees. The fee is split between the pool, protocol, treasury, and referral. Referrals also offer a rebate that is reduces the total fee paid.
+
+### Funding
+
+Funding is accumulated on each open position. Funding calculations include:
+
+1. Skew based funding
+2. Integral of skew based funding
+3. Flat borrowing rate paid to the pool
+4. Share of funding paid to the pool
+
+In the case where the funding rate is positive, longs will pay shorts. In the case where the funding rate is negative, shorts will pay longs.
