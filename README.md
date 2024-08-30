@@ -24,7 +24,7 @@ The `margin pool` component is responsible for being the central counter party f
 
 #### Margin Account
 
-Individual `margin accounts` components act as trading accounts for users. Each account hold the users collateral, positions, unsettled debt, and requests. Accounts have three auth levels to make them more convenient to use without compromising security. 
+Individual `margin accounts` components act as trading accounts for users. Each account hold the users collateral, positions, unsettled debt, and requests. Accounts have three auth levels to make them more convenient to use without compromising security.
 
 - Level 1: Can change the accounts auth settings.
 - Level 2: Can remove collateral from the account.
