@@ -141,42 +141,112 @@ Before a user can trade they must first add collateral to their account. Adding 
 
 In order to trade a user submits a margin order request. The request is then executed by a keeper when possible, creating a position within the users margin account.
 
-Key features of margin orders:
+Key Features:
 
-- Leverage: Trade using cross margin collateral.
-- Execution Price: Directional price limit for the order.
-- Reduce Only: Option to ensure an order only reduces an existing position.
-- Slippage Protection: Set maximum allowed slippage to protect against unexpected fees.
-- Delayed Execution: Option to delay order execution for a specified time.
-- Expiry: Set an expiration time for orders to be automatically cancelled if not filled.
-- FSM and Chaining: Orders can be submitted as either dormant or active. The execution of one order can then activate or cancel other orders.
+- Cross-margin leverage
+- Directional price limits
+- Reduce-only option
+- Slippage protection
+- Delayed execution
+- Order expiration
+- Finite State Machine (FSM) and order chaining
 
-Using these features traders can easily create complex orders while specifying the precise conditions for order execution. The `margin_order_request` method allows for maximum flexibility while the `margin_order_tp_sl_request` method allows for the easy creation of take profit and stop loss orders.
+These features enable traders to create sophisticated order strategies. The `margin_order_request` method offers maximum flexibility, while `margin_order_tp_sl_request` simplifies the creation of take-profit and stop-loss orders.
 
 ### Auto-Deleveraging
 
-Auto-deleveraging is a feature that allows for the automatic closing of positions in the case the pool is out of balance. This feature helps to ensure the system remains in a healthy state in the case of large price movements. Positions with the highest ROI are closed first. The ROI threshold required for auto-deleveraging deceases as the skew increases.
+Auto-deleveraging is a mechanism that automatically closes positions to rebalance the pool when market skew becomes excessive. This feature helps maintain system stability during significant price movements or market imbalances. Key aspects of the ADL process include:
+
+1. Activation: ADL is triggered when the skew ratio exceeds a predefined cap.
+2. Target selection: Positions are evaluated based on their profit-and-loss (PNL) percentage.
+3. Dynamic threshold: The PNL threshold for ADL eligibility is calculated using a cubic function that considers the current skew ratio. This ensures that as skew increases, more positions become eligible for ADL.
+4. Full closure: When a position qualifies for ADL, it is closed entirely.
+5. Effectiveness check: The system verifies that the ADL action actually reduces the overall skew.
+6. Fee settlement: Normal trading fees are applied to ADL actions, maintaining fairness for all participants.
+
+This approach ensures that the most profitable positions are deleveraged first, with the threshold dynamically adjusting based on market conditions. The ADL mechanism helps prevent extreme imbalances and maintains the overall health of the trading system.
 
 ### Liquidations
 
-Liquidations occur when an account's margin falls below the required maintenance margin. All positions are closed and all collateral in the account is sold at a discounted rate to pay off the debt. If the value of the collateral is not enough to pay off the debt the remaining debt is forgiven and realized as a loss by the pool.
+A liquidation occurs when an account's total value falls below the required maintenance margin. The process involves:
+
+1. Closing all open positions and calculating the resulting profit or loss (PnL).
+2. Valuing all collateral assets at a discounted rate.
+3. Comparing the account's total value (PnL + discounted collateral + virtual balance) against the required margin.
+4. If the account value is below the required margin, the liquidation proceeds:
+    - All collateral is withdrawn from the account.
+    - A liquidator provides payment in the base currency to cover the discounted collateral value.
+    - The account is settled using the PnL and the payment received for collateral.
+5. If there's still a negative balance after settlement, this becomes a loss for the liquidity pool:
+    - The remaining debt is forgiven (zeroed out for the account).
+    - The pool absorbs this loss, socializing it among liquidity providers.
+
+This process ensures under collateralized positions are closed promptly, minimizing risk to the system. The liquidator takes on market risk in exchange for potentially acquiring discounted assets, while the pool acts as the final backstop for any unrecoverable losses.
+
+### Pair Updates
+
+Regular pair updates are crucial for maintaining accurate exchange state, including the pool's total PnL and skew, as well as for updating funding rates. Update are triggered by:
+
+- A trade being executed.
+- A auto-deleverage being executed.
+- A liquidation being executed.
+- The last update being too old.
+- The price moving past the accepted change threshold.
+
+These updates ensure the system remains current and responsive to market conditions.
 
 ### Fees
 
-Trade fees are applied whenever a position is opened or closed either by a order, auto deleveraging, or liquidation. Fees calculations include:
+Trade fees are applied whenever a position is opened or closed either by a order, auto deleveraging, or liquidation. The fee algorithm calculates a dynamic trading fee based on several factors.
 
-1. Flat percentage fee
-2. Price impact fee
+#### Fee Calculation
 
-The price impact fee determined from the skew increase squared, but maybe negative in the case the trade reduces the skew. The total fee is clamped between 0% and maximum fee to prevent excessive fees. The fee is split between the pool, protocol, treasury, and referral. Referrals also offer a rebate that is reduces the total fee paid.
+The fee is calculated based on two components:
+
+a. fee_0: A base fee proportional to the absolute value of the trade.
+b. fee_1: A dynamic fee that scales with market skew and trade size.
+
+The algorithm works as follows:
+
+1. fee_0 is calculated as a flat percentage (pair_config.fee_0) of the absolute trade value.
+2. fee_1 is more complex:
+    - It scales with the current market skew (skew), which is the difference between long and short positions multiplied by the current price.
+    - It also scales quadratically with the trade value itself (value).
+    - This component aims to charge higher fees for trades that increase market imbalance.
+3. The base fee (fee_0) and dynamic fee (fee_1) are added together.
+4. The sum is then multiplied by a rebate factor (fee_rebate), which can potentially reduce the fee for certain users (e.g., high-volume traders or users with referral bonuses).
+5. Finally, the resulting fee is clamped between 0 and fee_max, ensuring it never exceeds a certain percentage of the trade value.
+
+This algorithm allows for flexible fee structures that can adapt to market conditions, discourage market imbalances, and provide incentives for desired user behaviors, all while maintaining a predictable maximum fee.
 
 ### Funding
 
-Funding is accumulated on each open position. Funding calculations include:
+Funding is accumulated on each open position.
 
-1. Skew based funding
-2. Integral of skew based funding
-3. Flat borrowing rate paid to the pool
-4. Share of funding paid to the pool
+#### Funding Rate Calculation
 
-In the case where the funding rate is positive, longs will pay shorts. In the case where the funding rate is negative, shorts will pay longs.
+The fun calculates a funding rate based on two components:
+
+a. funding_1_rate: Proportional to the current market skew (imbalance between long and short positions).
+b. funding_2_rate: Based on an accumulated rate that changes over time, influenced by market skew.
+
+#### Funding Distribution
+
+- If the funding rate is positive, long positions pay short positions.
+- If the funding rate is negative, short positions pay long positions.
+- A portion of the funding (funding_share) is kept by the pool.
+- An additional funding component (funding_pool) is charged as a flat rate to both long and short positions.
+
+#### Funding Indices
+
+The algorithm updates funding_long_index and funding_short_index, which track the cumulative funding for long and short positions respectively.
+These indices are used to calculate the funding payments for individual positions based on when they were opened.
+
+#### Time-based Calculation
+
+All funding calculations are proportional to the time period (period) since the last update.
+
+#### Zero Open Interest Handling
+
+If either long or short open interest is zero, no funding is calculated to avoid division by zero.
+This algorithm aims to incentivize market balance by making it more expensive to hold positions on the overweight side of the market, while also generating fees for the protocol and liquidity providers. The use of cumulative indices allows for efficient calculation of funding payments for individual positions, regardless of when they were opened.
