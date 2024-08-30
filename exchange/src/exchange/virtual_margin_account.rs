@@ -296,19 +296,19 @@ impl VirtualMarginAccount {
         updated
     }
 
-    pub fn cancel_request(&mut self, index: ListIndex) {
-        let mut keeper_request = self.keeper_request(index);
-        let status_phases = self._status_phases(STATUS_CANCELLED);
-        assert!(
-            status_phases.contains(&keeper_request.status),
-            "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
-        );
-        if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
-            self._remove_active_request(index);
-        }
-        keeper_request.status = STATUS_CANCELLED;
-        self.request_updates.insert(index, keeper_request);
-    }
+    // pub fn cancel_request(&mut self, index: ListIndex) {
+    //     let mut keeper_request = self.keeper_request(index);
+    //     let status_phases = self._status_phases(STATUS_CANCELLED);
+    //     assert!(
+    //         status_phases.contains(&keeper_request.status),
+    //         "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT, keeper_request.status, status_phases
+    //     );
+    //     if keeper_request.status == STATUS_ACTIVE || keeper_request.status == STATUS_DORMANT {
+    //         self._remove_active_request(index);
+    //     }
+    //     keeper_request.status = STATUS_CANCELLED;
+    //     self.request_updates.insert(index, keeper_request);
+    // }
 
     pub fn cancel_requests(&mut self, indexes: Vec<ListIndex>) {
         let keeper_requests = self.keeper_requests(indexes);
