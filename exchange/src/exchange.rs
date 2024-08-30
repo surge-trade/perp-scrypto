@@ -2146,6 +2146,8 @@ mod exchange_mod {
 
             let pool_position = pool.position_mut(pair_id);
             let position = account.position_mut(pair_id);
+
+            assert!(position.amount.0.signum() * amount.0.signum() >= I192::ZERO);
             
             let fee = self._calculate_fee(exchange_config, pair_config, pool_position, fee_rebate, price, value);
             let cost = value + fee;
@@ -2199,6 +2201,9 @@ mod exchange_mod {
 
             let pool_position = pool.position_mut(pair_id);
             let position = account.position_mut(pair_id);
+
+            assert!(position.amount.0.signum() * amount.0.signum() <= I192::ZERO);
+            assert!(position.amount.0.abs() >= amount.0.abs());
 
             let fee = self._calculate_fee(exchange_config, pair_config, pool_position, fee_rebate, price, value);
             let cost = -amount / position.amount * position.cost;
