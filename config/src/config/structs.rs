@@ -108,7 +108,7 @@ impl Default for ExchangeConfig {
             adl_offset: dec!(0.2),
             adl_a: dec!(0.05),
             adl_b: dec!(0.01),
-            fee_liquidity_add: dec!(0),
+            fee_liquidity_add: dec!(0.001),
             fee_liquidity_remove: dec!(0.001),
             fee_share_protocol: dec!(0.22),
             fee_share_treasury: dec!(0.08),
