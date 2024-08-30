@@ -115,7 +115,7 @@ fn test_cancel_requests_duplicate() {
     assert_eq!(event.requests.len(), 1);
 }
 
-pub fn test_cancel_request_invalid_index() {
+pub fn test_cancel_requests_invalid_index() {
     let mut interface = get_setup();
 
     let rule_0 = rule!(allow_all);
@@ -133,7 +133,7 @@ pub fn test_cancel_request_invalid_index() {
 }
 
 #[test]
-pub fn test_cancel_request_not_active_or_dormant() {
+pub fn test_cancel_requests_not_active_or_dormant() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
@@ -195,14 +195,14 @@ pub fn test_cancel_request_not_active_or_dormant() {
         ])
     ).expect_commit_success();
 
-    interface.cancel_request(
+    interface.cancel_requests(
         margin_account_component,
-        0,
+        vec![0],
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_CANCEL_REQUEST_NOT_ACTIVE_OR_DORMANT));
 }
 
 #[test]
-fn test_cancel_request_invalid_auth() {
+fn test_cancel_requests_invalid_auth() {
     let mut interface = get_setup();
 
     let rule_0 = rule!(allow_all);

@@ -941,24 +941,24 @@ impl ExchangeInterface {
         receipt
     }
 
-    pub fn cancel_request(
-        &mut self,
-        margin_account_component: ComponentAddress,
-        index: ListIndex,
-    ) -> TransactionReceiptV1 {
-        let fee_oath: Option<ManifestBucket> = None;
+    // pub fn cancel_request(
+    //     &mut self,
+    //     margin_account_component: ComponentAddress,
+    //     index: ListIndex,
+    // ) -> TransactionReceiptV1 {
+    //     let fee_oath: Option<ManifestBucket> = None;
 
-        let manifest = ManifestBuilder::new()
-            .lock_fee_from_faucet()
-            .call_method(
-                self.components.exchange_component, 
-                "cancel_request", 
-                manifest_args!(fee_oath, margin_account_component, index)
-            )
-            .build();
-        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
-        receipt
-    }
+    //     let manifest = ManifestBuilder::new()
+    //         .lock_fee_from_faucet()
+    //         .call_method(
+    //             self.components.exchange_component, 
+    //             "cancel_request", 
+    //             manifest_args!(fee_oath, margin_account_component, index)
+    //         )
+    //         .build();
+    //     let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+    //     receipt
+    // }
 
     pub fn cancel_requests(
         &mut self,
