@@ -114,7 +114,7 @@ impl Default for ExchangeConfig {
             fee_share_treasury: dec!(0.08),
             fee_share_referral: dec!(1),
             fee_max: dec!(0.01),
-            protocol_burn_amount: dec!(1000),
+            protocol_burn_amount: dec!(10000),
             reward_keeper: dec!(1),
         }
     }
