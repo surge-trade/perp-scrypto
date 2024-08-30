@@ -275,7 +275,6 @@ mod exchange_mod {
             remove_collateral_request => restrict_to: [remove_collateral_request_user];
             margin_order_request => restrict_to: [margin_order_request_user];
             margin_order_tp_sl_request => restrict_to: [margin_order_request_user];
-            cancel_request => restrict_to: [cancel_request_user];
             cancel_requests => restrict_to: [cancel_request_user];
 
             // Keeper methods
@@ -1179,21 +1178,21 @@ mod exchange_mod {
             })
         }
 
-        pub fn cancel_request(
-            &self, 
-            fee_oath: Option<Bucket>,
-            account: ComponentAddress, 
-            index: ListIndex,
-        ) {
-            authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+        // pub fn cancel_request(
+        //     &self, 
+        //     fee_oath: Option<Bucket>,
+        //     account: ComponentAddress, 
+        //     index: ListIndex,
+        // ) {
+        //     authorize!(self, {
+        //         let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
+        //         let mut account = self._handle_fee_oath(account, &config, fee_oath);
 
-                account.verify_level_3_auth();
-                account.cancel_request(index);
-                account.realize();
-            })
-        }
+        //         account.verify_level_3_auth();
+        //         account.cancel_request(index);
+        //         account.realize();
+        //     })
+        // }
 
         pub fn cancel_requests(
             &self, 
