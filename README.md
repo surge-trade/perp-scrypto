@@ -1,42 +1,42 @@
 # Surge
 
-Surge is perpetual futures decentralized exchange. It uses a oracle price feed in combination with a USD liquidity pool to execute trades. Trades use a two step process to avoid front running. First the trader submits a request to the exchange, then a keeper then executes the trade. All trades are settled in USD which is labeled as the base token. Surge aims to provide highly efficient liquidity and good execution for the trader, while ensure a stable yield for liquidity providers. Since the pool is the counter-party for all trades it is important to keep open interest between longs and shorts as balanced as possible. The difference between long and short open interest is referred to as the skew. In the ideal state where the combined open interest is high but the skew is zero, the pool is delta neutral and is assured to make a profit. The protocol seeks to maintain this state by funding and fee incentives.
+Surge is a perpetual futures decentralized exchange. It uses an oracle price feed in combination with a USD liquidity pool to execute trades. Trades use a two-step process to avoid front running. First, the trader submits a request to the exchange, then a keeper executes the trade. All trades are settled in USD, which is labeled as the base token. Surge aims to provide highly efficient liquidity and good execution for the trader while ensuring a stable yield for liquidity providers. Since the pool is the counter-party for all trades, it is important to keep open interest between longs and shorts as balanced as possible. The difference between long and short open interest is referred to as the skew. In the ideal state where the combined open interest is high but the skew is zero, the pool is delta neutral and is assured to make a profit. The protocol seeks to maintain this state by funding and fee incentives.
 
 ## Architecture
 
 ### Oracle
 
-Surge uses a pull based oracle model. When a keeper processes a trade the latest price is fetched from the oracle and submitted to the exchange. Prices are signed by the oracle and verified on chain. If the age of the price is too old the exchange will not accept it. Surge allows for multiple oracles to be used but all oracles must agree on the price to avoid arbitrage. Oracles have a N of N trust model..
+Surge uses a pull-based oracle model. When a keeper processes a trade, the latest price is fetched from the oracle and submitted to the exchange. Prices are signed by the oracle and verified on-chain. If the age of the price is too old, the exchange will not accept it. Surge allows for multiple oracles to be used, but all oracles must agree on the price to avoid arbitrage. Oracles have an N of N trust model.
 
 ### Keeper
 
-Surge uses a keeper to process requests such as trades and removing collateral, as well as auto-deleveraging, liquidations, and updating funding rates. The keeper is expected to save all requests and execute them possible. There maybe significant time between the request submission and the keeper executing the trade such as in the case of a limit order with is execution price not yet met. Keepers have a 1 of N trust model.
+Surge uses a keeper to process requests such as trades and removing collateral, as well as auto-deleveraging, liquidations, and updating funding rates. The keeper is expected to save all requests and execute them when possible. There may be significant time between the request submission and the keeper executing the trade, such as in the case of a limit order with its execution price not yet met. Keepers have a 1 of N trust model.
 
-### On Ledger Components
+### On-Ledger Components
 
 #### Exchange
 
-Surge uses a modular architecture where the `exchange` is stateless and contains the core logic while peripheral components are responsible for holding state and tokens. The `exchange` controls these peripheral components using the `authority` token. This allows for upgradeability of the core logic but simple deploying a new version of the `exchange` and passing the `authority` token to the new component.
+Surge uses a modular architecture where the `exchange` is stateless and contains the core logic while peripheral components are responsible for holding state and tokens. The `exchange` controls these peripheral components using the `authority` token. This allows for upgradeability of the core logic by simply deploying a new version of the `exchange` and passing the `authority` token to the new component.
 
 #### Margin Pool
 
-The `margin pool` component is responsible for being the central counter party for all positions and debt within the system. It also acts as a bank for all base tokens in the system.
+The `margin pool` component is responsible for being the central counterparty for all positions and debt within the system. It also acts as a bank for all base tokens in the system.
 
 #### Margin Account
 
-Individual `margin accounts` components act as trading accounts for users. Each account hold the users collateral, positions, unsettled debt, and requests. Accounts have three auth levels to make them more convenient to use without compromising security.
+Individual `margin accounts` components act as trading accounts for users. Each account holds the user's collateral, positions, unsettled debt, and requests. Accounts have three auth levels to make them more convenient to use without compromising security.
 
-- Level 1: Can change the accounts auth settings.
+- Level 1: Can change the account's auth settings.
 - Level 2: Can remove collateral from the account.
 - Level 3: Can submit trades and cancel requests.
 
 #### Config
 
-The `config` component is responsible for holding the exchange's settings. This includes things such as tradable pairs, valid collaterals, fees and funding rates, etc.
+The `config` component is responsible for holding the exchange's settings. This includes things such as tradable pairs, valid collaterals, fees, and funding rates.
 
 #### Referral Generator
 
-The `referral generator` component is responsible tracking verifying referral codes. Users can be given a referral nft which then allows them to create referral codes with claimable tokens. The referred user can then claim by using the referral code when creating their account. The gives the referred user a fee rebate on their trades and owner of the referral nft a share of the trading fees.
+The `referral generator` component is responsible for tracking and verifying referral codes. Users can be given a referral NFT which then allows them to create referral codes with claimable tokens. The referred user can then claim by using the referral code when creating their account. This gives the referred user a fee rebate on their trades and the owner of the referral NFT a share of the trading fees.
 
 #### Fee Distributor
 
@@ -44,24 +44,24 @@ The `fee distributor` component acts as an account for protocol and treasury fee
 
 #### Permission Registry
 
-The `permission registry` component is responsible mapping auth to usable `margin accounts`. This allows for the user to seamlessly login on a new device.
+The `permission registry` component is responsible for mapping auth to usable `margin accounts`. This allows the user to seamlessly log in on a new device.
 
 #### Fee Delegator
 
-The `fee delegator` component is responsible for paying network fees for users. In exchange the user has debt assigned to their `margin account`. This allows for users to not have to own the network token in order to use surge.
+The `fee delegator` component is responsible for paying network fees for users. In exchange, the user has debt assigned to their `margin account`. This allows users to not have to own the network token in order to use Surge.
 
 #### Token Wrapper
 
-The `token wrapper` component is responsible for wrapping and unwrapping the child tokens into the base token. Initially this will be the xUSDC. This allows for the possibility of changing to a different stablecoin in the future if desired. Note: only one child token should be allowed at a time to avoid arbitrage. The `token wrapper` also enables flash loans.
+The `token wrapper` component is responsible for wrapping and unwrapping the child tokens into the base token. Initially, this will be the xUSDC. This allows for the possibility of changing to a different stablecoin in the future if desired. Note: only one child token should be allowed at a time to avoid arbitrage. The `token wrapper` also enables flash loans.
 
 #### Env Registry
 
-The `env registry` component is acts an on ledger store for variables used by the front end.
+The `env registry` component acts as an on-ledger store for variables used by the front end.
 
 ### Resources
 
 - `base token`: Wrapped USDC.
-- `LP token`: LP token for the providing liquidity to the pool.
+- `LP token`: LP token for providing liquidity to the pool.
 - `referral NFT`: NFT that allows for the creation of referral codes.
 - `protocol token`: Utility token for the protocol.
 - `keeper reward token`: Reward token for the keeper to incentivize submitting transactions.
@@ -131,15 +131,15 @@ The `env registry` component is acts an on ledger store for variables used by th
 
 ### Adding and Removing Liquidity
 
-Users can provide liquidity to the pool in the form of `base tokens`. Liquidity providers take the opposite position of every trade and collect fees and a share of funding. In the ideal state where the combined open interest is high but the skew is zero, the pool is delta neutral and liquidity providers are assured to make a profit. Add and remove liquidity is atomic but has a small fee to prevent arbitrage.
+Users can provide liquidity to the pool in the form of `base tokens`. Liquidity providers take the opposite position of every trade and collect fees and a share of funding. In the ideal state where the combined open interest is high but the skew is zero, the pool is delta neutral and liquidity providers are assured to make a profit. Adding and removing liquidity is atomic but has a small fee to prevent arbitrage.
 
 ### Adding and Removing Collateral
 
-Before a user can trade they must first add collateral to their account. Adding collateral is an atomic action but removing collateral requires submitting a request that is then executed by a keeper. This is to insure the user meets all margin requirements.
+Before a user can trade, they must first add collateral to their account. Adding collateral is an atomic action, but removing collateral requires submitting a request that is then executed by a keeper. This is to ensure the user meets all margin requirements.
 
 ### Margin Orders
 
-In order to trade a user submits a margin order request. The request is then executed by a keeper when possible, creating a position within the users margin account.
+In order to trade, a user submits a margin order request. The request is then executed by a keeper when possible, creating a position within the user's margin account.
 
 Key Features:
 
@@ -181,14 +181,14 @@ A liquidation occurs when an account's total value falls below the required main
     - The remaining debt is forgiven (zeroed out for the account).
     - The pool absorbs this loss, socializing it among liquidity providers.
 
-This process ensures under collateralized positions are closed promptly, minimizing risk to the system. The liquidator takes on market risk in exchange for potentially acquiring discounted assets, while the pool acts as the final backstop for any unrecoverable losses.
+This process ensures under-collateralized positions are closed promptly, minimizing risk to the system. The liquidator takes on market risk in exchange for potentially acquiring discounted assets, while the pool acts as the final backstop for any unrecoverable losses.
 
 ### Pair Updates
 
-Regular pair updates are crucial for maintaining accurate exchange state, including the pool's total PnL and skew, as well as for updating funding rates. Update are triggered by:
+Regular pair updates are crucial for maintaining accurate exchange state, including the pool's total PnL and skew, as well as for updating funding rates. Updates are triggered by:
 
 - A trade being executed.
-- A auto-deleverage being executed.
+- An auto-deleverage being executed.
 - A liquidation being executed.
 - The last update being too old.
 - The price moving past the accepted change threshold.
@@ -197,7 +197,7 @@ These updates ensure the system remains current and responsive to market conditi
 
 ### Fees
 
-Trade fees are applied whenever a position is opened or closed either by a order, auto deleveraging, or liquidation. The fee algorithm calculates a dynamic trading fee based on several factors.
+Trade fees are applied whenever a position is opened or closed either by an order, auto-deleveraging, or liquidation. The fee algorithm calculates a dynamic trading fee based on several factors.
 
 #### Fee Calculation
 
@@ -225,7 +225,7 @@ Funding is accumulated on each open position.
 
 #### Funding Rate Calculation
 
-The fun calculates a funding rate based on two components:
+The funding rate is calculated based on two components:
 
 a. funding_1_rate: Proportional to the current market skew (imbalance between long and short positions).
 b. funding_2_rate: Based on an accumulated rate that changes over time, influenced by market skew.
