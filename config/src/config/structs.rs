@@ -130,12 +130,11 @@ impl ExchangeConfig {
         assert!(self.adl_b >= dec!(0), "Invalid adl b");
         assert!(self.fee_liquidity_add >= dec!(0), "Invalid liquidity fee");
         assert!(self.fee_liquidity_remove >= dec!(0), "Invalid liquidity fee");
-        assert!(self.fee_share_protocol >= dec!(0), "Invalid protocol fee");
-        assert!(self.fee_share_treasury >= dec!(0), "Invalid treasury fee");
-        assert!(self.fee_share_protocol + self.fee_share_treasury <= dec!(0.5), "Invalid combined fee share");
+        assert!(self.fee_share_protocol >= dec!(0) && self.fee_share_protocol <= dec!(0.3), "Invalid protocol fee");
+        assert!(self.fee_share_treasury >= dec!(0) && self.fee_share_treasury <= dec!(0.15), "Invalid treasury fee");
         assert!(self.fee_share_referral >= dec!(0) && self.fee_share_referral <= dec!(1), "Invalid referral fee");
         assert!(self.fee_max >= dec!(0), "Invalid max fee");
-        assert!(self.protocol_burn_amount > dec!(0), "Invalid protocol burn amount");
+        assert!(self.protocol_burn_amount >= dec!(1000), "Invalid protocol burn amount");
         assert!(self.reward_keeper >= dec!(0), "Invalid keeper reward");
     }
 
@@ -253,16 +252,16 @@ impl PairConfig {
         assert!(self.oi_max >= dec!(0), "Invalid oi max");
         assert!(self.update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
         assert!(self.update_period_seconds >= 0, "Invalid pair update period");
-        assert!(self.margin_initial >= dec!(0), "Invalid initial margin");
-        assert!(self.margin_maintenance >= dec!(0), "Invalid maintenance margin");
-        assert!(self.funding_1 >= dec!(0), "Invalid funding 1");
-        assert!(self.funding_2 >= dec!(0), "Invalid funding 2");
-        assert!(self.funding_2_delta >= dec!(0), "Invalid funding 2 delta");
-        assert!(self.funding_pool_0 >= dec!(0), "Invalid funding pool 0");
-        assert!(self.funding_pool_1  >= dec!(0), "Invalid funding pool 1");
-        assert!(self.funding_share >= dec!(0), "Invalid funding share");
-        assert!(self.fee_0  >= dec!(0), "Invalid fee 0");
-        assert!(self.fee_1 >= dec!(0), "Invalid fee 1");
+        assert!(self.margin_initial >= dec!(0) && self.margin_initial <= dec!(1), "Invalid initial margin");
+        assert!(self.margin_maintenance >= dec!(0) && self.margin_maintenance <= dec!(1) && self.margin_maintenance <= self.margin_initial, "Invalid maintenance margin");
+        assert!(self.funding_1 >= dec!(0) && self.funding_1 <= dec!(0.000001), "Invalid funding 1");
+        assert!(self.funding_2 >= dec!(0) && self.funding_2 <= dec!(0.000000032), "Invalid funding 2");
+        assert!(self.funding_2_delta >= dec!(0) && self.funding_2_delta <= dec!(0.00001), "Invalid funding 2 delta");
+        assert!(self.funding_pool_0 >= dec!(0) && self.funding_pool_0 <= dec!(0.00000001), "Invalid funding pool 0");
+        assert!(self.funding_pool_1 >= dec!(0) && self.funding_pool_1 <= dec!(0.0000001), "Invalid funding pool 1");
+        assert!(self.funding_share >= dec!(0) && self.funding_share <= dec!(0.1), "Invalid funding share");
+        assert!(self.fee_0 >= dec!(0) && self.fee_0 <= dec!(0.015), "Invalid fee 0");
+        assert!(self.fee_1 >= dec!(0) && self.fee_1 <= dec!(0.0000002), "Invalid fee 1");
     }
 
     pub fn compress(&self) -> PairConfigCompressed {
@@ -328,8 +327,8 @@ pub struct CollateralConfigCompressed {
 
 impl CollateralConfig {
     pub fn validate(&self) {
-        assert!(self.discount >= dec!(0), "Invalid discount");
-        assert!(self.margin >= dec!(0), "Invalid margin");
+        assert!(self.discount >= dec!(0) && self.discount <= dec!(1), "Invalid discount");
+        assert!(self.margin >= dec!(0) && self.margin <= dec!(0.1), "Invalid margin");
     }
 
     pub fn compress(&self) -> CollateralConfigCompressed {
