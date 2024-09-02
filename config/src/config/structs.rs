@@ -254,10 +254,10 @@ impl PairConfig {
         assert!(self.update_period_seconds >= 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0) && self.margin_initial <= dec!(1), "Invalid initial margin");
         assert!(self.margin_maintenance >= dec!(0) && self.margin_maintenance <= dec!(1) && self.margin_maintenance <= self.margin_initial, "Invalid maintenance margin");
-        assert!(self.funding_1 >= dec!(0) && self.funding_1 <= dec!(0.000001), "Invalid funding 1");
+        assert!(self.funding_1 >= dec!(0) && self.funding_1 <= dec!(0.0000001), "Invalid funding 1");
         assert!(self.funding_2 >= dec!(0) && self.funding_2 <= dec!(0.000000032), "Invalid funding 2");
         assert!(self.funding_2_delta >= dec!(0) && self.funding_2_delta <= dec!(0.00001), "Invalid funding 2 delta");
-        assert!(self.funding_pool_0 >= dec!(0) && self.funding_pool_0 <= dec!(0.00000001), "Invalid funding pool 0");
+        assert!(self.funding_pool_0 >= dec!(0) && self.funding_pool_0 <= dec!(0.000000032), "Invalid funding pool 0");
         assert!(self.funding_pool_1 >= dec!(0) && self.funding_pool_1 <= dec!(0.0000001), "Invalid funding pool 1");
         assert!(self.funding_share >= dec!(0) && self.funding_share <= dec!(0.1), "Invalid funding share");
         assert!(self.fee_0 >= dec!(0) && self.fee_0 <= dec!(0.015), "Invalid fee 0");
