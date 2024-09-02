@@ -2257,11 +2257,13 @@ mod exchange_mod {
             pool_position.last_update = current_time;
             
             let funding_pool_delta = if !period.is_zero() {
-                let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+                let skew_abs_capped = skew_abs.min(oi_long.max(oi_short) * price * dec!(0.1));
+                let skew_capped = skew_abs_capped * skew.0.signum();
+                let funding_2_rate_delta = skew_capped * pair_config.funding_2_delta * period;
                 pool_position.funding_2_rate += funding_2_rate_delta;
 
                 if !oi_long.is_zero() && !oi_short.is_zero() {
-                    let funding_1_rate = skew * pair_config.funding_1;
+                    let funding_1_rate = skew_capped * pair_config.funding_1;
                     let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
                     let funding_rate = funding_1_rate + funding_2_rate;
 
@@ -2284,7 +2286,7 @@ mod exchange_mod {
                     };
 
                     let funding_pool_0_rate = (oi_long + oi_short) * price * pair_config.funding_pool_0;
-                    let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
+                    let funding_pool_1_rate = skew_abs_capped * pair_config.funding_pool_1;
                     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
 
                     let funding_pool = funding_pool_rate * period;

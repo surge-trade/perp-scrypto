@@ -56,18 +56,20 @@ fn test_update_pairs_long_skew() {
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
+    let skew_capped = oi_long * dec!(0.1) * price_2;
+    let skew_abs_capped = skew_capped.checked_abs().unwrap();
     let pnl_snap = pool_position_2.cost - skew;
 
     let period = Decimal::from(time_2.seconds_since_unix_epoch - time_1.seconds_since_unix_epoch);
-    let funding_1_rate = skew * pair_config.funding_1;
-    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+    let funding_1_rate = skew_capped * pair_config.funding_1;
+    let funding_2_rate_delta = skew_capped * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_2.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
     let funding_long = (funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_long * pair_config.funding_share;
     let funding_short = -(funding_long - funding_share);
 
     let funding_pool_0_rate = oi_net * price_2 * pair_config.funding_pool_0;
-    let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
+    let funding_pool_1_rate = skew_abs_capped * pair_config.funding_pool_1;
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     
@@ -156,18 +158,20 @@ fn test_update_pairs_short_skew() {
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
+    let skew_capped = -oi_short * dec!(0.1) * price_2;
+    let skew_abs_capped = skew_capped.checked_abs().unwrap();
     let pnl_snap = pool_position_2.cost - skew;
 
     let period = Decimal::from(time_2.seconds_since_unix_epoch - time_1.seconds_since_unix_epoch);
-    let funding_1_rate = skew * pair_config.funding_1;
-    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+    let funding_1_rate = skew_capped * pair_config.funding_1;
+    let funding_2_rate_delta = skew_capped * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_2.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
     let funding_short = -(funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_short * pair_config.funding_share;
     let funding_long = -(funding_short - funding_share);
 
     let funding_pool_0_rate = oi_net * price_2 * pair_config.funding_pool_0;
-    let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
+    let funding_pool_1_rate = skew_abs_capped * pair_config.funding_pool_1;
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     
@@ -329,10 +333,11 @@ fn test_update_pairs_no_oi_long() {
     let oi_short = pair_details_2.oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
+    let skew_capped = -oi_short * dec!(0.1) * price_2;
     let pnl_snap = pool_position_2.cost - skew;
 
     let period = Decimal::from(time_2.seconds_since_unix_epoch - time_1.seconds_since_unix_epoch);
-    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+    let funding_2_rate_delta = skew_capped * pair_config.funding_2_delta * period;
 
     let pool_details = interface.get_pool_details();
     assert_eq!(pool_details.unrealized_pool_funding, pool_details_2.unrealized_pool_funding);
@@ -414,10 +419,11 @@ fn test_update_pairs_no_oi_short() {
     let oi_short = pair_details_2.oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
+    let skew_capped = oi_long * dec!(0.1) * price_2;
     let pnl_snap = pool_position_2.cost - skew;
 
     let period = Decimal::from(time_2.seconds_since_unix_epoch - time_1.seconds_since_unix_epoch);
-    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+    let funding_2_rate_delta = skew_capped * pair_config.funding_2_delta * period;
 
     let pool_details = interface.get_pool_details();
     assert_eq!(pool_details.unrealized_pool_funding, pool_details_2.unrealized_pool_funding);
