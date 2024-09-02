@@ -159,7 +159,7 @@ Auto-deleveraging is a mechanism that automatically closes positions to rebalanc
 
 1. Activation: ADL is triggered when the skew ratio exceeds a predefined cap.
 2. Target selection: Positions are evaluated based on their profit-and-loss (PNL) percentage.
-3. Dynamic threshold: The PNL threshold for ADL eligibility is calculated using a cubic function that considers the current skew ratio. This ensures that as skew increases, more positions become eligible for ADL. See: [https://www.desmos.com/calculator/3u0xkak3gg]
+3. Dynamic threshold: The PNL threshold for ADL eligibility is calculated using a cubic function that considers the current skew ratio. This ensures that as skew increases, more positions become eligible for ADL. See: <https://www.desmos.com/calculator/3u0xkak3gg>
 4. Full closure: When a position qualifies for ADL, it is closed entirely.
 5. Effectiveness check: The system verifies that the ADL action actually reduces the overall skew.
 6. Fee settlement: Normal trading fees are applied to ADL actions, maintaining fairness for all participants.
