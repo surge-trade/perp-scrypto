@@ -11,20 +11,27 @@ pub struct VirtualOracle {
 impl VirtualOracle {
     pub fn new(oracle: Global<Oracle>, resource_feeds: HashMap<ResourceAddress, PairId>, mut pair_ids: HashSet<PairId>, max_age: Instant, updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>) -> Self {
         pair_ids.extend(resource_feeds.values().cloned());
-        if let Some((update_data, update_signature, key_id)) = updates {
-            let prices = oracle.push_and_get_prices_with_auth(pair_ids, max_age, update_data, update_signature, key_id);
-
-            Self {
-                prices,
-                resource_feeds,
-            }
+        let prices_with_timestamp = if let Some((update_data, update_signature, key_id)) = updates {
+            oracle.push_and_get_prices_with_auth(pair_ids, update_data, update_signature, key_id)
         } else {
-            let prices = oracle.get_prices_with_auth(pair_ids, max_age);
+            oracle.get_prices_with_auth(pair_ids)
+        };
 
-            Self {
-                prices,
-                resource_feeds,
-            }
+        let prices = prices_with_timestamp.into_iter().map(|(pair_id, (price, timestamp))| {
+            assert!(
+                timestamp.compare(max_age, TimeComparisonOperator::Gt),
+                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PRICE_TOO_OLD, timestamp.seconds_since_unix_epoch, max_age.seconds_since_unix_epoch
+            );
+            assert!(
+                price.is_positive(), 
+                "{}, VALUE:{}, REQUIRED:0, OP:>", ERROR_INVALID_PRICE, price
+            );
+            (pair_id, price)
+        }).collect();
+
+        Self {
+            prices,
+            resource_feeds,
         }
     }
 

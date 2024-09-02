@@ -67,12 +67,12 @@ mod exchange_mod {
             // fn new(owner_role: OwnerRole, public_key: Bls12381G1PublicKey) -> Global<Oracle>;
 
             // Authority protected methods
-            fn push_and_get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal>;
-            fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
+            fn push_and_get_prices_with_auth(&self, pair_ids: HashSet<PairId>, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, (Decimal, Instant)>;
+            fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, (Decimal, Instant)>;
 
             // User methods
-            // fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, Decimal>;
-            // fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal>;
+            // fn push_and_get_prices(&self, pair_ids: HashSet<PairId>, data: Vec<u8>, signature: Bls12381G2Signature) -> HashMap<PairId, (Decimal, Instant)>;
+            // fn get_prices(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, (Decimal, Instant)>;
         }
     }
     extern_blueprint! {

@@ -43,7 +43,7 @@ mod oracle_mod {
                 keys,
                 prices: HashMap::new()
             }
-            .instantiate()  
+            .instantiate()
             .prepare_to_globalize(owner_role)
             .roles(roles! {
                 authority => rule!(require(AUTHORITY_RESOURCE));
@@ -89,23 +89,23 @@ mod oracle_mod {
             self.prices.remove(&pair_id);
         }
 
-        pub fn push_and_get_prices_with_auth(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal> {
-            self._push_and_get_prices(pair_ids, max_age, data, signature, key_id)
+        pub fn push_and_get_prices_with_auth(&mut self, pair_ids: HashSet<PairId>, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, (Decimal, Instant)> {
+            self._push_and_get_prices(pair_ids, data, signature, key_id)
         }
 
-        pub fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
-            self._get_prices(pair_ids, max_age)
+        pub fn get_prices_with_auth(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, (Decimal, Instant)> {
+            self._get_prices(pair_ids)
         }
 
-        pub fn push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal> {
-            self._push_and_get_prices(pair_ids, max_age, data, signature, key_id)
+        pub fn push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, (Decimal, Instant)> {
+            self._push_and_get_prices(pair_ids, data, signature, key_id)
         }
 
-        pub fn get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
-            self._get_prices(pair_ids, max_age)
+        pub fn get_prices(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, (Decimal, Instant)> {
+            self._get_prices(pair_ids)
         }
 
-        fn _push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, max_age: Instant, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, Decimal> {
+        fn _push_and_get_prices(&mut self, pair_ids: HashSet<PairId>, data: Vec<u8>, signature: Bls12381G2Signature, key_id: ListIndex) -> HashMap<PairId, (Decimal, Instant)> {
             let prices: Vec<Price> = scrypto_decode(&data).expect(ERROR_INVALID_DATA);
 
             let hash = CryptoUtils::keccak256_hash(data).to_vec();
@@ -125,17 +125,13 @@ mod oracle_mod {
                     .or_insert((p1.quote, p1.timestamp));
             });
 
-            self.get_prices(pair_ids, max_age)
+            self._get_prices(pair_ids)
         }
 
-        fn _get_prices(&self, pair_ids: HashSet<PairId>, max_age: Instant) -> HashMap<PairId, Decimal> {
+        fn _get_prices(&self, pair_ids: HashSet<PairId>) -> HashMap<PairId, (Decimal, Instant)> {
             pair_ids.into_iter().map(|pair_id| {
                 let (quote, timestamp) = *self.prices.get(&pair_id).expect(ERROR_MISSING_PAIR);
-                assert!(
-                    timestamp.compare(max_age, TimeComparisonOperator::Gt),
-                    "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_PRICE_TOO_OLD, timestamp.seconds_since_unix_epoch, max_age.seconds_since_unix_epoch
-                );
-                (pair_id, quote)
+                (pair_id, (quote, timestamp))
             }).collect()
         }
     }
