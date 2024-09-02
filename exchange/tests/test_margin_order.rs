@@ -594,7 +594,7 @@ fn test_margin_order_long_close_funding_positive() {
 
     let price_3 = dec!(60000);
     let amount_long_3 = dec!(1);
-    let amount_short_3 = dec!(0.95);
+    let amount_short_3 = dec!(0.8);
     interface.make_open_interest(pair_config.pair_id.clone(), amount_long_3, amount_short_3, price_3);
 
     let base_input_4 = dec!(1000);
@@ -773,7 +773,7 @@ fn test_margin_order_long_close_funding_negative() {
     interface.add_liquidity((base_resource, base_input_2)).expect_commit_success();
 
     let price_3 = dec!(60000);
-    let amount_long_3 = dec!(0.95);
+    let amount_long_3 = dec!(0.8);
     let amount_short_3 = dec!(1);
     interface.make_open_interest(pair_config.pair_id.clone(), amount_long_3, amount_short_3, price_3);
 
@@ -1504,7 +1504,7 @@ fn test_margin_order_short_close_funding_positive() {
     interface.add_liquidity((base_resource, base_input_2)).expect_commit_success();
 
     let price_3 = dec!(60000);
-    let amount_long_3 = dec!(0.95);
+    let amount_long_3 = dec!(0.8);
     let amount_short_3 = dec!(1);
     interface.make_open_interest(pair_config.pair_id.clone(), amount_long_3, amount_short_3, price_3);
 
@@ -1685,7 +1685,7 @@ fn test_margin_order_short_close_funding_negative() {
 
     let price_3 = dec!(60000);
     let amount_long_3 = dec!(1);
-    let amount_short_3 = dec!(0.95);
+    let amount_short_3 = dec!(0.8);
     interface.make_open_interest(pair_config.pair_id.clone(), amount_long_3, amount_short_3, price_3);
 
     let base_input_4 = dec!(1000);

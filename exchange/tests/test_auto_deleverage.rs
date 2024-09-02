@@ -107,23 +107,21 @@ fn test_auto_deleverage() {
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
-    let skew_abs_capped = skew_abs.min(oi_long.max(oi_short) * price_7 * dec!(0.1));
-    let skew_capped = skew_abs_capped * skew.0.signum();
     let skew_after = (oi_long - oi_short - trade_size_4) * price_7;
     let skew_2 = skew * skew;
     let skew_2_after = skew_after * skew_after;
     let skew_2_delta = skew_2_after - skew_2;
 
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
-    let funding_1_rate = skew_capped * pair_config.funding_1;
-    let funding_2_rate_delta = skew_capped * pair_config.funding_2_delta * period;
+    let funding_1_rate = skew * pair_config.funding_1;
+    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
     let funding_long = (funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_long * pair_config.funding_share;
     let funding_index_long = funding_long / oi_long;
 
     let funding_pool_0_rate = oi_net * price_7 * pair_config.funding_pool_0;
-    let funding_pool_1_rate = skew_abs_capped * pair_config.funding_pool_1;
+    let funding_pool_1_rate = skew_abs * pair_config.funding_pool_1;
     let funding_pool_rate = funding_pool_0_rate + funding_pool_1_rate;
     let funding_pool = funding_pool_rate * period;
     let funding_pool_index = funding_pool / oi_net;
