@@ -123,7 +123,7 @@ fn test_margin_order_long_open() {
     assert_eq!(event.fee_protocol, -fee_protocol);
     assert_eq!(event.fee_treasury, -fee_treasury);
     assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.activated_requests, vec![2, 1]);
+    assert_eq!(event.activated_requests, vec![1, 2]);
     assert_eq!(event.cancelled_requests, vec![] as Vec<ListIndex>);
 }
 
@@ -1034,7 +1034,7 @@ fn test_margin_order_short_open() {
     assert_eq!(event.fee_protocol, -fee_protocol);
     assert_eq!(event.fee_treasury, -fee_treasury);
     assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.activated_requests, vec![2, 1]);
+    assert_eq!(event.activated_requests, vec![1, 2]);
     assert_eq!(event.cancelled_requests, vec![] as Vec<ListIndex>);
 }
 
