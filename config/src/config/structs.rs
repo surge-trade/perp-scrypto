@@ -101,13 +101,13 @@ impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
             max_price_age_seconds: 5,
-            positions_max: 10,
+            positions_max: 30,
             collaterals_max: 5,
-            active_requests_max: 30,
+            active_requests_max: 100,
             skew_ratio_cap: dec!(0.15),
             adl_offset: dec!(0.2),
-            adl_a: dec!(0.05),
-            adl_b: dec!(0.01),
+            adl_a: dec!(0.07),
+            adl_b: dec!(0.07),
             fee_liquidity_add: dec!(0.001),
             fee_liquidity_remove: dec!(0.001),
             fee_share_protocol: dec!(0.22),

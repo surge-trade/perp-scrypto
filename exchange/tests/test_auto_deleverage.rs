@@ -419,7 +419,7 @@ fn test_auto_deleverage_below_threshold() {
         ])
     ).expect_commit_success();
 
-    let price_7 = dec!(75000);
+    let price_7 = dec!(70000);
     let time_7 = interface.increment_ledger_time(10000);
     interface.auto_deleverage(
         margin_account_component,

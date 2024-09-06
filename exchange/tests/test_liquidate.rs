@@ -526,7 +526,7 @@ fn test_liquidate_pool_loss() {
 }
 
 #[test]
-fn test_liquidate_many_positions_and_collaterals() {
+fn test_liquidate_many_positions_collaterals_and_orders() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
@@ -624,11 +624,30 @@ fn test_liquidate_many_positions_and_collaterals() {
         timestamp: time_5,
     }).collect();
     for i in 0..position_pair_ids.len() {
-        interface.process_request(
+        let transaction = interface.process_request(
             margin_account_component,
             i as ListIndex, 
             Some(prices_5.clone()),
-        ).expect_commit_success();
+        );
+        // println!("transaction: {:?}", transaction.fee_summary);
+        transaction.expect_commit_success();
+    }
+    for _ in 0..exchange_config.active_requests_max {
+        let transaction = interface.margin_order_request(
+            0, 
+            10000000000, 
+            margin_account_component, 
+            position_pair_ids[0].clone(), 
+            dec!(100), 
+            false, 
+            PriceLimit::Gte(dec!(10000)), 
+            SlippageLimit::None, 
+            vec![RequestIndexRef::Index(1), RequestIndexRef::Index(2)], 
+            vec![RequestIndexRef::Index(3), RequestIndexRef::Index(4)], 
+            STATUS_ACTIVE
+        );
+        // println!("transaction: {:?}", transaction.fee_summary);
+        transaction.expect_commit_success();
     }
 
     let base_input_6 = dec!(10000);
@@ -649,6 +668,7 @@ fn test_liquidate_many_positions_and_collaterals() {
         (base_resource, base_input_6), 
         Some(prices_6),
     );
+    // println!("transaction_6: {:?}", transaction_6.fee_summary);
     let result_6 = transaction_6.expect_commit_success().clone();
 
     let base_balance_7 = interface.test_account_balance(base_resource);
@@ -694,7 +714,7 @@ fn test_liquidate_many_positions_and_collaterals() {
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
     assert_eq!(account_details.virtual_balance, dec!(0));
-    assert_eq!(account_details.valid_requests_start, exchange_config.positions_max as ListIndex);
+    assert_eq!(account_details.valid_requests_start, (exchange_config.positions_max + exchange_config.active_requests_max) as ListIndex);
 
     let event_liquidate: EventLiquidate = interface.parse_event(&result_6);
     assert_eq!(event_liquidate.account, margin_account_component);
@@ -717,7 +737,7 @@ fn test_liquidate_many_positions_and_collaterals() {
 
     let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
     assert_eq!(event_requests_start.account, margin_account_component);
-    assert_eq!(event_requests_start.valid_requests_start, exchange_config.positions_max as ListIndex);
+    assert_eq!(event_requests_start.valid_requests_start, (exchange_config.positions_max + exchange_config.active_requests_max) as ListIndex);
 }
 
 #[test]
