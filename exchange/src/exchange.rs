@@ -980,6 +980,7 @@ mod exchange_mod {
                 self._add_collateral(&config, &mut pool, &mut account, tokens);
 
                 if let Some(fee_oath) = fee_oath {
+                    account.verify_level_3_auth();
                     let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
                     self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
                 }
@@ -1712,7 +1713,7 @@ mod exchange_mod {
             let lp_supply = lp_token_manager.total_supply().unwrap();
 
             let (lp_amount, lp_price) = if lp_supply.is_zero() {
-                (value, dec!(1))
+                (value - fee, dec!(1))
             } else {
                 let lp_price = pool_value / lp_supply;
                 let lp_amount = (value - fee) / lp_price;

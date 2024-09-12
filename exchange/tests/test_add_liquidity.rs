@@ -22,7 +22,7 @@ fn test_add_liquidity_initial() {
     let fee_treasury = fee * exchange_config.fee_share_treasury;
     let fee_pool = fee - fee_protocol - fee_treasury;
 
-    assert_eq!(lp_output_1, base_input_0);
+    assert_eq!(lp_output_1, base_input_0 - fee);
     assert_eq!(pool_value_1, base_input_0 - fee_protocol - fee_treasury);
 
     let event: EventLiquidityChange = interface.parse_event(&result);

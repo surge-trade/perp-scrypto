@@ -180,7 +180,11 @@ mod token_wrapper_mod {
         pub fn repay_flash_loan(&mut self, flash_oath: Bucket, mut token: Bucket) -> Bucket {
             assert!(
                 flash_oath.resource_address() == self.flash_oath.address(),
-                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FLASH_OATH, Runtime::bech32_encode_address(flash_oath.resource_address()), Runtime::bech32_encode_address(self.flash_oath.address())
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_FLASH_OATH_TOKEN, Runtime::bech32_encode_address(flash_oath.resource_address()), Runtime::bech32_encode_address(self.flash_oath.address())
+            );
+            assert!(
+                token.resource_address() == BASE_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT_TOKEN, Runtime::bech32_encode_address(token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
             );
             assert!(
                 token.amount() >= flash_oath.amount(),
