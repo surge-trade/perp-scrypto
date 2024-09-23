@@ -1254,22 +1254,6 @@ mod exchange_mod {
             })
         }
 
-        // pub fn cancel_request(
-        //     &self, 
-        //     fee_oath: Option<Bucket>,
-        //     account: ComponentAddress, 
-        //     index: ListIndex,
-        // ) {
-        //     authorize!(self, {
-        //         let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-        //         let mut account = self._handle_fee_oath(account, &config, fee_oath);
-
-        //         account.verify_level_3_auth();
-        //         account.cancel_request(index);
-        //         account.realize();
-        //     })
-        // }
-
         pub fn cancel_requests(
             &self, 
             fee_oath: Option<Bucket>,
@@ -1293,22 +1277,6 @@ mod exchange_mod {
                 account.realize();
             })
         }
-
-        // pub fn cancel_all_requests(
-        //     &self, 
-        //     fee_oath: Option<Bucket>,
-        //     account: ComponentAddress, 
-        // ) {
-        //     authorize!(self, {
-        //         let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT));
-        //         let mut account = self._handle_fee_oath(account, &config, fee_oath);
-
-        //         account.verify_level_3_auth();
-        //         account.update_valid_requests_start();
-
-        //         account.realize();
-        //     })
-        // }
 
         // --- KEEPER METHODS ---
 
@@ -1739,22 +1707,6 @@ mod exchange_mod {
             }
         }
 
-        // fn _handle_fee_oath(
-        //     &self,
-        //     account: ComponentAddress,
-        //     config: &VirtualConfig,
-        //     fee_oath: Option<Bucket>,
-        // ) -> VirtualMarginAccount {
-        //     if let Some(fee_oath) = fee_oath {
-        //         let mut account = VirtualMarginAccount::new(account);
-        //         let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
-        //         self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-        //         account
-        //     } else {
-        //         VirtualMarginAccount::new(account)
-        //     }
-        // }
-
         fn _settle_fee_oath(
             &self,
             config: &VirtualConfig,
@@ -1772,6 +1724,7 @@ mod exchange_mod {
             let fee_value = fee_oath.amount();
             account.add_virtual_balance(-fee_value);
             fee_oath.burn();
+
             self._assert_account_integrity(config, pool, account, oracle);
         }
 
