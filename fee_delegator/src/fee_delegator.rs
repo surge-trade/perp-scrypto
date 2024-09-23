@@ -132,7 +132,7 @@ mod fee_delegator_mod {
                 self.vault.lock_fee(amount);
             }
 
-            let price = Runtime::get_usd_price();
+            let price = Runtime::get_usd_price() * self.price_multiplier;
             let value = price * amount;
             self.virtual_balance += value;
 
