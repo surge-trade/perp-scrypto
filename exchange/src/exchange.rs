@@ -561,9 +561,11 @@ mod exchange_mod {
             count: u64,
         ) -> (Vec<Bucket>, ListIndex) {
             authorize!(self, {
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 let referral_data: ReferralData = referral_manager.get_non_fungible_data(&referral_id);
 
+                tokens.iter().for_each(|token| self._assert_valid_collateral(&config, token.resource_address()));
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
                     "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REFERRAL_LIMIT_REACHED, referral_data.referrals + count, referral_data.max_referrals
@@ -761,11 +763,13 @@ mod exchange_mod {
             authorize!(self, {
                 let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL)
                     .as_non_fungible().non_fungible();
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 let referral_id = checked_referral.local_id();
                 let referral_data = checked_referral.data();
                 let count: u64 = referral_hashes.iter().map(|(_, (_, count))| *count).sum();
 
+                tokens.iter().for_each(|token| self._assert_valid_collateral(&config, token.resource_address()));
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
                     "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REFERRAL_LIMIT_REACHED, referral_data.referrals + count, referral_data.max_referrals

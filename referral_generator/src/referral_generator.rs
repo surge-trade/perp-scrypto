@@ -85,6 +85,10 @@ mod referral_generator_mod {
 
             let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
             for &(resource, amount) in claims.iter() {
+                assert!(
+                    amount.is_positive(),
+                    "{}, VALUE:{}, REQUIRED:0, OP:> |", ERROR_INVALID_CLAIM_AMOUNT, amount,
+                );
                 let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
                 *total_claim += amount * Decimal::from(count);
             }
@@ -145,13 +149,17 @@ mod referral_generator_mod {
             for (_, (claims, count)) in referral_hashes.iter() {
                 if *count == 1 {
                     for &(resource, amount) in claims {
+                        assert!(
+                            amount.is_positive(),
+                            "{}, VALUE:{}, REQUIRED:0, OP:> |", ERROR_INVALID_CLAIM_AMOUNT, amount,
+                        );
                         let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
                         *total_claim += amount;
                     }
                 } else {
                     assert!(
                         claims.len() == 0,
-                        "{}, VALUE:{}, REQUIRED:0, OP:== |", ERROR_MULTIPLE_USE_REFERRAL_CODE_WITH_CLAIMS, claims.len()
+                        "{}, VALUE:{}, REQUIRED:0, OP:== |", ERROR_REFERRAL_MULTIPLE_USE_CODE_WITH_CLAIMS, claims.len()
                     );
                 }
             }
