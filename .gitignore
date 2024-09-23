@@ -8,3 +8,4 @@ Cargo.lock
 __pycache__/
 radixdlt-scrypto/
 accounts.json
+*/tests/compiled/
