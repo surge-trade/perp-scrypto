@@ -637,7 +637,7 @@ impl ExchangeInterface {
         &mut self,
         referral_proof: (ResourceAddress, NonFungibleLocalId),
         allocation_index: ListIndex,
-        referral_hashes: HashMap<Hash, u64>,
+        referral_hashes: HashSet<Hash>,
     ) -> TransactionReceiptV1 {
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()

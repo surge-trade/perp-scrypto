@@ -143,9 +143,16 @@ mod referral_generator_mod {
 
             let mut total_claims: HashMap<ResourceAddress, Decimal> = HashMap::new();
             for (_, (claims, count)) in referral_hashes.iter() {
-                for &(resource, amount) in claims {
-                    let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
-                    *total_claim += amount * Decimal::from(*count);
+                if *count == 1 {
+                    for &(resource, amount) in claims {
+                        let total_claim = total_claims.entry(resource).or_insert(Decimal::zero());
+                        *total_claim += amount;
+                    }
+                } else {
+                    assert!(
+                        claims.len() == 0,
+                        "{}, VALUE:{}, REQUIRED:0, OP:== |", ERROR_MULTIPLE_USE_REFERRAL_CODE_WITH_CLAIMS, claims.len()
+                    );
                 }
             }
 
@@ -190,12 +197,12 @@ mod referral_generator_mod {
             &mut self, 
             referral_id: NonFungibleLocalId, 
             allocation_index: ListIndex, 
-            referral_hashes: HashMap<Hash, u64>
+            referral_hashes: HashSet<Hash>
         ) {
             let mut referral_allocation_list = self.referral_allocations.get_mut(&referral_id).expect(ERROR_ALLOCATION_NOT_FOUND);
             let referral_allocation = referral_allocation_list.get_mut(allocation_index as usize).expect(ERROR_ALLOCATION_NOT_FOUND);
                 
-            let total_count: u64 = referral_hashes.iter().map(|(_, c)| c).sum();
+            let total_count: u64 = referral_hashes.len() as u64;
             referral_allocation.count += total_count;
 
             assert!(
@@ -204,7 +211,7 @@ mod referral_generator_mod {
             );
 
             let claims = &referral_allocation.claims;
-            for (hash, count) in referral_hashes.into_iter() {
+            for hash in referral_hashes.into_iter() {
                 assert!(
                     self.referral_codes.get(&hash).is_none(),
                     "{}, VALUE:{:?}, REQUIRED:None, OP:== |", ERROR_REFERRAL_CODE_ALREADY_EXISTS, Some(hash)
@@ -213,7 +220,7 @@ mod referral_generator_mod {
                     referral_id: referral_id.clone(),
                     claims: claims.clone(),
                     count: 0,
-                    max_count: count,
+                    max_count: 1,
                 });
             }
         }

@@ -146,7 +146,7 @@ mod exchange_mod {
             // Authority protected methods
             fn add_allocation(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, claims: Vec<(ResourceAddress, Decimal)>, count: u64) -> (Vec<Bucket>, ListIndex);
             fn create_referral_codes(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, referral_hashes: HashMap<Hash, (Vec<(ResourceAddress, Decimal)>, u64)>) -> Vec<Bucket>;
-            fn create_referral_codes_from_allocation(&self, referral_id: NonFungibleLocalId, allocation_index: ListIndex, referral_hashes: HashMap<Hash, u64>);
+            fn create_referral_codes_from_allocation(&self, referral_id: NonFungibleLocalId, allocation_index: ListIndex, referral_hashes: HashSet<Hash>);
             fn claim_referral_code(&self, hash: Hash) -> (NonFungibleLocalId, Vec<Bucket>);
         }
     }
@@ -783,7 +783,7 @@ mod exchange_mod {
             &self, 
             referral_proof: Proof,
             allocation_index: ListIndex,
-            referral_hashes: HashMap<Hash, u64>,
+            referral_hashes: HashSet<Hash>,
         ) {
             authorize!(self, {
                 let checked_referral: NonFungible<ReferralData> = referral_proof.check_with_message(REFERRAL_RESOURCE, ERROR_INVALID_REFERRAL)
