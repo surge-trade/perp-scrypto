@@ -250,8 +250,8 @@ pub struct PairConfigCompressed {
 impl PairConfig {
     pub fn validate(&self) {
         assert!(self.oi_max >= dec!(0), "Invalid oi max");
-        assert!(self.update_price_delta_ratio >= dec!(0), "Invalid pair update price delta ratio");
-        assert!(self.update_period_seconds >= 0, "Invalid pair update period");
+        assert!(self.update_price_delta_ratio > dec!(0), "Invalid pair update price delta ratio");
+        assert!(self.update_period_seconds > 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0) && self.margin_initial <= dec!(1), "Invalid initial margin");
         assert!(self.margin_maintenance >= dec!(0) && self.margin_maintenance <= dec!(1) && self.margin_maintenance <= self.margin_initial, "Invalid maintenance margin");
         assert!(self.funding_1 >= dec!(0) && self.funding_1 <= dec!(0.0000001), "Invalid funding 1");
