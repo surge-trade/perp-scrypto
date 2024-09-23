@@ -867,17 +867,24 @@ mod exchange_mod {
                 permission_registry.set_permissions(initial_rule, permissions);
 
                 let mut account = VirtualMarginAccount::new(account_component);
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-
-                self._add_collateral(&config, &mut pool, &mut account, tokens);
-
                 if let Some(fee_oath) = fee_oath {
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                }
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
 
-                pool.realize();
+                    self._add_collateral(&config, &mut pool, &mut account, tokens);
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+
+                    pool.realize();
+                } else {
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
+                    let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+
+                    self._add_collateral(&config, &mut pool, &mut account, tokens);
+
+                    pool.realize();
+                }
                 account.realize();
 
                 Runtime::emit_event(EventAccountCreation {
@@ -896,11 +903,19 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
                 let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
+                
                 let old_rule = account.get_level_1_auth();
                 let mut permissions = permission_registry.get_permissions(old_rule.clone());
                 permissions.level_1.shift_remove(&account.address());
@@ -923,10 +938,18 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
                 let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
+
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
 
                 let old_rule = account.get_level_2_auth();
                 let mut permissions = permission_registry.get_permissions(old_rule.clone());
@@ -950,10 +973,18 @@ mod exchange_mod {
             rule: AccessRule,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
                 let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
+
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
 
                 let old_rule = account.get_level_3_auth();
                 let mut permissions = permission_registry.get_permissions(old_rule.clone());
@@ -977,19 +1008,29 @@ mod exchange_mod {
             tokens: Vec<Bucket>,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
                 let mut account = VirtualMarginAccount::new(account);
-                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-
-                self._add_collateral(&config, &mut pool, &mut account, tokens);
 
                 if let Some(fee_oath) = fee_oath {
                     account.verify_level_3_auth();
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
-                    self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
+
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._add_collateral(&config, &mut pool, &mut account, tokens);
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+
+                    pool.realize();
+                } else {
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
+                    let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
+
+                    self._add_collateral(&config, &mut pool, &mut account, tokens);
+
+                    pool.realize();
                 }
 
-                pool.realize();
                 account.realize();
             })
         }
@@ -1003,10 +1044,20 @@ mod exchange_mod {
             claims: Vec<(ResourceAddress, Decimal)>,
         ) -> ListIndex {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
-
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_2_auth();
+
+                let config = if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                    config
+                } else {
+                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new())
+                };
 
                 assert!(
                     claims.len() <= 10,
@@ -1044,10 +1095,20 @@ mod exchange_mod {
             status: Status,
         ) -> ListIndex {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
-
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_3_auth();
+
+                let config = if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                    config
+                } else {
+                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new())
+                };
 
                 assert!(
                     activate_requests.len() <= 2,
@@ -1095,10 +1156,20 @@ mod exchange_mod {
             price_sl: Option<Decimal>,
         ) -> (ListIndex, Option<ListIndex>, Option<ListIndex>) {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
-
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_3_auth();
+
+                let config = if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                    config
+                } else {
+                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new())
+                };
 
                 let mut request_index = account.requests_len();
                 let index_order = request_index;
@@ -1206,10 +1277,18 @@ mod exchange_mod {
             indexes: Vec<ListIndex>,
         ) {
             authorize!(self, {
-                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
-                let mut account = self._handle_fee_oath(account, &config, fee_oath);
-
+                let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_3_auth();
+
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
+
                 account.cancel_requests(indexes);
                 account.realize();
             })
@@ -1660,25 +1739,26 @@ mod exchange_mod {
             }
         }
 
-        fn _handle_fee_oath(
-            &self,
-            account: ComponentAddress,
-            config: &VirtualConfig,
-            fee_oath: Option<Bucket>,
-        ) -> VirtualMarginAccount {
-            if let Some(fee_oath) = fee_oath {
-                let mut account = VirtualMarginAccount::new(account);
-                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
-                self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
-                account
-            } else {
-                VirtualMarginAccount::new(account)
-            }
-        }
+        // fn _handle_fee_oath(
+        //     &self,
+        //     account: ComponentAddress,
+        //     config: &VirtualConfig,
+        //     fee_oath: Option<Bucket>,
+        // ) -> VirtualMarginAccount {
+        //     if let Some(fee_oath) = fee_oath {
+        //         let mut account = VirtualMarginAccount::new(account);
+        //         let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), Instant::new(0), None);
+        //         self._settle_fee_oath(&config, &mut account, &oracle, fee_oath);
+        //         account
+        //     } else {
+        //         VirtualMarginAccount::new(account)
+        //     }
+        // }
 
         fn _settle_fee_oath(
             &self,
             config: &VirtualConfig,
+            pool: &VirtualLiquidityPool,
             account: &mut VirtualMarginAccount,
             oracle: &VirtualOracle,
             fee_oath: Bucket,
@@ -1690,16 +1770,9 @@ mod exchange_mod {
             );
 
             let fee_value = fee_oath.amount();
-            let result_value_collateral = self._value_collateral(config, account, oracle);
-            let collateral_value_approx = result_value_collateral.collateral_value_discounted + account.virtual_balance() - fee_value;
-
-            assert!(
-                collateral_value_approx > result_value_collateral.margin_collateral,
-                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, collateral_value_approx, result_value_collateral.margin_collateral
-            );
-
             account.add_virtual_balance(-fee_value);
             fee_oath.burn();
+            self._assert_account_integrity(config, pool, account, oracle);
         }
 
         fn _add_liquidity(
