@@ -189,6 +189,8 @@ pub struct PairConfig {
     pub pair_id: PairId,
     /// Maximum allowed combined oi for the pair
     pub oi_max: Decimal,
+    /// Minimum trade size 
+    pub trade_size_min: Decimal,
     /// Price delta ratio before updating a pair will be rewarded
     pub update_price_delta_ratio: Decimal,
     /// Time before updating a pair will be rewarded
@@ -221,6 +223,8 @@ pub struct PairConfigCompressed {
     pub pair_id: PairId,
     /// Maximum allowed combined oi for the pair
     pub oi_max: DFloat16,
+    /// Minimum trade size 
+    pub trade_size_min: DFloat16,
     /// Price delta ratio before updating a pair will be rewarded
     pub update_price_delta_ratio: DFloat16,
     /// Time before updating a pair will be rewarded
@@ -250,6 +254,7 @@ pub struct PairConfigCompressed {
 impl PairConfig {
     pub fn validate(&self) {
         assert!(self.oi_max >= dec!(0), "Invalid oi max");
+        assert!(self.trade_size_min >= dec!(0), "Invalid trade size min");
         assert!(self.update_price_delta_ratio > dec!(0), "Invalid pair update price delta ratio");
         assert!(self.update_period_seconds > 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0) && self.margin_initial <= dec!(1), "Invalid initial margin");
@@ -268,6 +273,7 @@ impl PairConfig {
         PairConfigCompressed {
             pair_id: self.pair_id.to_owned(),
             oi_max: DFloat16::from(self.oi_max),
+            trade_size_min: DFloat16::from(self.trade_size_min),
             update_price_delta_ratio: DFloat16::from(self.update_price_delta_ratio),
             update_period_seconds: self.update_period_seconds as u16,
             margin_initial: DFloat16::from(self.margin_initial),
@@ -289,6 +295,7 @@ impl PairConfigCompressed {
         PairConfig {
             pair_id: self.pair_id.to_owned(),
             oi_max: self.oi_max.into(),
+            trade_size_min: self.trade_size_min.into(),
             update_price_delta_ratio: self.update_price_delta_ratio.into(),
             update_period_seconds: self.update_period_seconds as i64,
             margin_initial: self.margin_initial.into(),

@@ -111,6 +111,7 @@ async def main():
         #         ret.ManifestBuilderValue.TUPLE_VALUE([
         #             ret.ManifestBuilderValue.STRING_VALUE(pair),  # pub pair_id: PairId,
         #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100000')), # pub oi_max: Decimal,
+        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
         #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # update_price_delta_ratio
         #             ret.ManifestBuilderValue.I64_VALUE(600), # update_period_seconds
         #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # pub margin_initial: Decimal,
@@ -135,6 +136,7 @@ async def main():
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE(pair),  # pub pair_id: PairId,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100000')), # pub oi_max: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,

@@ -1099,7 +1099,8 @@ mod exchange_mod {
                 account.verify_level_3_auth();
 
                 let config = if let Some(fee_oath) = fee_oath {
-                    let pair_ids = account.position_ids();
+                    let mut pair_ids = account.position_ids();
+                    pair_ids.insert(pair_id.clone());
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
                     let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
@@ -1107,8 +1108,15 @@ mod exchange_mod {
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                     config
                 } else {
-                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new())
+                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::from([pair_id.clone()]))
                 };
+
+                let pair_config = config.pair_config(&pair_id);
+                let amount_abs = amount.checked_abs().expect(ERROR_ARITHMETIC);
+                assert!(
+                    amount_abs >= pair_config.trade_size_min,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_TRADE_SIZE_MIN_NOT_MET, amount_abs, pair_config.trade_size_min
+                );
 
                 assert!(
                     activate_requests.len() <= 2,
@@ -1160,7 +1168,8 @@ mod exchange_mod {
                 account.verify_level_3_auth();
 
                 let config = if let Some(fee_oath) = fee_oath {
-                    let pair_ids = account.position_ids();
+                    let mut pair_ids = account.position_ids();
+                    pair_ids.insert(pair_id.clone());
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
                     let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
@@ -1168,8 +1177,15 @@ mod exchange_mod {
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                     config
                 } else {
-                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new())
+                    VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::from([pair_id.clone()]))
                 };
+
+                let pair_config = config.pair_config(&pair_id);
+                let amount_abs = amount.checked_abs().expect(ERROR_ARITHMETIC);
+                assert!(
+                    amount_abs >= pair_config.trade_size_min,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_TRADE_SIZE_MIN_NOT_MET, amount_abs, pair_config.trade_size_min
+                );
 
                 let mut request_index = account.requests_len();
                 let index_order = request_index;

@@ -29,6 +29,7 @@ pub const ERROR_SWAP_NO_DEBT: &str = "No debt to swap";
 
 pub const ERROR_CLAIMS_TOO_MANY: &str = "Claims list too big";
 pub const ERROR_EFFECTED_REQUESTS_TOO_MANY: &str = "Too many effected requests";
+pub const ERROR_TRADE_SIZE_MIN_NOT_MET: &str = "Trade size minimum not met";
 
 pub const ERROR_INVALID_COLLATERAL: &str = "Invalid collateral";
 pub const ERROR_POSITIONS_TOO_MANY: &str = "Too many positions";

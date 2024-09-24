@@ -11,6 +11,7 @@ fn test_process_request_execute() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
+            trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -95,6 +96,7 @@ fn test_process_request_expired() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
+            trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -179,6 +181,7 @@ fn test_process_request_at_submission() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(10000),
+            trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -247,6 +250,7 @@ fn test_process_request_not_active() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
+            trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -327,6 +331,7 @@ fn test_process_request_price_age_too_old() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(10000),
+            trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -395,6 +400,7 @@ fn test_process_request_no_fresh_price() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
+            trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -495,6 +501,7 @@ fn test_process_request_before_valid_requests_start() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(200000),
+        trade_size_min: dec!(0.000001),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),

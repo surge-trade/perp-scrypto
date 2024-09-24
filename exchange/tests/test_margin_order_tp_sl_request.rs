@@ -6,6 +6,25 @@ use tests_common::*;
 fn test_margin_order_tp_sl_request_no_tp_no_sl() {
     let mut interface = get_setup();
 
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
@@ -70,6 +89,25 @@ fn test_margin_order_tp_sl_request_no_tp_no_sl() {
 #[test]
 fn test_margin_order_tp_sl_request_with_tp_no_sl() {
     let mut interface = get_setup();
+
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
@@ -152,6 +190,25 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
 fn test_margin_order_tp_sl_request_no_tp_with_sl() {
     let mut interface = get_setup();
 
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
@@ -232,6 +289,25 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
 #[test]
 fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
     let mut interface = get_setup();
+
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
@@ -330,6 +406,25 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
 fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
     let mut interface = get_setup();
 
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
         rule_0,
@@ -424,9 +519,136 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
 }
 
 #[test]
+fn test_margin_order_tp_sl_long_min_trade_size_not_met() {
+    let mut interface = get_setup();
+
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
+    let rule_0 = rule!(allow_all);
+    let result = interface.create_account(
+        rule_0,
+        vec![],
+        None,
+    ).expect_commit_success().clone();
+    let margin_account_component = result.new_component_addresses()[0];
+
+    let delay_seconds_1 = 10;
+    let expiry_seconds_1 = 10;
+    let pair_id_1 = "BTC/USD";
+    let amount_1 = dec!(0.0000009);
+    let reduce_only_1 = false;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
+    let price_tp_1 = None;
+    let price_sl_1 = None;
+    interface.margin_order_tp_sl_request(
+        delay_seconds_1,
+        expiry_seconds_1,
+        margin_account_component,
+        pair_id_1.into(),
+        amount_1,
+        reduce_only_1,
+        price_limit_1,
+        slippage_limit_1,
+        price_tp_1,
+        price_sl_1,
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_TRADE_SIZE_MIN_NOT_MET));
+}
+
+#[test]
+fn test_margin_order_tp_sl_short_min_trade_size_not_met() {
+    let mut interface = get_setup();
+
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
+    let rule_0 = rule!(allow_all);
+    let result = interface.create_account(
+        rule_0,
+        vec![],
+        None,
+    ).expect_commit_success().clone();
+    let margin_account_component = result.new_component_addresses()[0];
+
+    let delay_seconds_1 = 10;
+    let expiry_seconds_1 = 10;
+    let pair_id_1 = "BTC/USD";
+    let amount_1 = dec!(-0.0000009);
+    let reduce_only_1 = false;
+    let price_limit_1 = PriceLimit::None;
+    let slippage_limit_1 = SlippageLimit::None;
+    let price_tp_1 = None;
+    let price_sl_1 = None;
+    interface.margin_order_tp_sl_request(
+        delay_seconds_1,
+        expiry_seconds_1,
+        margin_account_component,
+        pair_id_1.into(),
+        amount_1,
+        reduce_only_1,
+        price_limit_1,
+        slippage_limit_1,
+        price_tp_1,
+        price_sl_1,
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_TRADE_SIZE_MIN_NOT_MET));
+}
+
+#[test]
 fn test_margin_order_tp_sl_request_exceed_max_active() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
+
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
@@ -477,6 +699,25 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
 #[test]
 fn test_margin_order_tp_sl_request_invalid_auth() {
     let mut interface = get_setup();
+
+    let pair_config = PairConfig {
+        pair_id: "BTC/USD".into(),
+        oi_max: dec!(10000),
+        trade_size_min: dec!(0.000001),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0.0000000317),
+        funding_2: dec!(0.0000000317),
+        funding_2_delta: dec!(0.000000827),
+        funding_pool_0: dec!(0.0000000159),
+        funding_pool_1: dec!(0.0000000317),
+        funding_share: dec!(0.1),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    };
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
     let result = interface.create_account(
