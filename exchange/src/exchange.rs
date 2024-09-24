@@ -565,7 +565,12 @@ mod exchange_mod {
                 let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
                 let referral_data: ReferralData = referral_manager.get_non_fungible_data(&referral_id);
 
-                tokens.iter().for_each(|token| self._assert_valid_collateral(&config, token.resource_address()));
+                tokens.iter().for_each(|token| {
+                    let resource = token.resource_address();
+                    if resource != BASE_RESOURCE {
+                        self._assert_valid_collateral(&config, token.resource_address());
+                    }
+                });
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
                     "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REFERRAL_LIMIT_REACHED, referral_data.referrals + count, referral_data.max_referrals
@@ -769,7 +774,12 @@ mod exchange_mod {
                 let referral_data = checked_referral.data();
                 let count: u64 = referral_hashes.iter().map(|(_, (_, count))| *count).sum();
 
-                tokens.iter().for_each(|token| self._assert_valid_collateral(&config, token.resource_address()));
+                tokens.iter().for_each(|token| {
+                    let resource = token.resource_address();
+                    if resource != BASE_RESOURCE {
+                        self._assert_valid_collateral(&config, token.resource_address());
+                    }
+                });
                 assert!(
                     referral_data.referrals + count <= referral_data.max_referrals,
                     "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_REFERRAL_LIMIT_REACHED, referral_data.referrals + count, referral_data.max_referrals
