@@ -103,8 +103,8 @@ fn test_auto_deleverage() {
         ])
     ).expect_commit_success().clone();
 
-    let oi_long = pair_details_7.oi_long;
-    let oi_short = pair_details_7.oi_short;
+    let oi_long = pair_details_7.pool_position.oi_long;
+    let oi_short = pair_details_7.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
@@ -116,7 +116,7 @@ fn test_auto_deleverage() {
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_long = (funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_long * pair_config.funding_share;
     let funding_index_long = funding_long / oi_long;
@@ -156,8 +156,8 @@ fn test_auto_deleverage() {
     assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + pnl_snap_delta_a + pnl_snap_delta_b);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_5);
-    assert_eq!(pair_details.oi_short, amount_short_5);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_5);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_5);
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);

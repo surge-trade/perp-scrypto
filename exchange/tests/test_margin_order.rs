@@ -100,8 +100,8 @@ fn test_margin_order_long_open() {
     assert_eq!(pool_details.pnl_snap, pool_details_5.pnl_snap + fee);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, trade_size_4);
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, trade_size_4);
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 1);
@@ -255,8 +255,8 @@ fn test_margin_order_long_close_reduce_only() {
     assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -394,8 +394,8 @@ fn test_margin_order_long_close_profit() {
     assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -533,8 +533,8 @@ fn test_margin_order_long_close_loss() {
     assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -668,8 +668,8 @@ fn test_margin_order_long_close_funding_positive() {
         ])
     ).expect_commit_success().clone();
 
-    let oi_long = pair_details_7.oi_long;
-    let oi_short = pair_details_7.oi_short;
+    let oi_long = pair_details_7.pool_position.oi_long;
+    let oi_short = pair_details_7.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
@@ -681,7 +681,7 @@ fn test_margin_order_long_close_funding_positive() {
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_long = (funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_long * pair_config.funding_share;
     let funding_index_long = funding_long / oi_long;
@@ -714,8 +714,8 @@ fn test_margin_order_long_close_funding_positive() {
     assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + (value - cost_7));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_3);
-    assert_eq!(pair_details.oi_short, amount_short_3);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_3);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_3);
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -849,8 +849,8 @@ fn test_margin_order_long_close_funding_negative() {
         ])
     ).expect_commit_success().clone();
 
-    let oi_long = pair_details_7.oi_long;
-    let oi_short = pair_details_7.oi_short;
+    let oi_long = pair_details_7.pool_position.oi_long;
+    let oi_short = pair_details_7.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
@@ -862,7 +862,7 @@ fn test_margin_order_long_close_funding_negative() {
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_short = -(funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_short * pair_config.funding_share;
     let funding_long = -(funding_short - funding_share);
@@ -896,8 +896,8 @@ fn test_margin_order_long_close_funding_negative() {
     assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + (value - cost_7));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_3);
-    assert_eq!(pair_details.oi_short, amount_short_3);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_3);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_3);
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -1017,8 +1017,8 @@ fn test_margin_order_short_open() {
     assert_eq!(pool_details.pnl_snap, pool_details_5.pnl_snap + fee);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, -trade_size_4);
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, -trade_size_4);
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 1);
@@ -1172,8 +1172,8 @@ fn test_margin_order_short_close_reduce_only() {
     assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -1311,8 +1311,8 @@ fn test_margin_order_short_close_profit() {
     assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -1450,8 +1450,8 @@ fn test_margin_order_short_close_loss() {
     assert_eq!(pool_details.pnl_snap, pool_details_6.pnl_snap + (value - cost_6) - trade_delta);
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -1585,8 +1585,8 @@ fn test_margin_order_short_close_funding_positive() {
         ])
     ).expect_commit_success().clone();
 
-    let oi_long = pair_details_7.oi_long;
-    let oi_short = pair_details_7.oi_short;
+    let oi_long = pair_details_7.pool_position.oi_long;
+    let oi_short = pair_details_7.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
@@ -1598,7 +1598,7 @@ fn test_margin_order_short_close_funding_positive() {
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_short = -(funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_short * pair_config.funding_share;
     let funding_index_short = funding_short / oi_short;
@@ -1631,8 +1631,8 @@ fn test_margin_order_short_close_funding_positive() {
     assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + (value - cost_7));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_3);
-    assert_eq!(pair_details.oi_short, amount_short_3);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_3);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_3);
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -1766,8 +1766,8 @@ fn test_margin_order_short_close_funding_negative() {
         ])
     ).expect_commit_success().clone();
 
-    let oi_long = pair_details_7.oi_long;
-    let oi_short = pair_details_7.oi_short;
+    let oi_long = pair_details_7.pool_position.oi_long;
+    let oi_short = pair_details_7.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_7;
     let skew_abs = skew.checked_abs().unwrap();
@@ -1779,7 +1779,7 @@ fn test_margin_order_short_close_funding_negative() {
     let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_7.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_long = (funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_long * pair_config.funding_share;
     let funding_short = -(funding_long - funding_share);
@@ -1813,8 +1813,8 @@ fn test_margin_order_short_close_funding_negative() {
     assert_eq!(pool_details.pnl_snap, pool_details_7.pnl_snap + (value - cost_7));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_3);
-    assert_eq!(pair_details.oi_short, amount_short_3);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_3);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_3);
     
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);

@@ -3,6 +3,7 @@ use super::requests::*;
 use common::*;
 use config::*;
 use account::*;
+use pool::*;
 use referral_generator::{ReferralData, ReferralAllocation};
 
 #[derive(ScryptoSbor, Clone, Debug)]
@@ -60,9 +61,7 @@ pub struct PoolDetails {
 #[derive(ScryptoSbor, Clone, Debug)]
 pub struct PairDetails {
     pub pair_id: PairId,
-    pub oi_long: Decimal,
-    pub oi_short: Decimal,
-    pub funding_2: Decimal,
+    pub pool_position: PoolPosition,
     pub pair_config: PairConfig,
 }
 

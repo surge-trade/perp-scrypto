@@ -52,8 +52,8 @@ fn test_update_pairs_long_skew() {
     ).expect_commit_success().clone();
 
     let pool_value = interface.get_pool_value();
-    let oi_long = pair_details_2.oi_long;
-    let oi_short = pair_details_2.oi_short;
+    let oi_long = pair_details_2.pool_position.oi_long;
+    let oi_short = pair_details_2.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
@@ -62,7 +62,7 @@ fn test_update_pairs_long_skew() {
     let period = Decimal::from(time_2.seconds_since_unix_epoch - time_1.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_2.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_2.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_long = (funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_long * pair_config.funding_share;
     let funding_short = -(funding_long - funding_share);
@@ -82,9 +82,9 @@ fn test_update_pairs_long_skew() {
     assert_eq!(pool_details.skew_ratio, skew_abs / pool_value);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_1);
-    assert_eq!(pair_details.oi_short, amount_short_1);
-    assert_eq!(pair_details.funding_2, pair_details_2.funding_2 + funding_2_rate_delta);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_1);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_1);
+    assert_eq!(pair_details.pool_position.funding_2_rate, pair_details_2.pool_position.funding_2_rate + funding_2_rate_delta);
 
     let event: EventPairUpdates = interface.parse_event(&result_2);
     assert_eq!(event.updates.len(), 1);
@@ -153,8 +153,8 @@ fn test_update_pairs_short_skew() {
     ).expect_commit_success().clone();
 
     let pool_value = interface.get_pool_value();
-    let oi_long = pair_details_2.oi_long;
-    let oi_short = pair_details_2.oi_short;
+    let oi_long = pair_details_2.pool_position.oi_long;
+    let oi_short = pair_details_2.pool_position.oi_short;
     let oi_net = oi_long + oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
@@ -163,7 +163,7 @@ fn test_update_pairs_short_skew() {
     let period = Decimal::from(time_2.seconds_since_unix_epoch - time_1.seconds_since_unix_epoch);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-    let funding_2_rate = (pair_details_2.funding_2 + funding_2_rate_delta) * pair_config.funding_2;
+    let funding_2_rate = (pair_details_2.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
     let funding_short = -(funding_1_rate + funding_2_rate) * period;
     let funding_share = funding_short * pair_config.funding_share;
     let funding_long = -(funding_short - funding_share);
@@ -183,9 +183,9 @@ fn test_update_pairs_short_skew() {
     assert_eq!(pool_details.skew_ratio, skew_abs / pool_value);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_1);
-    assert_eq!(pair_details.oi_short, amount_short_1);
-    assert_eq!(pair_details.funding_2, pair_details_2.funding_2 + funding_2_rate_delta);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_1);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_1);
+    assert_eq!(pair_details.pool_position.funding_2_rate, pair_details_2.pool_position.funding_2_rate + funding_2_rate_delta);
 
     let event: EventPairUpdates = interface.parse_event(&result_2);
     assert_eq!(event.updates.len(), 1);
@@ -246,8 +246,8 @@ fn test_update_pairs_period_zero() {
     ).expect_commit_success().clone();
 
     let pool_value = interface.get_pool_value();
-    let oi_long = pair_details_2.oi_long;
-    let oi_short = pair_details_2.oi_short;
+    let oi_long = pair_details_2.pool_position.oi_long;
+    let oi_short = pair_details_2.pool_position.oi_short;
     let skew = (oi_long - oi_short) * price_1;
     let skew_abs = skew.checked_abs().unwrap();
     let pnl_snap = pool_position_2.cost - skew;
@@ -258,9 +258,9 @@ fn test_update_pairs_period_zero() {
     assert_eq!(pool_details.skew_ratio, skew_abs / pool_value);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_1);
-    assert_eq!(pair_details.oi_short, amount_short_1);
-    assert_eq!(pair_details.funding_2, pair_details_2.funding_2);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_1);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_1);
+    assert_eq!(pair_details.pool_position.funding_2_rate, pair_details_2.pool_position.funding_2_rate);
 
     let event: EventPairUpdates = interface.parse_event(&result_2);
     assert_eq!(event.updates.len(), 1);
@@ -329,8 +329,8 @@ fn test_update_pairs_no_oi_long() {
     ).expect_commit_success().clone();
 
     let pool_value = interface.get_pool_value();
-    let oi_long = pair_details_2.oi_long;
-    let oi_short = pair_details_2.oi_short;
+    let oi_long = pair_details_2.pool_position.oi_long;
+    let oi_short = pair_details_2.pool_position.oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
     let pnl_snap = pool_position_2.cost - skew;
@@ -344,9 +344,9 @@ fn test_update_pairs_no_oi_long() {
     assert_eq!(pool_details.skew_ratio, skew_abs / pool_value);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_1);
-    assert_eq!(pair_details.oi_short, amount_short_1);
-    assert_eq!(pair_details.funding_2, pair_details_2.funding_2 + funding_2_rate_delta);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_1);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_1);
+    assert_eq!(pair_details.pool_position.funding_2_rate, pair_details_2.pool_position.funding_2_rate + funding_2_rate_delta);
 
     let event: EventPairUpdates = interface.parse_event(&result_2);
     assert_eq!(event.updates.len(), 1);
@@ -415,8 +415,8 @@ fn test_update_pairs_no_oi_short() {
     ).expect_commit_success().clone();
 
     let pool_value = interface.get_pool_value();
-    let oi_long = pair_details_2.oi_long;
-    let oi_short = pair_details_2.oi_short;
+    let oi_long = pair_details_2.pool_position.oi_long;
+    let oi_short = pair_details_2.pool_position.oi_short;
     let skew = (oi_long - oi_short) * price_2;
     let skew_abs = skew.checked_abs().unwrap();
     let pnl_snap = pool_position_2.cost - skew;
@@ -430,9 +430,9 @@ fn test_update_pairs_no_oi_short() {
     assert_eq!(pool_details.skew_ratio, skew_abs / pool_value);
 
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, amount_long_1);
-    assert_eq!(pair_details.oi_short, amount_short_1);
-    assert_eq!(pair_details.funding_2, pair_details_2.funding_2 + funding_2_rate_delta);
+    assert_eq!(pair_details.pool_position.oi_long, amount_long_1);
+    assert_eq!(pair_details.pool_position.oi_short, amount_short_1);
+    assert_eq!(pair_details.pool_position.funding_2_rate, pair_details_2.pool_position.funding_2_rate + funding_2_rate_delta);
 
     let event: EventPairUpdates = interface.parse_event(&result_2);
     assert_eq!(event.updates.len(), 1);

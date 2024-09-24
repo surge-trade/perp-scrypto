@@ -145,8 +145,8 @@ fn test_liquidate_long() {
     assert_eq!(pool_details.pnl_snap, dec!(0));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -320,8 +320,8 @@ fn test_liquidate_short() {
     assert_eq!(pool_details.pnl_snap, dec!(0));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -496,8 +496,8 @@ fn test_liquidate_pool_loss() {
     assert_eq!(pool_details.pnl_snap, dec!(0));
     
     let pair_details = interface.get_pair_details(vec![pair_config.pair_id.clone()])[0].clone();
-    assert_eq!(pair_details.oi_long, dec!(0));
-    assert_eq!(pair_details.oi_short, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+    assert_eq!(pair_details.pool_position.oi_short, dec!(0));
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.positions.len(), 0);
@@ -711,8 +711,8 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
     
     for pair_id in position_pair_ids.iter() {
         let pair_details = interface.get_pair_details(vec![pair_id.clone()])[0].clone();
-        assert_eq!(pair_details.oi_long, dec!(0));
-        assert_eq!(pair_details.oi_short, dec!(0));
+        assert_eq!(pair_details.pool_position.oi_long, dec!(0));
+        assert_eq!(pair_details.pool_position.oi_short, dec!(0));
     }
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
