@@ -10,7 +10,7 @@ fn test_cancel_requests_normal() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
-            trade_size_min: dec!(0.000001),
+            trade_size_min: dec!(0),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -93,7 +93,7 @@ fn test_cancel_requests_duplicate() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
-            trade_size_min: dec!(0.000001),
+            trade_size_min: dec!(0),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -182,7 +182,7 @@ pub fn test_cancel_requests_not_active_or_dormant() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
-            trade_size_min: dec!(0.000001),
+            trade_size_min: dec!(0),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),
@@ -250,7 +250,7 @@ fn test_cancel_requests_invalid_auth() {
         PairConfig {
             pair_id: "BTC/USD".into(),
             oi_max: dec!(100000),
-            trade_size_min: dec!(0.000001),
+            trade_size_min: dec!(0),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
             margin_initial: dec!(0.01),

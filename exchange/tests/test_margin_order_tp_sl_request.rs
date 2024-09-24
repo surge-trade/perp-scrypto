@@ -9,7 +9,7 @@ fn test_margin_order_tp_sl_request_no_tp_no_sl() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -93,7 +93,7 @@ fn test_margin_order_tp_sl_request_with_tp_no_sl() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -193,7 +193,7 @@ fn test_margin_order_tp_sl_request_no_tp_with_sl() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -293,7 +293,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_long() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -409,7 +409,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -519,7 +519,7 @@ fn test_margin_order_tp_sl_request_with_tp_with_sl_short() {
 }
 
 #[test]
-fn test_margin_order_tp_sl_long_min_trade_size_not_met() {
+fn test_margin_order_tp_sl_min_trade_size_not_met_long() {
     let mut interface = get_setup();
 
     let pair_config = PairConfig {
@@ -549,31 +549,22 @@ fn test_margin_order_tp_sl_long_min_trade_size_not_met() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let delay_seconds_1 = 10;
-    let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USD";
-    let amount_1 = dec!(0.0000009);
-    let reduce_only_1 = false;
-    let price_limit_1 = PriceLimit::None;
-    let slippage_limit_1 = SlippageLimit::None;
-    let price_tp_1 = None;
-    let price_sl_1 = None;
     interface.margin_order_tp_sl_request(
-        delay_seconds_1,
-        expiry_seconds_1,
+        0,
+        10,
         margin_account_component,
-        pair_id_1.into(),
-        amount_1,
-        reduce_only_1,
-        price_limit_1,
-        slippage_limit_1,
-        price_tp_1,
-        price_sl_1,
+        pair_config.pair_id.clone(),
+        dec!(0.0000009),
+        false,
+        PriceLimit::None,
+        SlippageLimit::None,
+        None,
+        None,
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_TRADE_SIZE_MIN_NOT_MET));
 }
 
 #[test]
-fn test_margin_order_tp_sl_short_min_trade_size_not_met() {
+fn test_margin_order_tp_sl_min_trade_size_not_met_short() {
     let mut interface = get_setup();
 
     let pair_config = PairConfig {
@@ -603,26 +594,17 @@ fn test_margin_order_tp_sl_short_min_trade_size_not_met() {
     ).expect_commit_success().clone();
     let margin_account_component = result.new_component_addresses()[0];
 
-    let delay_seconds_1 = 10;
-    let expiry_seconds_1 = 10;
-    let pair_id_1 = "BTC/USD";
-    let amount_1 = dec!(-0.0000009);
-    let reduce_only_1 = false;
-    let price_limit_1 = PriceLimit::None;
-    let slippage_limit_1 = SlippageLimit::None;
-    let price_tp_1 = None;
-    let price_sl_1 = None;
     interface.margin_order_tp_sl_request(
-        delay_seconds_1,
-        expiry_seconds_1,
+        0,
+        10,
         margin_account_component,
-        pair_id_1.into(),
-        amount_1,
-        reduce_only_1,
-        price_limit_1,
-        slippage_limit_1,
-        price_tp_1,
-        price_sl_1,
+        pair_config.pair_id.clone(),
+        dec!(-0.0000009),
+        false,
+        PriceLimit::None,
+        SlippageLimit::None,
+        None,
+        None,
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_TRADE_SIZE_MIN_NOT_MET));
 }
 
@@ -634,7 +616,7 @@ fn test_margin_order_tp_sl_request_exceed_max_active() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -703,7 +685,7 @@ fn test_margin_order_tp_sl_request_invalid_auth() {
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
         oi_max: dec!(10000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),

@@ -20,7 +20,7 @@ fn test_swap_debt_more_than_debt() {
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -160,7 +160,7 @@ fn test_swap_debt_less_than_debt() {
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -307,7 +307,7 @@ fn test_swap_debt_more_than_token() {
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -463,7 +463,7 @@ fn test_swap_debt_no_debt() {
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -532,7 +532,7 @@ fn test_swap_debt_invalid_token() {
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
@@ -652,7 +652,7 @@ fn test_swap_debt_invalid_payment() {
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
-        trade_size_min: dec!(0.000001),
+        trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
