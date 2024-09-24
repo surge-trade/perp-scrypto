@@ -11,7 +11,7 @@ fn test_margin_order_long_open() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -137,7 +137,7 @@ fn test_margin_order_long_close_reduce_only() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -287,7 +287,7 @@ fn test_margin_order_long_close_profit() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -426,7 +426,7 @@ fn test_margin_order_long_close_loss() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -565,7 +565,7 @@ fn test_margin_order_long_close_funding_positive() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -746,7 +746,7 @@ fn test_margin_order_long_close_funding_negative() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -928,7 +928,7 @@ fn test_margin_order_short_open() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1054,7 +1054,7 @@ fn test_margin_order_short_close_reduce_only() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1204,7 +1204,7 @@ fn test_margin_order_short_close_profit() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1343,7 +1343,7 @@ fn test_margin_order_short_close_loss() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1482,7 +1482,7 @@ fn test_margin_order_short_close_funding_positive() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1663,7 +1663,7 @@ fn test_margin_order_short_close_funding_negative() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1844,7 +1844,7 @@ fn test_margin_order_gte_price_limit_not_met() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -1922,7 +1922,7 @@ fn test_margin_order_lte_price_limit_not_met() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -2000,7 +2000,7 @@ fn test_margin_order_percent_slippage_limit_not_met() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -2078,7 +2078,7 @@ fn test_margin_order_absolute_slippage_limit_not_met() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -2156,7 +2156,7 @@ fn test_margin_order_long_exceed_oi_max() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(10000),
+        oi_max: dec!(1),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -2196,7 +2196,7 @@ fn test_margin_order_long_exceed_oi_max() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(1);
+    let trade_size_4 = dec!(1.001);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -2210,7 +2210,7 @@ fn test_margin_order_long_exceed_oi_max() {
         None,
     ).expect_commit_success();
 
-    let price_5 = pair_config.oi_max + dec!(1);
+    let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     interface.process_request(
         margin_account_component,
@@ -2233,7 +2233,7 @@ fn test_margin_order_short_exceed_oi_max() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(10000),
+        oi_max: dec!(1),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -2273,7 +2273,7 @@ fn test_margin_order_short_exceed_oi_max() {
     ).expect_commit_success().clone();
     let margin_account_component = result_3.new_component_addresses()[0];
 
-    let trade_size_4 = dec!(-1);
+    let trade_size_4 = dec!(-1.001);
     interface.margin_order_tp_sl_request(
         0,
         10000000000,
@@ -2287,7 +2287,7 @@ fn test_margin_order_short_exceed_oi_max() {
         None,
     ).expect_commit_success();
 
-    let price_5 = pair_config.oi_max + dec!(1);
+    let price_5 = dec!(60000);
     let time_5 = interface.increment_ledger_time(1);
     interface.process_request(
         margin_account_component,
@@ -2310,7 +2310,7 @@ fn test_margin_order_exceed_skew_cap() {
     let referral_resource = interface.resources.referral_resource;
     
     let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
+        pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
@@ -2393,7 +2393,7 @@ fn test_margin_order_adl_mode_skew_reducing() {
     let referral_resource = interface.resources.referral_resource;
     
     let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
+        pair_id: "TEST/USD".into(),
         oi_max: dec!(200000),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
@@ -2476,7 +2476,7 @@ fn test_margin_order_insufficient_margin() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -2567,7 +2567,7 @@ fn test_margin_order_exceed_positions_max() {
     for i in 0..exchange_config.positions_max + 1 {
         let pair_config_2 = PairConfig {
             pair_id: format!("TEST{}/USD", i).into(),
-            oi_max: dec!(200000),
+            oi_max: dec!(2),
             trade_size_min: dec!(0),
             update_price_delta_ratio: dec!(0.005),
             update_period_seconds: 3600,

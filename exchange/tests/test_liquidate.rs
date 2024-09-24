@@ -21,7 +21,7 @@ fn test_liquidate_long() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -196,7 +196,7 @@ fn test_liquidate_short() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -371,7 +371,7 @@ fn test_liquidate_pool_loss() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -763,7 +763,7 @@ fn test_liquidate_invalid_payment_token() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -869,7 +869,7 @@ fn test_liquidate_sufficient_margin() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -975,7 +975,7 @@ fn test_liquidate_insufficient_payment() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,

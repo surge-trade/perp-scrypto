@@ -2212,14 +2212,14 @@ mod exchange_mod {
             if amount.is_positive() {
                 pool_position.oi_long += amount;
                 assert!(
-                    pool_position.oi_long * price <= pair_config.oi_max / dec!(2), 
-                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, pool_position.oi_long * price, pair_config.oi_max / dec!(2)
+                    pool_position.oi_long <= pair_config.oi_max, 
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, pool_position.oi_long, pair_config.oi_max
                 );
             } else {
                 pool_position.oi_short -= amount;
                 assert!(
-                    pool_position.oi_short * price <= pair_config.oi_max / dec!(2), 
-                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, pool_position.oi_short * price, pair_config.oi_max / dec!(2)
+                    pool_position.oi_short <= pair_config.oi_max , 
+                    "{}, VALUE:{}, REQUIRED:{}, OP:<= |", ERROR_PAIR_OI_TOO_HIGH, pool_position.oi_short, pair_config.oi_max
                 );
             }
             pool_position.cost += cost;

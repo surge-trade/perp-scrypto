@@ -11,7 +11,7 @@ fn test_auto_deleverage() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(100000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -186,7 +186,7 @@ fn test_auto_deleverage_skew_too_low() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(100000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -282,7 +282,7 @@ fn test_auto_deleverage_no_position() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(100000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -350,7 +350,7 @@ fn test_auto_deleverage_below_threshold() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(100000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -446,7 +446,7 @@ fn test_auto_deleverage_skew_not_reduced() {
     
     let pair_config_btc = PairConfig {
         pair_id: "BTC/USD".into(),
-        oi_max: dec!(100000),
+        oi_max: dec!(2),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,
@@ -463,7 +463,7 @@ fn test_auto_deleverage_skew_not_reduced() {
     };
     let pair_config_xrd = PairConfig {
         pair_id: "XRD/USD".into(),
-        oi_max: dec!(100000),
+        oi_max: dec!(10000000),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
         update_period_seconds: 3600,

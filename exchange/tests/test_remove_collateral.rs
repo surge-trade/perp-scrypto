@@ -337,7 +337,7 @@ fn test_remove_collateral_insufficient_margin() {
     interface.update_pair_configs(vec![
         PairConfig {
             pair_id: "BTC/USD".into(),
-            oi_max: dec!(100000),
+            oi_max: dec!(2),
             trade_size_min: dec!(0.000001),
             update_price_delta_ratio: dec!(0.001),
             update_period_seconds: 600,
