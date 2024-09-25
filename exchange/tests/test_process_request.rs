@@ -7,25 +7,8 @@ fn test_process_request_execute() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
-    interface.update_pair_configs(vec![
-        PairConfig {
-            pair_id: "BTC/USD".into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.001),
-            update_period_seconds: 600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0),
-            funding_2: dec!(0),
-            funding_2_delta: dec!(0),
-            funding_pool_0: dec!(0),
-            funding_pool_1: dec!(0),
-            funding_share: dec!(0),
-            fee_0: dec!(0.001),
-            fee_1: dec!(0),
-        }
-    ]).expect_commit_success();
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(100000);
     interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
@@ -92,25 +75,8 @@ fn test_process_request_expired() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
-    interface.update_pair_configs(vec![
-        PairConfig {
-            pair_id: "BTC/USD".into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.001),
-            update_period_seconds: 600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0),
-            funding_2: dec!(0),
-            funding_2_delta: dec!(0),
-            funding_pool_0: dec!(0),
-            funding_pool_1: dec!(0),
-            funding_share: dec!(0),
-            fee_0: dec!(0.001),
-            fee_1: dec!(0),
-        }
-    ]).expect_commit_success();
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(100000);
     interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
@@ -177,25 +143,8 @@ fn test_process_request_at_submission() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
 
-    interface.update_pair_configs(vec![
-        PairConfig {
-            pair_id: "BTC/USD".into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.001),
-            update_period_seconds: 600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0),
-            funding_2: dec!(0),
-            funding_2_delta: dec!(0),
-            funding_pool_0: dec!(0),
-            funding_pool_1: dec!(0),
-            funding_share: dec!(0),
-            fee_0: dec!(0.001),
-            fee_1: dec!(0),
-        }
-    ]).expect_commit_success();
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(100000);
     interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
@@ -246,25 +195,8 @@ fn test_process_request_not_active() {
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
 
-    interface.update_pair_configs(vec![
-        PairConfig {
-            pair_id: "BTC/USD".into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.001),
-            update_period_seconds: 600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0),
-            funding_2: dec!(0),
-            funding_2_delta: dec!(0),
-            funding_pool_0: dec!(0),
-            funding_pool_1: dec!(0),
-            funding_share: dec!(0),
-            fee_0: dec!(0.001),
-            fee_1: dec!(0),
-        }
-    ]).expect_commit_success();
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(100000);
     interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
@@ -327,25 +259,8 @@ fn test_process_request_price_age_too_old() {
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
 
-    interface.update_pair_configs(vec![
-        PairConfig {
-            pair_id: "BTC/USD".into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.001),
-            update_period_seconds: 600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0),
-            funding_2: dec!(0),
-            funding_2_delta: dec!(0),
-            funding_pool_0: dec!(0),
-            funding_pool_1: dec!(0),
-            funding_share: dec!(0),
-            fee_0: dec!(0.001),
-            fee_1: dec!(0),
-        }
-    ]).expect_commit_success();
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(100000);
     interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
@@ -396,25 +311,8 @@ fn test_process_request_no_fresh_price() {
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
 
-    interface.update_pair_configs(vec![
-        PairConfig {
-            pair_id: "BTC/USD".into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.001),
-            update_period_seconds: 600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0),
-            funding_2: dec!(0),
-            funding_2_delta: dec!(0),
-            funding_pool_0: dec!(0),
-            funding_pool_1: dec!(0),
-            funding_share: dec!(0),
-            fee_0: dec!(0.001),
-            fee_1: dec!(0),
-        }
-    ]).expect_commit_success();
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(100000);
     interface.add_liquidity((base_resource, base_input_0)).expect_commit_success();
@@ -498,23 +396,7 @@ fn test_process_request_before_valid_requests_start() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);

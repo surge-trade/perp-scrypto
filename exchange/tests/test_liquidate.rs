@@ -19,23 +19,7 @@ fn test_liquidate_long() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -194,23 +178,7 @@ fn test_liquidate_short() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -369,23 +337,7 @@ fn test_liquidate_pool_loss() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -562,12 +514,13 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
             update_period_seconds: 3600,
             margin_initial: dec!(0.01),
             margin_maintenance: dec!(0.005),
-            funding_1: dec!(0.0000000317),
-            funding_2: dec!(0.0000000317),
-            funding_2_delta: dec!(0.000000827),
-            funding_pool_0: dec!(0.0000000159),
-            funding_pool_1: dec!(0.0000000317),
-            funding_share: dec!(0.1),
+            funding_1: dec!(1),
+            funding_2: dec!(1),
+            funding_2_delta: dec!(100),
+            funding_2_decay: dec!(100),
+            funding_pool_0: dec!(0.02),
+            funding_pool_1: dec!(0.25),
+            funding_share: dec!(0.02),
             fee_0: dec!(0.0005),
             fee_1: dec!(0.0000000005),
         };
@@ -761,23 +714,7 @@ fn test_liquidate_invalid_payment_token() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -867,23 +804,7 @@ fn test_liquidate_sufficient_margin() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -973,23 +894,7 @@ fn test_liquidate_insufficient_payment() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);

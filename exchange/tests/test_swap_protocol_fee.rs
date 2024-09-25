@@ -9,23 +9,7 @@ fn test_swap_protocol_fee_normal() {
     let base_resource = interface.resources.base_resource;
     let protocol_resource = interface.resources.protocol_resource;
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(1000000);
@@ -65,23 +49,7 @@ fn test_swap_protocol_fee_invalid_payment() {
     let base_resource = interface.resources.base_resource;
     let fake_protocol_resource = interface.mint_test_token(dec!(10000000), 18);
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(1000000);
@@ -105,23 +73,7 @@ fn test_swap_protocol_fee_insufficient_payment() {
     let base_resource = interface.resources.base_resource;
     let protocol_resource = interface.resources.protocol_resource;
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_0 = dec!(1000000);

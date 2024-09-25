@@ -9,23 +9,7 @@ fn test_margin_order_long_open() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -135,23 +119,7 @@ fn test_margin_order_long_close_reduce_only() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -285,23 +253,7 @@ fn test_margin_order_long_close_profit() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -424,23 +376,7 @@ fn test_margin_order_long_close_loss() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -563,23 +499,7 @@ fn test_margin_order_long_close_funding_positive() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -678,7 +598,7 @@ fn test_margin_order_long_close_funding_positive() {
     let skew_2_after = skew_after * skew_after;
     let skew_2_delta = skew_2_after - skew_2;
 
-    let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
+    let period = period(time_7, time_6);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
@@ -744,23 +664,7 @@ fn test_margin_order_long_close_funding_negative() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -859,7 +763,7 @@ fn test_margin_order_long_close_funding_negative() {
     let skew_2_after = skew_after * skew_after;
     let skew_2_delta = skew_2_after - skew_2;
 
-    let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
+    let period = period(time_7, time_6);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
@@ -926,23 +830,7 @@ fn test_margin_order_short_open() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1052,23 +940,7 @@ fn test_margin_order_short_close_reduce_only() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1202,23 +1074,7 @@ fn test_margin_order_short_close_profit() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1341,23 +1197,7 @@ fn test_margin_order_short_close_loss() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1480,23 +1320,7 @@ fn test_margin_order_short_close_funding_positive() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1595,7 +1419,7 @@ fn test_margin_order_short_close_funding_positive() {
     let skew_2_after = skew_after * skew_after;
     let skew_2_delta = skew_2_after - skew_2;
 
-    let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
+    let period = period(time_7, time_6);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
@@ -1661,23 +1485,7 @@ fn test_margin_order_short_close_funding_negative() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1776,7 +1584,7 @@ fn test_margin_order_short_close_funding_negative() {
     let skew_2_after = skew_after * skew_after;
     let skew_2_delta = skew_2_after - skew_2;
 
-    let period = Decimal::from(time_7.seconds_since_unix_epoch - time_6.seconds_since_unix_epoch);
+    let period = period(time_7, time_6);
     let funding_1_rate = skew * pair_config.funding_1;
     let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
     let funding_2_rate = (pair_details_7.pool_position.funding_2_rate + funding_2_rate_delta) * pair_config.funding_2;
@@ -1842,23 +1650,7 @@ fn test_margin_order_gte_price_limit_not_met() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1920,23 +1712,7 @@ fn test_margin_order_lte_price_limit_not_met() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -1998,23 +1774,7 @@ fn test_margin_order_percent_slippage_limit_not_met() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -2076,23 +1836,7 @@ fn test_margin_order_absolute_slippage_limit_not_met() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -2162,12 +1906,13 @@ fn test_margin_order_long_exceed_oi_max() {
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
         margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
+        funding_1: dec!(1),
+        funding_2: dec!(1),
+        funding_2_delta: dec!(100),
+        funding_2_decay: dec!(100),
+        funding_pool_0: dec!(0.02),
+        funding_pool_1: dec!(0.25),
+        funding_share: dec!(0.02),
         fee_0: dec!(0.0005),
         fee_1: dec!(0.0000000005),
     };
@@ -2239,12 +1984,13 @@ fn test_margin_order_short_exceed_oi_max() {
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
         margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
+        funding_1: dec!(1),
+        funding_2: dec!(1),
+        funding_2_delta: dec!(100),
+        funding_2_decay: dec!(100),
+        funding_pool_0: dec!(0.02),
+        funding_pool_1: dec!(0.25),
+        funding_share: dec!(0.02),
         fee_0: dec!(0.0005),
         fee_1: dec!(0.0000000005),
     };
@@ -2317,12 +2063,13 @@ fn test_margin_order_exceed_skew_cap() {
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
         margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
+        funding_1: dec!(1),
+        funding_2: dec!(1),
+        funding_2_delta: dec!(100),
+        funding_2_decay: dec!(100),
+        funding_pool_0: dec!(0.02),
+        funding_pool_1: dec!(0.25),
+        funding_share: dec!(0.02),
         fee_0: dec!(0.0005),
         fee_1: dec!(0.0000000005),
     };
@@ -2392,23 +2139,7 @@ fn test_margin_order_adl_mode_skew_reducing() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -2474,23 +2205,7 @@ fn test_margin_order_insufficient_margin() {
     let base_resource = interface.resources.base_resource;
     let referral_resource = interface.resources.referral_resource;
     
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -2565,23 +2280,7 @@ fn test_margin_order_exceed_positions_max() {
     let mut pair_ids = vec![];
     let mut pair_configs = vec![];
     for i in 0..exchange_config.positions_max + 1 {
-        let pair_config_2 = PairConfig {
-            pair_id: format!("TEST{}/USD", i).into(),
-            oi_max: dec!(2),
-            trade_size_min: dec!(0),
-            update_price_delta_ratio: dec!(0.005),
-            update_period_seconds: 3600,
-            margin_initial: dec!(0.01),
-            margin_maintenance: dec!(0.005),
-            funding_1: dec!(0.0000000317),
-            funding_2: dec!(0.0000000317),
-            funding_2_delta: dec!(0.000000827),
-            funding_pool_0: dec!(0.0000000159),
-            funding_pool_1: dec!(0.0000000317),
-            funding_share: dec!(0.1),
-            fee_0: dec!(0.0005),
-            fee_1: dec!(0.0000000005),
-        };
+        let pair_config_2 = default_pair_config(format!("TEST{}/USD", i).into());
         pair_ids.push(pair_config_2.pair_id.clone());
         pair_configs.push(pair_config_2);
     }

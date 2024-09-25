@@ -6,23 +6,7 @@ use tests_common::*;
 fn test_margin_order_request_constant_index() {
     let mut interface = get_setup();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
@@ -93,23 +77,7 @@ fn test_margin_order_request_constant_index() {
 fn test_margin_order_request_relative_index() {
     let mut interface = get_setup();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
@@ -212,12 +180,13 @@ fn test_margin_order_long_request_min_trade_size_not_met() {
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
         margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
+        funding_1: dec!(1),
+        funding_2: dec!(1),
+        funding_2_delta: dec!(100),
+        funding_2_decay: dec!(100),
+        funding_pool_0: dec!(0.02),
+        funding_pool_1: dec!(0.25),
+        funding_share: dec!(0.02),
         fee_0: dec!(0.0005),
         fee_1: dec!(0.0000000005),
     };
@@ -258,12 +227,13 @@ fn test_margin_order_short_request_min_trade_size_not_met() {
         update_period_seconds: 3600,
         margin_initial: dec!(0.01),
         margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
+        funding_1: dec!(1),
+        funding_2: dec!(1),
+        funding_2_delta: dec!(100),
+        funding_2_decay: dec!(100),
+        funding_pool_0: dec!(0.02),
+        funding_pool_1: dec!(0.25),
+        funding_share: dec!(0.02),
         fee_0: dec!(0.0005),
         fee_1: dec!(0.0000000005),
     };
@@ -296,23 +266,7 @@ fn test_margin_order_short_request_min_trade_size_not_met() {
 fn test_margin_order_request_exceed_max_activate_requests() {
     let mut interface = get_setup();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
@@ -352,23 +306,7 @@ fn test_margin_order_request_exceed_max_activate_requests() {
 fn test_margin_order_request_exceed_max_cancel_requests() {
     let mut interface = get_setup();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
@@ -409,23 +347,7 @@ fn test_margin_order_request_exceed_max_active() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
@@ -481,23 +403,7 @@ fn test_margin_order_request_exceed_max_active() {
 fn test_margin_order_request_invalid_status() {
     let mut interface = get_setup();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);
@@ -537,23 +443,7 @@ fn test_margin_order_request_invalid_status() {
 fn test_margin_order_request_invalid_auth() {
     let mut interface = get_setup();
 
-    let pair_config = PairConfig {
-        pair_id: "BTC/USD".into(),
-        oi_max: dec!(2),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0.0000000317),
-        funding_2: dec!(0.0000000317),
-        funding_2_delta: dec!(0.000000827),
-        funding_pool_0: dec!(0.0000000159),
-        funding_pool_1: dec!(0.0000000317),
-        funding_share: dec!(0.1),
-        fee_0: dec!(0.0005),
-        fee_1: dec!(0.0000000005),
-    };
+    let pair_config = default_pair_config("BTC/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let rule_0 = rule!(allow_all);

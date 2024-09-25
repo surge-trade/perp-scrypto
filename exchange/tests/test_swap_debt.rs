@@ -17,23 +17,7 @@ fn test_swap_debt_more_than_debt() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0),
-        funding_2: dec!(0),
-        funding_2_delta: dec!(0),
-        funding_pool_0: dec!(0),
-        funding_pool_1: dec!(0),
-        funding_share: dec!(0),
-        fee_0: dec!(0),
-        fee_1: dec!(0),
-    };
+    let pair_config = pair_config_zero_fees_and_funding("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);
@@ -157,23 +141,7 @@ fn test_swap_debt_less_than_debt() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0),
-        funding_2: dec!(0),
-        funding_2_delta: dec!(0),
-        funding_pool_0: dec!(0),
-        funding_pool_1: dec!(0),
-        funding_share: dec!(0),
-        fee_0: dec!(0),
-        fee_1: dec!(0),
-    };
+    let pair_config = pair_config_zero_fees_and_funding("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);
@@ -304,23 +272,7 @@ fn test_swap_debt_more_than_token() {
         (xrd_resource, xrd_collateral_config.clone()),
     ]).expect_commit_success();
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0),
-        funding_2: dec!(0),
-        funding_2_delta: dec!(0),
-        funding_pool_0: dec!(0),
-        funding_pool_1: dec!(0),
-        funding_share: dec!(0),
-        fee_0: dec!(0),
-        fee_1: dec!(0),
-    };
+    let pair_config = pair_config_zero_fees_and_funding("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);
@@ -460,23 +412,7 @@ fn test_swap_debt_no_debt() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0),
-        funding_2: dec!(0),
-        funding_2_delta: dec!(0),
-        funding_pool_0: dec!(0),
-        funding_pool_1: dec!(0),
-        funding_share: dec!(0),
-        fee_0: dec!(0),
-        fee_1: dec!(0),
-    };
+    let pair_config = pair_config_zero_fees_and_funding("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);
@@ -529,23 +465,7 @@ fn test_swap_debt_invalid_token() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0),
-        funding_2: dec!(0),
-        funding_2_delta: dec!(0),
-        funding_pool_0: dec!(0),
-        funding_pool_1: dec!(0),
-        funding_share: dec!(0),
-        fee_0: dec!(0),
-        fee_1: dec!(0),
-    };
+    let pair_config = pair_config_zero_fees_and_funding("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);
@@ -649,23 +569,7 @@ fn test_swap_debt_invalid_payment() {
         (btc_resource, collateral_config.clone()),
     ]).expect_commit_success();
     
-    let pair_config = PairConfig {
-        pair_id: "TEST/USD".into(),
-        oi_max: dec!(200000),
-        trade_size_min: dec!(0),
-        update_price_delta_ratio: dec!(0.005),
-        update_period_seconds: 3600,
-        margin_initial: dec!(0.01),
-        margin_maintenance: dec!(0.005),
-        funding_1: dec!(0),
-        funding_2: dec!(0),
-        funding_2_delta: dec!(0),
-        funding_pool_0: dec!(0),
-        funding_pool_1: dec!(0),
-        funding_share: dec!(0),
-        fee_0: dec!(0),
-        fee_1: dec!(0),
-    };
+    let pair_config = pair_config_zero_fees_and_funding("TEST/USD".into());
     interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
 
     let base_input_1 = dec!(1000000);

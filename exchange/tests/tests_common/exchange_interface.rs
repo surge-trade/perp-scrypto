@@ -6,6 +6,52 @@ use super::*;
 use ::common::*;
 use exchange::*;
 
+pub fn default_pair_config(pair_id: PairId) -> PairConfig {
+    PairConfig {
+        pair_id,
+        oi_max: dec!(1000000000),
+        trade_size_min: dec!(0),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(1),
+        funding_2: dec!(1),
+        funding_2_delta: dec!(100),
+        funding_2_decay: dec!(100),
+        funding_pool_0: dec!(0.02),
+        funding_pool_1: dec!(0.25),
+        funding_share: dec!(0.02),
+        fee_0: dec!(0.0005),
+        fee_1: dec!(0.0000000005),
+    }
+}
+
+pub fn pair_config_zero_fees_and_funding(pair_id: PairId) -> PairConfig {
+    PairConfig {
+        pair_id,
+        oi_max: dec!(1000000000),
+        trade_size_min: dec!(0),
+        update_price_delta_ratio: dec!(0.005),
+        update_period_seconds: 3600,
+        margin_initial: dec!(0.01),
+        margin_maintenance: dec!(0.005),
+        funding_1: dec!(0),
+        funding_2: dec!(0),
+        funding_2_delta: dec!(0),
+        funding_2_decay: dec!(0),
+        funding_pool_0: dec!(0),
+        funding_pool_1: dec!(0),
+        funding_share: dec!(0),
+        fee_0: dec!(0),
+        fee_1: dec!(0),
+    }
+}
+
+pub fn period(time_1: Instant, time_0: Instant) -> Decimal {
+    Decimal::from(time_1.seconds_since_unix_epoch - time_0.seconds_since_unix_epoch) / (dec!(60) * dec!(60) * dec!(24) * dec!(365))
+}
+
 pub struct ExchangeInterface {
     pub public_key: Secp256k1PublicKey,
     pub test_account: ComponentAddress,
@@ -146,7 +192,7 @@ impl ExchangeInterface {
         amount_long: Decimal,
         amount_short: Decimal,
         price: Decimal,
-    ) {
+    ) -> (ComponentAddress, ComponentAddress) {
         let result = self.create_account(
             rule!(allow_all), 
             vec![(self.resources.base_resource, dec!(100000))], 
@@ -200,6 +246,68 @@ impl ExchangeInterface {
         self.process_request(
             margin_account_component_1,
             0, 
+            Some(vec![
+                Price {
+                    pair: pair_id.clone(),
+                    quote: price,
+                    timestamp: time,
+                },
+            ])
+        ).expect_commit_success();
+
+        (margin_account_component_0, margin_account_component_1)
+    }
+
+    pub fn close_open_interest(
+        &mut self,
+        pair_id: PairId,
+        margin_account_components: (ComponentAddress, ComponentAddress),
+        amount_long: Decimal,
+        amount_short: Decimal,
+        price: Decimal,
+    ) {
+        let (margin_account_component_0, margin_account_component_1) = margin_account_components;
+        let idx_0 = self.margin_order_request(
+            0, 
+            10, 
+            margin_account_component_0, 
+            pair_id.clone(), 
+            -amount_long, 
+            false, 
+            PriceLimit::None, 
+            SlippageLimit::None,
+            vec![], 
+            vec![], 
+            STATUS_ACTIVE
+        ).expect_commit_success().output(1);
+        let idx_1 = self.margin_order_request(
+            0, 
+            10, 
+            margin_account_component_1, 
+            pair_id.clone(), 
+            amount_short, 
+            false, 
+            PriceLimit::None, 
+            SlippageLimit::None,
+            vec![], 
+            vec![], 
+            STATUS_ACTIVE
+        ).expect_commit_success().output(1);
+        let time = self.increment_ledger_time(1);
+        self.process_request(
+            margin_account_component_0,
+            idx_0, 
+            Some(vec![
+                Price {
+                    pair: pair_id.clone(),
+                    quote: price,
+                    timestamp: time,
+                },
+            ])
+        ).expect_commit_success();
+        self.process_request(
+            margin_account_component_1,
+            idx_1, 
             Some(vec![
                 Price {
                     pair: pair_id.clone(),

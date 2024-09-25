@@ -2302,19 +2302,38 @@ mod exchange_mod {
             
             let current_time = Clock::current_time_rounded_to_seconds();
             let period_seconds = current_time.seconds_since_unix_epoch - pool_position.last_update.seconds_since_unix_epoch;
-            let period = Decimal::from(period_seconds);
+            let period = Decimal::from(period_seconds) / dec!(31536000); // 1 year
             
             let price_delta_ratio = (price - pool_position.last_price).checked_abs().expect(ERROR_ARITHMETIC) / pool_position.last_price;
             pool_position.last_price = price;
             pool_position.last_update = current_time;
             
             let funding_pool_delta = if !period.is_zero() {
-                let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
-                pool_position.funding_2_rate += funding_2_rate_delta;
+                let funding_2_max = oi_long * price;
+                let funding_2_min = -oi_short * price;
+                
+                if pool_position.funding_2_rate > funding_2_max {
+                    let excess = pool_position.funding_2_rate - funding_2_max;
+                    let decay = excess * (pair_config.funding_2_decay * period).min(dec!(1));
+                    pool_position.funding_2_rate -= decay;
+                } else if pool_position.funding_2_rate < funding_2_min {
+                    let excess = pool_position.funding_2_rate - funding_2_min;
+                    let decay = excess * (pair_config.funding_2_decay * period).min(dec!(1));
+                    pool_position.funding_2_rate -= decay;
+                } else {
+                    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
+                    if pool_position.funding_2_rate + funding_2_rate_delta > funding_2_max {
+                        pool_position.funding_2_rate = funding_2_max;
+                    } else if pool_position.funding_2_rate + funding_2_rate_delta < funding_2_min {
+                        pool_position.funding_2_rate = funding_2_min;
+                    } else {
+                        pool_position.funding_2_rate += funding_2_rate_delta;
+                    }
+                }
 
                 if !oi_long.is_zero() && !oi_short.is_zero() {
                     let funding_1_rate = skew * pair_config.funding_1;
-                    let funding_2_rate = pool_position.funding_2_rate * pair_config.funding_2;
+                    let funding_2_rate = pool_position.funding_2_rate.clamp(funding_2_min, funding_2_max) * pair_config.funding_2;
                     let funding_rate = funding_1_rate + funding_2_rate;
 
                     let (funding_long_index, funding_short_index, funding_share) = if funding_rate.is_positive() {

@@ -205,6 +205,8 @@ pub struct PairConfig {
     pub funding_2: Decimal,
     /// Rate of change of funding 2 integral
     pub funding_2_delta: Decimal,
+    /// Rate of decay for funding 2 if it is out of bounds
+    pub funding_2_decay: Decimal,
     /// Constant pool funding
     pub funding_pool_0: Decimal,
     /// Skew based pool funding
@@ -213,7 +215,7 @@ pub struct PairConfig {
     pub funding_share: Decimal,
     /// Constant fee
     pub fee_0: Decimal,
-    /// Skew based fee
+    /// Price impact fee
     pub fee_1: Decimal,
 }
 
@@ -239,6 +241,8 @@ pub struct PairConfigCompressed {
     pub funding_2: DFloat16,
     /// Rate of change of funding 2 integral
     pub funding_2_delta: DFloat16,
+    /// Rate of decay for funding 2 if it is out of bounds
+    pub funding_2_decay: DFloat16,
     /// Constant pool funding
     pub funding_pool_0: DFloat16,
     /// Skew based pool funding
@@ -247,26 +251,27 @@ pub struct PairConfigCompressed {
     pub funding_share: DFloat16,
     /// Constant fee
     pub fee_0: DFloat16,
-    /// Skew based fee
+    /// Price impact fee
     pub fee_1: DFloat16,
 }
 
 impl PairConfig {
     pub fn validate(&self) {
-        assert!(self.oi_max >= dec!(0), "Invalid oi max");
-        assert!(self.trade_size_min >= dec!(0), "Invalid trade size min");
+        assert!(self.oi_max >= dec!(0), "Invalid oi maximum");
+        assert!(self.trade_size_min >= dec!(0), "Invalid minimum trade size");
         assert!(self.update_price_delta_ratio > dec!(0), "Invalid pair update price delta ratio");
         assert!(self.update_period_seconds > 0, "Invalid pair update period");
         assert!(self.margin_initial >= dec!(0) && self.margin_initial <= dec!(1), "Invalid initial margin");
         assert!(self.margin_maintenance >= dec!(0) && self.margin_maintenance <= dec!(1) && self.margin_maintenance <= self.margin_initial, "Invalid maintenance margin");
-        assert!(self.funding_1 >= dec!(0) && self.funding_1 <= dec!(0.0000001), "Invalid funding 1");
-        assert!(self.funding_2 >= dec!(0) && self.funding_2 <= dec!(0.000000032), "Invalid funding 2");
-        assert!(self.funding_2_delta >= dec!(0) && self.funding_2_delta <= dec!(0.00001), "Invalid funding 2 delta");
-        assert!(self.funding_pool_0 >= dec!(0) && self.funding_pool_0 <= dec!(0.000000032), "Invalid funding pool 0");
-        assert!(self.funding_pool_1 >= dec!(0) && self.funding_pool_1 <= dec!(0.0000001), "Invalid funding pool 1");
+        assert!(self.funding_1 >= dec!(0) && self.funding_1 <= dec!(2), "Invalid funding 1");
+        assert!(self.funding_2 >= dec!(0) && self.funding_2 <= dec!(4), "Invalid funding 2");
+        assert!(self.funding_2_delta >= dec!(0) && self.funding_2_delta <= dec!(10000), "Invalid funding 2 delta");
+        assert!(self.funding_2_decay >= dec!(0), "Invalid funding 2 decay");
+        assert!(self.funding_pool_0 >= dec!(0) && self.funding_pool_0 <= dec!(1), "Invalid funding pool 0");
+        assert!(self.funding_pool_1 >= dec!(0) && self.funding_pool_1 <= dec!(2), "Invalid funding pool 1");
         assert!(self.funding_share >= dec!(0) && self.funding_share <= dec!(0.1), "Invalid funding share");
         assert!(self.fee_0 >= dec!(0) && self.fee_0 <= dec!(0.015), "Invalid fee 0");
-        assert!(self.fee_1 >= dec!(0) && self.fee_1 <= dec!(0.0000002), "Invalid fee 1");
+        assert!(self.fee_1 >= dec!(0) && self.fee_1 <= dec!(0.000001), "Invalid fee 1");
     }
 
     pub fn compress(&self) -> PairConfigCompressed {
@@ -281,6 +286,7 @@ impl PairConfig {
             funding_1: DFloat16::from(self.funding_1),
             funding_2: DFloat16::from(self.funding_2),
             funding_2_delta: DFloat16::from(self.funding_2_delta),
+            funding_2_decay: DFloat16::from(self.funding_2_decay),
             funding_pool_0: DFloat16::from(self.funding_pool_0),
             funding_pool_1: DFloat16::from(self.funding_pool_1),
             funding_share: DFloat16::from(self.funding_share),
@@ -303,6 +309,7 @@ impl PairConfigCompressed {
             funding_1: self.funding_1.into(),
             funding_2: self.funding_2.into(),
             funding_2_delta: self.funding_2_delta.into(),
+            funding_2_decay: self.funding_2_decay.into(),
             funding_pool_0: self.funding_pool_0.into(),
             funding_pool_1: self.funding_pool_1.into(),
             funding_share: self.funding_share.into(),
