@@ -65,15 +65,15 @@ async def main():
                     ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['xrd']))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("XRD/USD"), # pair_id
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.8')), # discount
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.90')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')), # margin
                     ])
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(btc_resource))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # pair_id
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.9')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.95')), # discount
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
                     ])
                 ]),
@@ -81,7 +81,7 @@ async def main():
                     ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(eth_resource))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("ETH/USD"), # pair_id
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.9')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.95')), # discount
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
                     ])
                 ])
