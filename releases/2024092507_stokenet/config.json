@@ -33,7 +33,5 @@
     "PERMISSION_REGISTRY_PACKAGE": "package_tdx_2_1p4vtaheds6whrehxa7wutudlr3mchzs8hgh348p627vuyhyy5wt0yr",
     "PERMISSION_REGISTRY_COMPONENT": "component_tdx_2_1czktpgnrv5m02ymw0qjlt80pn528ggrrfu2w8q3ap0psfplh0ungla",
     "ENV_REGISTRY_PACKAGE": "package_tdx_2_1p49l6u0n6yalrrfmlz9angzmrssc4a0d66nkjmfvmftwup60c3ewcj",
-    "ENV_REGISTRY_COMPONENT": "component_tdx_2_1cpcs56m8mhlrz4c3xw2tkfdkzet5whzlh8e8aw3pg8vkse8wx0rr0e",
-    "EXCHANGE_PACKAGE": "package_tdx_2_1p4d2zt2q6szsz8xvh5hy2x5a07mz0dym4aukknjzhprn8vc4aupwuj",
-    "EXCHANGE_COMPONENT": "component_tdx_2_1cppwdp3npqugxnn2c069249k7g348jepdmm4ydjlyddupftm2m66wt"
+    "ENV_REGISTRY_COMPONENT": "component_tdx_2_1cpcs56m8mhlrz4c3xw2tkfdkzet5whzlh8e8aw3pg8vkse8wx0rr0e"
 }
