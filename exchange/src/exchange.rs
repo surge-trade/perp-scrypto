@@ -1019,10 +1019,9 @@ mod exchange_mod {
         ) {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account);
+                account.verify_level_3_auth();
 
                 if let Some(fee_oath) = fee_oath {
-                    account.verify_level_3_auth();
-
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
