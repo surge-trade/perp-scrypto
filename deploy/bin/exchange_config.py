@@ -53,10 +53,9 @@ async def main():
             'update_exchange_config',
             [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.I64_VALUE(5), # max_price_age_seconds
-                    ret.ManifestBuilderValue.U16_VALUE(20), # positions_max
+                    ret.ManifestBuilderValue.U16_VALUE(30), # positions_max
                     ret.ManifestBuilderValue.U16_VALUE(5), # collaterals_max
-                    ret.ManifestBuilderValue.U16_VALUE(60), # active_requests_max
+                    ret.ManifestBuilderValue.U16_VALUE(100), # active_requests_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.15')), # skew_ratio_cap
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.2')), # adl_offset
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.07')), # adl_a
