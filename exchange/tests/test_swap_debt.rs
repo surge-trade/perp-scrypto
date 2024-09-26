@@ -10,6 +10,7 @@ fn test_swap_debt_more_than_debt() {
 
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -134,6 +135,7 @@ fn test_swap_debt_less_than_debt() {
 
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -259,11 +261,13 @@ fn test_swap_debt_more_than_token() {
 
     let btc_collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
     let xrd_collateral_config = CollateralConfig {
         pair_id: "XRD/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -405,6 +409,7 @@ fn test_swap_debt_no_debt() {
 
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -458,6 +463,7 @@ fn test_swap_debt_invalid_token() {
 
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -562,6 +568,7 @@ fn test_swap_debt_invalid_payment() {
 
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };

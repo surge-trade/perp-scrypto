@@ -444,6 +444,7 @@ fn test_margin_order_tp_sl_min_trade_size_not_met_long() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
+        price_age_max: 5,
         oi_max: dec!(2),
         trade_size_min: dec!(0.000001),
         update_price_delta_ratio: dec!(0.005),
@@ -490,6 +491,7 @@ fn test_margin_order_tp_sl_min_trade_size_not_met_short() {
 
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
+        price_age_max: 5,
         oi_max: dec!(2),
         trade_size_min: dec!(0.000001),
         update_price_delta_ratio: dec!(0.005),

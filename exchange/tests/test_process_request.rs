@@ -192,7 +192,6 @@ fn test_process_request_at_submission() {
 #[test]
 fn test_process_request_not_active() {
     let mut interface = get_setup();
-    let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
 
     let pair_config = default_pair_config("BTC/USD".into());
@@ -227,7 +226,7 @@ fn test_process_request_not_active() {
         STATUS_ACTIVE,
     ).expect_commit_success();
 
-    let time_3 = interface.increment_ledger_time(exchange_config.max_price_age_seconds + 1 as i64);
+    let time_3 = interface.increment_ledger_time(pair_config.price_age_max + 1 as i64);
     interface.process_request(
         margin_account_component,
         0, 
@@ -256,7 +255,6 @@ fn test_process_request_not_active() {
 #[test]
 fn test_process_request_price_age_too_old() {
     let mut interface = get_setup();
-    let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
 
     let pair_config = default_pair_config("BTC/USD".into());
@@ -291,7 +289,7 @@ fn test_process_request_price_age_too_old() {
         STATUS_ACTIVE,
     ).expect_commit_success();
 
-    let time_3 = interface.increment_ledger_time(exchange_config.max_price_age_seconds + 1 as i64);
+    let time_3 = interface.increment_ledger_time(pair_config.price_age_max + 1 as i64);
     interface.process_request(
         margin_account_component,
         0, 
@@ -299,7 +297,7 @@ fn test_process_request_price_age_too_old() {
             Price {
                 pair: pair_id_2.into(),
                 quote: dec!(60000),
-                timestamp: time_3.add_seconds(-exchange_config.max_price_age_seconds as i64).unwrap(),
+                timestamp: time_3.add_seconds(-pair_config.price_age_max as i64).unwrap(),
             }
         ])
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_PRICE_TOO_OLD));
@@ -308,7 +306,6 @@ fn test_process_request_price_age_too_old() {
 #[test]
 fn test_process_request_no_fresh_price() {
     let mut interface = get_setup();
-    let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
 
     let pair_config = default_pair_config("BTC/USD".into());
@@ -373,7 +370,7 @@ fn test_process_request_no_fresh_price() {
         STATUS_ACTIVE,
     ).expect_commit_success();
 
-    let _time_5 = interface.increment_ledger_time(exchange_config.max_price_age_seconds + 1 as i64);
+    let _time_5 = interface.increment_ledger_time(pair_config.price_age_max + 1 as i64);
     interface.process_request(
         margin_account_component,
         1, 
@@ -389,6 +386,7 @@ fn test_process_request_before_valid_requests_start() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };

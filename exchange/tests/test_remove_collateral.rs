@@ -11,6 +11,7 @@ fn test_remove_collateral_base() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),
@@ -68,6 +69,7 @@ fn test_remove_collateral_other() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),
@@ -127,6 +129,7 @@ fn test_remove_collateral_base_too_much() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),
@@ -174,6 +177,7 @@ fn test_remove_collateral_other_too_much() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),
@@ -222,6 +226,7 @@ fn test_remove_collateral_protected_target_account() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),
@@ -277,6 +282,7 @@ fn test_remove_collateral_protected_target_account_with_authorized_depositor() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),
@@ -339,6 +345,7 @@ fn test_remove_collateral_insufficient_margin() {
     interface.update_collateral_configs(vec![
         (btc_resource, CollateralConfig {
             pair_id: "BTC/USD".to_string(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         }),

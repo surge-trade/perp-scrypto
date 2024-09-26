@@ -881,7 +881,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._add_collateral(&config, &mut pool, &mut account, tokens);
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
@@ -921,7 +921,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
@@ -956,7 +956,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
@@ -991,7 +991,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
@@ -1025,7 +1025,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._add_collateral(&config, &mut pool, &mut account, tokens);
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
@@ -1060,7 +1060,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                     config
@@ -1112,7 +1112,7 @@ mod exchange_mod {
                     pair_ids.insert(pair_id.clone());
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                     config
@@ -1181,7 +1181,7 @@ mod exchange_mod {
                     pair_ids.insert(pair_id.clone());
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                     config
@@ -1293,7 +1293,7 @@ mod exchange_mod {
                     let pair_ids = account.position_ids();
                     let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                     let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, Instant::new(0), None);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
 
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
@@ -1323,9 +1323,7 @@ mod exchange_mod {
 
                 if !expired {
                     let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-
-                    let max_age = self._max_age(&config);
-                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, max_age, price_updates);
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds(&config, pair_ids.clone()), price_updates);
 
                     match request {
                         Request::RemoveCollateral(request) => {
@@ -1357,9 +1355,7 @@ mod exchange_mod {
                 let mut account = VirtualMarginAccount::new(account);
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), HashSet::new());
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), HashSet::new());
-                
-                let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashSet::new(), max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), HashMap::new(), price_updates);
 
                 let (token, remainder) = self._swap_debt(&config, &mut pool, &mut account, &oracle, &resource, payment);
     
@@ -1381,9 +1377,7 @@ mod exchange_mod {
                 let pair_ids = account.position_ids();
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
-
-                let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, max_age, price_updates);
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds(&config, pair_ids.clone()), price_updates);
 
                 let tokens = self._liquidate(&config, &mut pool, &mut account, &oracle, payment);
 
@@ -1408,8 +1402,8 @@ mod exchange_mod {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
-                let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids, max_age, price_updates);
+                let pair_feeds = self._pair_feeds(&config, pair_ids.clone());
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_feeds, price_updates);
 
                 self._auto_deleverage(&config, &mut pool, &mut account, &oracle, &pair_id);
 
@@ -1431,8 +1425,8 @@ mod exchange_mod {
                 let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
 
-                let max_age = self._max_age(&config);
-                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_ids.clone(), max_age, price_updates);
+                let pair_feeds = self._pair_feeds(&config, pair_ids.clone());
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), pair_feeds, price_updates);
 
                 let rewarded: Vec<bool> = pair_ids.iter().map(|pair_id| {
                     self._update_pair(&config, &mut pool, &oracle, pair_id)
@@ -1449,19 +1443,24 @@ mod exchange_mod {
 
         // --- INTERNAL METHODS ---
 
-        fn _max_age(
+        fn _pair_feeds(
             &self,
             config: &VirtualConfig,
-        ) -> Instant {
-            let current_time = Clock::current_time_rounded_to_seconds();
-            current_time.add_seconds(-(config.exchange_config().max_price_age_seconds)).expect(ERROR_ARITHMETIC)
+            pair_ids: HashSet<PairId>,
+        ) -> HashMap<PairId, i64> {
+            pair_ids.into_iter().map(|pair_id| {
+                let pair_config = config.pair_config(&pair_id);
+                (pair_id, pair_config.price_age_max)
+            }).collect()
         }
 
-        fn _collateral_feeds(
+        fn _pair_feeds_no_max_age(
             &self,
-            config: &VirtualConfig,
-        ) -> HashMap<ResourceAddress, PairId> {
-            config.collateral_feeds()
+            pair_ids: HashSet<PairId>,
+        ) -> HashMap<PairId, i64> {
+            pair_ids.into_iter().map(|pair_id| {
+                (pair_id, i64::MAX)
+            }).collect()
         }
 
         fn _pool_value(
