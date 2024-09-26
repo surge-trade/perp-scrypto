@@ -40,6 +40,7 @@ fn test_add_collateral_other_asset() {
         btc_resource,
         CollateralConfig {
             pair_id: "BTC/USD".into(),
+            price_age_max: 5,
             discount: dec!(0.95),
             margin: dec!(0.01),
         }
@@ -93,6 +94,7 @@ fn test_add_collateral_exceed_collaterals_max() {
             token_resource_1,
             CollateralConfig {
                 pair_id: "TEST/USD".into(),
+                price_age_max: 5,
                 discount: dec!(0.95),
                 margin: dec!(0.01),
             }
@@ -107,6 +109,7 @@ fn test_add_collateral_exceed_collaterals_max() {
         token_resource_2,
         CollateralConfig {
             pair_id: "TEST/USD".into(),
+            price_age_max: 5,
             discount: dec!(0.95),
             margin: dec!(0.01),
         }

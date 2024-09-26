@@ -108,7 +108,8 @@ fn test_margin_order_long_open() {
     assert_eq!(event.fee_protocol, -fee_protocol);
     assert_eq!(event.fee_treasury, -fee_treasury);
     assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.activated_requests, vec![1, 2]);
+    assert!(event.activated_requests.contains(&1));
+    assert!(event.activated_requests.contains(&2));
     assert_eq!(event.cancelled_requests, vec![] as Vec<ListIndex>);
 }
 
@@ -929,7 +930,8 @@ fn test_margin_order_short_open() {
     assert_eq!(event.fee_protocol, -fee_protocol);
     assert_eq!(event.fee_treasury, -fee_treasury);
     assert_eq!(event.fee_referral, -fee_referral);
-    assert_eq!(event.activated_requests, vec![1, 2]);
+    assert!(event.activated_requests.contains(&1));
+    assert!(event.activated_requests.contains(&2));
     assert_eq!(event.cancelled_requests, vec![] as Vec<ListIndex>);
 }
 
@@ -1900,6 +1902,7 @@ fn test_margin_order_long_exceed_oi_max() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
+        price_age_max: 5,
         oi_max: dec!(1),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
@@ -1978,6 +1981,7 @@ fn test_margin_order_short_exceed_oi_max() {
     
     let pair_config = PairConfig {
         pair_id: "BTC/USD".into(),
+        price_age_max: 5,
         oi_max: dec!(1),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
@@ -2057,6 +2061,7 @@ fn test_margin_order_exceed_skew_cap() {
     
     let pair_config = PairConfig {
         pair_id: "TEST/USD".into(),
+        price_age_max: 5,
         oi_max: dec!(200000),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),

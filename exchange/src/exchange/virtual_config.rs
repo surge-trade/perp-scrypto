@@ -40,7 +40,7 @@ impl VirtualConfig {
         &self.collateral_configs
     }
 
-    pub fn collateral_feeds(&self) -> HashMap<ResourceAddress, PairId> {
-        self.collateral_configs.iter().map(|(resource, config)| (*resource, config.pair_id.clone())).collect()
+    pub fn collateral_feeds(&self) -> HashMap<ResourceAddress, (PairId, i64)> {
+        self.collateral_configs.iter().map(|(resource, config)| (*resource, (config.pair_id.clone(), config.price_age_max))).collect()
     }
 }

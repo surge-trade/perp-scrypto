@@ -27,8 +27,6 @@ impl ConfigInfoCompressed {
 
 #[derive(ScryptoSbor, ManifestSbor, Clone, Debug)]
 pub struct ExchangeConfig {
-    /// Maximum allowed age of the price in seconds
-    pub max_price_age_seconds: i64,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
     /// Maximum allowed number of collaterals per account
@@ -63,8 +61,6 @@ pub struct ExchangeConfig {
 
 #[derive(ScryptoSbor, Clone)]
 pub struct ExchangeConfigCompressed {
-    /// Maximum allowed age of the price in seconds
-    pub max_price_age_seconds: u32,
     /// Maximum allowed number of positions per account
     pub positions_max: u16,
     /// Maximum allowed number of collaterals per account
@@ -100,7 +96,6 @@ pub struct ExchangeConfigCompressed {
 impl Default for ExchangeConfig {
     fn default() -> Self {
         Self {
-            max_price_age_seconds: 5,
             positions_max: 30,
             collaterals_max: 5,
             active_requests_max: 100,
@@ -122,7 +117,6 @@ impl Default for ExchangeConfig {
 
 impl ExchangeConfig {
     pub fn validate(&self) {
-        assert!(self.max_price_age_seconds > 0, "Invalid max price age");
         assert!(self.positions_max > 0, "Invalid max positions");
         assert!(self.skew_ratio_cap >= dec!(0), "Invalid skew ratio cap");
         assert!(self.adl_offset >= dec!(0), "Invalid adl offset");
@@ -140,7 +134,6 @@ impl ExchangeConfig {
 
     pub fn compress(&self) -> ExchangeConfigCompressed {
         ExchangeConfigCompressed {
-            max_price_age_seconds: self.max_price_age_seconds as u32,
             positions_max: self.positions_max,
             collaterals_max: self.collaterals_max,
             active_requests_max: self.active_requests_max,
@@ -163,7 +156,6 @@ impl ExchangeConfig {
 impl ExchangeConfigCompressed {
     pub fn decompress(&self) -> ExchangeConfig {
         ExchangeConfig {
-            max_price_age_seconds: self.max_price_age_seconds as i64,
             positions_max: self.positions_max,
             collaterals_max: self.collaterals_max,
             active_requests_max: self.active_requests_max,
@@ -187,6 +179,8 @@ impl ExchangeConfigCompressed {
 pub struct PairConfig {
     /// Price feed id
     pub pair_id: PairId,
+    /// Maximum allowed age of the price in seconds
+    pub price_age_max: i64,
     /// Maximum allowed combined oi for the pair
     pub oi_max: Decimal,
     /// Minimum trade size 
@@ -223,6 +217,8 @@ pub struct PairConfig {
 pub struct PairConfigCompressed {
     /// Price feed id
     pub pair_id: PairId,
+    /// Maximum allowed age of the price in seconds
+    pub price_age_max: u16,
     /// Maximum allowed combined oi for the pair
     pub oi_max: DFloat16,
     /// Minimum trade size 
@@ -257,6 +253,7 @@ pub struct PairConfigCompressed {
 
 impl PairConfig {
     pub fn validate(&self) {
+        assert!(self.price_age_max > 0, "Invalid max price age");
         assert!(self.oi_max >= dec!(0), "Invalid oi maximum");
         assert!(self.trade_size_min >= dec!(0), "Invalid minimum trade size");
         assert!(self.update_price_delta_ratio > dec!(0), "Invalid pair update price delta ratio");
@@ -277,6 +274,7 @@ impl PairConfig {
     pub fn compress(&self) -> PairConfigCompressed {
         PairConfigCompressed {
             pair_id: self.pair_id.to_owned(),
+            price_age_max: self.price_age_max as u16,
             oi_max: DFloat16::from(self.oi_max),
             trade_size_min: DFloat16::from(self.trade_size_min),
             update_price_delta_ratio: DFloat16::from(self.update_price_delta_ratio),
@@ -300,6 +298,7 @@ impl PairConfigCompressed {
     pub fn decompress(&self) -> PairConfig {
         PairConfig {
             pair_id: self.pair_id.to_owned(),
+            price_age_max: self.price_age_max as i64,
             oi_max: self.oi_max.into(),
             trade_size_min: self.trade_size_min.into(),
             update_price_delta_ratio: self.update_price_delta_ratio.into(),
@@ -323,6 +322,8 @@ impl PairConfigCompressed {
 pub struct CollateralConfig {
     /// Price feed id
     pub pair_id: PairId,
+    /// Maximum allowed age of the price in seconds
+    pub price_age_max: i64,
     /// Discount applied to the collateral
     pub discount: Decimal,
     /// Margin required for the collateral
@@ -333,6 +334,8 @@ pub struct CollateralConfig {
 pub struct CollateralConfigCompressed {
     /// Price feed id
     pub pair_id: PairId,
+    /// Maximum allowed age of the price in seconds
+    pub price_age_max: u16,
     /// Discount applied to the collateral
     pub discount: DFloat16,
     /// Margin required for the collateral
@@ -341,13 +344,15 @@ pub struct CollateralConfigCompressed {
 
 impl CollateralConfig {
     pub fn validate(&self) {
-        assert!(self.discount >= dec!(0) && self.discount <= dec!(1), "Invalid discount");
+        assert!(self.price_age_max > 0, "Invalid max price age");
+        assert!(self.discount >= dec!(0.8) && self.discount <= dec!(1), "Invalid discount");
         assert!(self.margin >= dec!(0) && self.margin <= dec!(0.1), "Invalid margin");
     }
 
     pub fn compress(&self) -> CollateralConfigCompressed {
         CollateralConfigCompressed {
             pair_id: self.pair_id.to_owned(),
+            price_age_max: self.price_age_max as u16,
             discount: DFloat16::from(self.discount),
             margin: DFloat16::from(self.margin),
         }
@@ -358,6 +363,7 @@ impl CollateralConfigCompressed {
     pub fn decompress(&self) -> CollateralConfig {
         CollateralConfig {
             pair_id: self.pair_id.to_owned(),
+            price_age_max: self.price_age_max as i64,
             discount: self.discount.into(),
             margin: self.margin.into(),
         }

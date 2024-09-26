@@ -9,6 +9,7 @@ use exchange::*;
 pub fn default_pair_config(pair_id: PairId) -> PairConfig {
     PairConfig {
         pair_id,
+        price_age_max: 5,
         oi_max: dec!(1000000000),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),
@@ -30,6 +31,7 @@ pub fn default_pair_config(pair_id: PairId) -> PairConfig {
 pub fn pair_config_zero_fees_and_funding(pair_id: PairId) -> PairConfig {
     PairConfig {
         pair_id,
+        price_age_max: 5,
         oi_max: dec!(1000000000),
         trade_size_min: dec!(0),
         update_price_delta_ratio: dec!(0.005),

@@ -12,6 +12,7 @@ fn test_liquidate_long() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -171,6 +172,7 @@ fn test_liquidate_short() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -330,6 +332,7 @@ fn test_liquidate_pool_loss() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -497,6 +500,7 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
         let pair_id = format!("TEST{}/USD", i);
         let collateral_config = CollateralConfig {
             pair_id: pair_id.clone(),
+            price_age_max: 5,
             discount: dec!(0.90),
             margin: dec!(0.01),
         };
@@ -508,6 +512,7 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
         let pair_id = format!("TEST{}/USD", i);
         let pair_config = PairConfig {
             pair_id: pair_id.clone(),
+            price_age_max: 5,
             oi_max: dec!(200000),
             trade_size_min: dec!(0),
             update_price_delta_ratio: dec!(0.005),
@@ -707,6 +712,7 @@ fn test_liquidate_invalid_payment_token() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -797,6 +803,7 @@ fn test_liquidate_sufficient_margin() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
@@ -887,6 +894,7 @@ fn test_liquidate_insufficient_payment() {
     
     let collateral_config = CollateralConfig {
         pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
         discount: dec!(0.90),
         margin: dec!(0.01),
     };
