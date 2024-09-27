@@ -67,31 +67,38 @@ def parse_request(elem):
         size = float(request_inner[1]['value'])
         reduce_only = bool(request_inner[2]['value'])
         limit_variant = int(request_inner[3]['variant_id'])
-        if limit_variant == 0 or limit_variant == 1:
-            limit_price = float(request_inner[3]['fields'][0]['value'])
-        else:
+        if limit_variant == 0:
             limit_price = None
+        else:
+            limit_price = float(request_inner[3]['fields'][0]['value'])
+        slippage_variant = int(request_inner[4]['variant_id'])
+        if slippage_variant == 0:
+            limit_slippage = None
+        elif slippage_variant == 1:
+            limit_slippage = request_inner[4]['fields'][0]['value'] + '%' # percent value
+        else:
+            limit_slippage = request_inner[4]['fields'][0]['value'] # usd value
 
         activate_requests = []
-        for i in request_inner[4]['elements']:
+        for i in request_inner[5]['elements']:
             activate_requests.append(i['value'])
 
         cancel_requests = []
-        for i in request_inner[5]['elements']:
+        for i in request_inner[6]['elements']:
             cancel_requests.append(i['value'])
 
-        if limit_variant == 0 and size > 0:
-            type = 'Stop Long'
-        elif limit_variant == 0 and size <= 0:
-            type = 'Limit Short'
-        elif limit_variant == 1 and size >= 0:
-            type = 'Limit Long'
-        elif limit_variant == 1 and size < 0:
-            type = 'Stop Short'    
-        elif limit_variant == 2 and size >= 0:
+        if limit_variant == 0 and size >= 0:
             type = 'Market Long'
-        elif limit_variant == 2 and size < 0:
+        elif limit_variant == 0 and size < 0:
             type = 'Market Short'
+        elif limit_variant == 1 and size > 0:
+            type = 'Stop Long'
+        elif limit_variant == 1 and size <= 0:
+            type = 'Limit Short'
+        elif limit_variant == 2 and size >= 0:
+            type = 'Limit Long'
+        elif limit_variant == 2 and size < 0:
+            type = 'Stop Short'    
         else:
             type = 'Unknown'
 
@@ -100,6 +107,7 @@ def parse_request(elem):
             'size': size,
             'reduce_only': reduce_only,
             'limit_price': limit_price,
+            'limit_slippage': limit_slippage,
             'activate_requests': activate_requests,
             'cancel_requests': cancel_requests,
         }

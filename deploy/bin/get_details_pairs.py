@@ -32,7 +32,7 @@ async def main():
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
         pair_ids = ['BTC/USD', 'ETH/USD', 'XRD/USD']
-        prices = await get_prices(session, pair_ids)
+        prices = {pair_id: 1 for pair_id in pair_ids}
 
         manifest = f'''
             CALL_METHOD
@@ -50,26 +50,32 @@ async def main():
         for elem in result['receipt']['output'][0]['programmatic_json']['elements']:
             elem = elem['fields']
             pair = elem[0]['value']
-            oi_long = float(elem[1]['value'])
-            oi_short = float(elem[2]['value'])
-            funding_2 = float(elem[3]['value'])
+            
+            pool_position = elem[1]['fields']
+            oi_long = float(pool_position[0]['value'])
+            oi_short = float(pool_position[1]['value'])
+            cost = float(pool_position[2]['value'])
+            funding_2 = float(pool_position[5]['value'])
 
-            pair_config = elem[4]['fields']
+            pair_config = elem[2]['fields']
             pair_config = {
                 'pair_id': pair_config[0]['value'],
-                'disabled': bool(pair_config[1]['value']),
-                'update_price_delta_ratio': float(pair_config[2]['value']),
-                'update_period_seconds': float(pair_config[3]['value']),
-                'margin': float(pair_config[4]['value']),
-                'margin_maintenance': float(pair_config[5]['value']),
-                'funding_1': float(pair_config[6]['value']),
-                'funding_2': float(pair_config[7]['value']),
-                'funding_2_delta': float(pair_config[8]['value']),
-                'funding_pool_0': float(pair_config[9]['value']),
-                'funding_pool_1': float(pair_config[10]['value']),
-                'funding_share': float(pair_config[11]['value']),
-                'fee_0': float(pair_config[12]['value']),
-                'fee_1': float(pair_config[13]['value']),
+                'price_max_age': int(pair_config[1]['value']),
+                'oi_max': float(pair_config[2]['value']),
+                'trade_size_min': float(pair_config[3]['value']),
+                'update_price_delta_ratio': float(pair_config[4]['value']),
+                'update_period_seconds': float(pair_config[5]['value']),
+                'margin': float(pair_config[6]['value']),
+                'margin_maintenance': float(pair_config[7]['value']),
+                'funding_1': float(pair_config[8]['value']),
+                'funding_2': float(pair_config[9]['value']),
+                'funding_2_delta': float(pair_config[10]['value']),
+                'funding_2_decay': float(pair_config[11]['value']),
+                'funding_pool_0': float(pair_config[12]['value']),
+                'funding_pool_1': float(pair_config[13]['value']),
+                'funding_share': float(pair_config[14]['value']),
+                'fee_0': float(pair_config[15]['value']),
+                'fee_1': float(pair_config[16]['value']),
             }
 
             price = prices[pair]
@@ -77,12 +83,15 @@ async def main():
             skew = (oi_long - oi_short) * price
 
             funding_1 = skew * pair_config['funding_1']
-            funding_2 = funding_2 * pair_config['funding_2']
-
+            funding_2_max = oi_long * price
+            funding_2_min = oi_short * price
+            funding_2 = min(max(funding_2, funding_2_min), funding_2_max) * pair_config['funding_2_delta']
+            
             if oi_long == 0 or oi_short == 0:
-                funding_share = 0
                 funding_long = 0
                 funding_short = 0
+                funding_share = 0
+                funding_pool = 0
             else:
                 funding = funding_1 + funding_2
                 if funding > 0:
@@ -96,20 +105,21 @@ async def main():
                     funding_long_index = -(funding_short - funding_share) / oi_long
                     funding_short_index = funding_short / oi_short
 
-            funding_pool_0 = oi_net * price * pair_config['funding_pool_0']
-            funding_pool_1 = abs(skew) * pair_config['funding_pool_1']
-            funding_pool = funding_pool_0 + funding_pool_1
-            funding_pool_index = funding_pool / oi_net
+                funding_pool_0 = oi_net * price * pair_config['funding_pool_0']
+                funding_pool_1 = abs(skew) * pair_config['funding_pool_1']
+                funding_pool = funding_pool_0 + funding_pool_1
+                funding_pool_index = funding_pool / oi_net
 
-            funding_long = (funding_long_index + funding_pool_index) / price
-            funding_short = (funding_short_index + funding_pool_index) / price
-            funding_pool += funding_share
+                funding_long = (funding_long_index + funding_pool_index) / price
+                funding_short = (funding_short_index + funding_pool_index) / price
+                funding_pool += funding_share
 
             pairs.append({
                 'pair': pair,
                 'oi_long': oi_long,
                 'oi_short': oi_short,
                 'oi_net': oi_net,
+                'cost': cost,
                 'skew': skew,
                 'funding_1': funding_1,
                 'funding_2': funding_2,
