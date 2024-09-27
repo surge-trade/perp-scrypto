@@ -25,8 +25,8 @@ def mint_owner_badge(builder: ManifestBuilder) -> ManifestBuilder:
             'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Glyph of Ownership'), True),
             'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('OWN'), True),
             'description': MetadataInitEntry(MetadataValue.STRING_VALUE('With power comes responsibility.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/owner_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
+            'icon_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade/images/owner_token.png'), True),
+            'info_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade'), True),
         },
         roles={},
     )
@@ -55,8 +55,6 @@ def mint_authority(builder: ManifestBuilder) -> ManifestBuilder:
             'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Authority'), True),
             'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('AUTH'), True),
             'description': MetadataInitEntry(MetadataValue.STRING_VALUE('A single attos holds exceptional power.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/authority_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
         },
         roles={},
     )
@@ -85,8 +83,6 @@ def mint_base_authority(builder: ManifestBuilder) -> ManifestBuilder:
             'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Base Authority'), True),
             'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('BAUTH'), True),
             'description': MetadataInitEntry(MetadataValue.STRING_VALUE('A single attos holds exceptional power.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/base_authority_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
         },
         roles={},
     )
@@ -118,11 +114,11 @@ def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resou
     )
     metadata = MetadataModuleConfig(
         init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge USD'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('sUSD'), True),
-            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge wrapped USD.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/susd_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge USD'), False),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('sUSD'), False),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge wrapped USD.'), False),
+            'icon_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade/images/susd_token.png'), False),
+            'info_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade'), False),
         },
         roles={},
     )
@@ -154,11 +150,11 @@ def create_lp(builder: ManifestBuilder, owner_role: OwnerRole, authority_resourc
     )
     metadata = MetadataModuleConfig(
         init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge LP'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SLP'), True),
-            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge liquidity pool LP token.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/surge_lp_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge LP'), False),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SLP'), False),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge liquidity pool LP token.'), False),
+            'icon_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade/images/surge_lp_token.png'), False),
+            'info_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade'), False),
         },
         roles={},
     )
@@ -383,11 +379,11 @@ def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole) -> M
     )
     metadata = MetadataModuleConfig(
         init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SRG'), True),
-            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge protocol utility token.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/surge_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge'), False),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SRG'), False),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge protocol utility token.'), False),
+            'icon_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade/images/surge_token.png'), False),
+            'info_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade'), False),
         },
         roles={},
     )
@@ -419,11 +415,11 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
     )
     metadata = MetadataModuleConfig(
         init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge Keeper Reward'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SKR'), True),
-            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge keeper reward token.'), True),
-            'icon_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade/images/surge_keeper_reward_token.png'), True),
-            'info_url': MetadataInitEntry(MetadataValue.STRING_VALUE('https://surge.trade'), True),
+            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge Keeper Reward'), False),
+            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('SKR'), False),
+            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('Surge keeper reward token.'), False),
+            'icon_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade/images/surge_keeper_reward_token.png'), False),
+            'info_url': MetadataInitEntry(MetadataValue.URL_VALUE('https://surge.trade'), False),
         },
         roles={},
     )
@@ -433,62 +429,6 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
         track_total_supply=True,
         divisibility=18,
         initial_supply=None,
-        resource_roles=resource_roles,
-        metadata=metadata,
-        address_reservation=None,
-    )
-
-def mint_test_btc(builder: ManifestBuilder) -> ManifestBuilder:
-    resource_roles = FungibleResourceRoles(
-        mint_roles=None,
-        burn_roles=None,
-        freeze_roles=None,
-        recall_roles=None,
-        withdraw_roles=None,
-        deposit_roles=None,
-    )
-    metadata: MetadataModuleConfig = MetadataModuleConfig(
-        init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('Bitcoin'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('BTC'), True),
-            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('The original cryptocurrency.'), True),
-        },
-        roles={},
-    )
-
-    return builder.create_fungible_resource_manager(
-        owner_role=OwnerRole.NONE(),
-        track_total_supply=True,
-        divisibility=18,
-        initial_supply=Decimal('21000000'),
-        resource_roles=resource_roles,
-        metadata=metadata,
-        address_reservation=None,
-    )
-
-def mint_test_usd(builder: ManifestBuilder) -> ManifestBuilder:
-    resource_roles = FungibleResourceRoles(
-        mint_roles=None,
-        burn_roles=None,
-        freeze_roles=None,
-        recall_roles=None,
-        withdraw_roles=None,
-        deposit_roles=None,
-    )
-    metadata: MetadataModuleConfig = MetadataModuleConfig(
-        init={
-            'name': MetadataInitEntry(MetadataValue.STRING_VALUE('USD'), True),
-            'symbol': MetadataInitEntry(MetadataValue.STRING_VALUE('USD'), True),
-            'description': MetadataInitEntry(MetadataValue.STRING_VALUE('The greatest tool of a powerful nation.'), True),
-        },
-        roles={},
-    )
-
-    return builder.create_fungible_resource_manager(
-        owner_role=OwnerRole.NONE(),
-        track_total_supply=True,
-        divisibility=18,
-        initial_supply=Decimal('1000000000'),
         resource_roles=resource_roles,
         metadata=metadata,
         address_reservation=None,
