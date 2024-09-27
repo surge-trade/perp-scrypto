@@ -35,5 +35,6 @@
     "ENV_REGISTRY_PACKAGE": "package_tdx_2_1pkx2pgsulrmhanrtaf2duxz4yr20vcn37j9mvcarpweyxgsfet2nka",
     "ENV_REGISTRY_COMPONENT": "component_tdx_2_1czhu53ek0md82s85sq89ghsqhywlg8sztaayzh8tllys6ykhfqu3nx",
     "EXCHANGE_PACKAGE": "package_tdx_2_1pk0htqc8l4lfjfers8yu88rjepsvs737vqz55wu59tk0q5mcpecrgq",
-    "EXCHANGE_COMPONENT": "component_tdx_2_1cpgea04u57gwfc39znna8mdx484m2r0al8tj9axcvxa6me9rxn7veu"
+    "EXCHANGE_COMPONENT": "component_tdx_2_1cpgea04u57gwfc39znna8mdx484m2r0al8tj9axcvxa6me9rxn7veu",
+    "ACCOUNT_COMPONENT": "component_tdx_2_1czyc5kx9xqvpnz7lrmdx400ggpv0pjvxlwd5r4zm6rzfyt3pdcfv4g"
 }
