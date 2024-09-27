@@ -46,15 +46,16 @@ async def main():
             'margin_order_request',
             [
                 ret.ManifestBuilderValue.ENUM_VALUE(0, []), # Fee oath
-                ret.ManifestBuilderValue.ENUM_VALUE(0, []), # Submission time
+                ret.ManifestBuilderValue.U64_VALUE(0), # Delay seconds
                 ret.ManifestBuilderValue.U64_VALUE(10000000000), # Expiry seconds
                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(account_component))), # Margin account
                 ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # Pair id
                 ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00010')), # Amount
                 ret.ManifestBuilderValue.BOOL_VALUE(False), # Reduce only
-                ret.ManifestBuilderValue.ENUM_VALUE(2, []), # Price limit
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Activate requests
-                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, []), # Cancel requests
+                ret.ManifestBuilderValue.ENUM_VALUE(0, []), # Price limit
+                ret.ManifestBuilderValue.ENUM_VALUE(0, []), # Slippage limit
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.ENUM_VALUE, []), # Activate requests
+                ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.ENUM_VALUE, []), # Cancel requests
                 ret.ManifestBuilderValue.U8_VALUE(1), # Status
             ]
         )
