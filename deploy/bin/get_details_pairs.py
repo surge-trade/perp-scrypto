@@ -31,15 +31,15 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
-        pair_ids = ['BTC/USD', 'ETH/USD', 'XRD/USD']
-        prices = {pair_id: 1 for pair_id in pair_ids}
+        pair_ids = ['BTC/USD']
+        prices = await get_prices(session, pair_ids)
 
         manifest = f'''
             CALL_METHOD
                 Address("{exchange_component}")
                 "get_pair_details"
                 Array<String>(
-                    "ETH/USD",
+                    "BTC/USD",
                 )
             ;
         '''
@@ -85,7 +85,7 @@ async def main():
             funding_1 = skew * pair_config['funding_1']
             funding_2_max = oi_long * price
             funding_2_min = oi_short * price
-            funding_2 = min(max(funding_2, funding_2_min), funding_2_max) * pair_config['funding_2_delta']
+            funding_2 = min(max(funding_2, funding_2_min), funding_2_max) * pair_config['funding_2']
             
             if oi_long == 0 or oi_short == 0:
                 funding_long = 0
@@ -123,9 +123,13 @@ async def main():
                 'skew': skew,
                 'funding_1': funding_1,
                 'funding_2': funding_2,
-                'funding_long': funding_long,
-                'funding_short': funding_short,
-                'funding_pool': funding_pool,
+                'funding_2_max': funding_2_max,
+                'funding_2_min': funding_2_min,
+                'funding_long_apr': funding_long,
+                'funding_long_24h': funding_long / 365,
+                'funding_short_apr': funding_short,
+                'funding_short_24h': funding_short / 365,
+                'funding_pool_24h': funding_pool / 365,
                 'pair_config': pair_config,
             })     
 
