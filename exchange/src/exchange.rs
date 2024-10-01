@@ -1,7 +1,7 @@
-mod errors;
-mod events;
-mod requests;
-mod structs;
+pub mod errors;
+pub mod events;
+pub mod requests;
+pub mod structs;
 mod virtual_config;
 mod virtual_margin_pool;
 mod virtual_margin_account;

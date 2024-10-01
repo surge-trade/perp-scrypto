@@ -1,3 +1,3 @@
-pub mod margin_account;
+mod margin_account;
 
 pub use margin_account::*;

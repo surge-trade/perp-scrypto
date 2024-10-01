@@ -1,14 +1,10 @@
-mod errors;
+pub mod errors;
+pub mod structs;
 
 use scrypto::prelude::*;
 use common::{ListIndex, List, _BASE_AUTHORITY_RESOURCE, _BASE_RESOURCE, TO_ZERO, TO_INFINITY};
 pub use self::errors::*;
-
-#[derive(ScryptoSbor)]
-pub struct Input {
-    pub vault: Vault,
-    pub wrappable: bool,
-}
+pub use self::structs::*;
 
 #[blueprint]
 #[types(

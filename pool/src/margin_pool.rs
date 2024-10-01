@@ -1,4 +1,4 @@
-mod structs;
+pub mod structs;
 
 use scrypto::prelude::*;
 use common::{PairId, _AUTHORITY_RESOURCE, _BASE_RESOURCE};

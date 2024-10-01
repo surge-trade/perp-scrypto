@@ -1,5 +1,5 @@
-mod errors;
-mod structs;
+pub mod errors;
+pub mod structs;
 
 use scrypto::prelude::*;
 use common::{ListIndex, Vaults, _AUTHORITY_RESOURCE, TO_ZERO, TO_INFINITY};

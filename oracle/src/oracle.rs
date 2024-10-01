@@ -1,15 +1,10 @@
-mod errors;
+pub mod errors;
+pub mod structs;
 
 use scrypto::prelude::*;
 use common::{PairId, ListIndex, _AUTHORITY_RESOURCE};
 pub use self::errors::*;
-
-#[derive(ScryptoSbor, Clone, Debug)]
-pub struct Price {
-    pub pair: String,
-    pub quote: Decimal,
-    pub timestamp: Instant,
-}
+pub use self::structs::*;
 
 #[blueprint]
 mod oracle_mod {

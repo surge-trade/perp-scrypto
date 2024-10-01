@@ -1,4 +1,4 @@
-mod errors;
+pub mod errors;
 
 use scrypto::prelude::*;
 use common::{_AUTHORITY_RESOURCE, TO_ZERO};
