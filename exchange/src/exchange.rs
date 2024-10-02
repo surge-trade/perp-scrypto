@@ -8,21 +8,21 @@ mod virtual_margin_account;
 mod virtual_oracle;
 
 use scrypto::prelude::*;
-use self::virtual_config::*;
-use self::virtual_margin_pool::*;
-use self::virtual_margin_account::*;
-use self::virtual_oracle::*;
-pub use common::*;
-pub use oracle::*;
-pub use config::*;
-pub use account::*;
-pub use pool::*;
-pub use referral_generator::*;
-pub use permission_registry::*;
+pub use ::common::*;
+pub use ::oracle::*;
+pub use ::config::*;
+pub use ::account::*;
+pub use ::pool::*;
+pub use ::referral_generator::*;
+pub use ::permission_registry::*;
 pub use self::errors::*;
 pub use self::events::*;
 pub use self::requests::*;
 pub use self::structs::*;
+use self::virtual_config::*;
+use self::virtual_margin_pool::*;
+use self::virtual_margin_account::*;
+use self::virtual_oracle::*;
 
 #[blueprint]
 #[events(

@@ -1,7 +1,7 @@
 use scrypto::prelude::*;
 use super::requests::*;
 use common::*;
-use config::*;
+use ::config::*;
 use account::*;
 use pool::*;
 use referral_generator::{ReferralData, ReferralAllocation};

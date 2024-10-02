@@ -1,3 +1,3 @@
-mod exchange;
+pub mod exchange;
 
 pub use exchange::*;

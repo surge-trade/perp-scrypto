@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use config::*;
+use ::config::*;
 use common::PairId;
 use super::errors::*;
 use super::exchange_mod::Config;

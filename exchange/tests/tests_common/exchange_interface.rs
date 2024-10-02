@@ -4,7 +4,7 @@ use scrypto_test::prelude::*;
 use super::*;
 
 use ::common::*;
-use exchange::*;
+use ::exchange::*;
 
 pub fn default_pair_config(pair_id: PairId) -> PairConfig {
     PairConfig {

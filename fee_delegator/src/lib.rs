@@ -1,3 +1,3 @@
-mod fee_delegator;
+pub mod fee_delegator;
 
 pub use fee_delegator::*;

@@ -1,3 +1,3 @@
-mod env_registry;
+pub mod env_registry;
 
 pub use env_registry::*;

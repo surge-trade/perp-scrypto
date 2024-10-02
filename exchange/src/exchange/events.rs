@@ -2,7 +2,7 @@ use scrypto::prelude::*;
 use account::KeeperRequest;
 use common::{PairId, ListIndex};
 use pool::PoolPosition;
-use config::*;
+use ::config::*;
 use super::requests::PriceLimit;
 
 #[derive(ScryptoSbor, ScryptoEvent, Clone, Debug)]
