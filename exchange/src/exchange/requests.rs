@@ -104,7 +104,6 @@ pub enum Request {
 
 impl Request {
     pub fn encode(&self) -> Vec<u8> {
-        // TODO: verify this is deterministic and will not change with different versions
         scrypto_encode(self).expect(ERROR_REQUEST_ENCODING)
     }
 

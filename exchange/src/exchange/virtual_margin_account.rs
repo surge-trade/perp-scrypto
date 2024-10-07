@@ -273,7 +273,7 @@ impl VirtualMarginAccount {
 
     pub fn try_set_keeper_requests_status(&mut self, indexes: Vec<ListIndex>, status: Status) -> Vec<ListIndex> {
         let status_phases = self._status_phases(status);
-        let keeper_requests = self.keeper_requests(indexes); // TODO: keeper_requests lite?
+        let keeper_requests = self.keeper_requests(indexes);
         let mut updated = vec![];
         for (index, keeper_request) in keeper_requests.into_iter() {
             if !status_phases.contains(&keeper_request.status) {
