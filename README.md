@@ -1,4 +1,5 @@
 # Surge
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Surge is a perpetual futures decentralized exchange. It uses an oracle price feed in combination with a USD liquidity pool to execute trades. Trades use a two-step process to avoid front running. First, the trader submits a request to the exchange, then a keeper executes the trade. All trades are settled in USD, which is labeled as the base token. Surge aims to provide highly efficient liquidity and good execution for the trader while ensuring a stable yield for liquidity providers. Since the pool is the counter-party for all trades, it is important to keep open interest between longs and shorts as balanced as possible. The difference between long and short open interest is referred to as the skew. In the ideal state where the combined open interest is high but the skew is zero, the pool is delta neutral and is assured to make a profit. The protocol seeks to maintain this state by funding and fee incentives.
 
