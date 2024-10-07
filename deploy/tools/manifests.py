@@ -365,9 +365,12 @@ CREATE_NON_FUNGIBLE_RESOURCE
 ;
 '''
 
-def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole) -> ManifestBuilder:
+def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole, mint_updater: AccessRule) -> ManifestBuilder:
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
-        mint_roles=None,
+        mint_roles=ResourceManagerRole(
+            role=AccessRule.deny_all(),
+            role_updater=mint_updater
+        ),
         burn_roles=ResourceManagerRole(
             role=AccessRule.allow_all(), 
             role_updater=None
