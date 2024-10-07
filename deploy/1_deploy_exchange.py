@@ -95,32 +95,34 @@ async def main():
         print('ACCOUNT:', account.as_str())
         balance = await gateway.get_xrd_balance(account)
         if balance < 10000:
-            builder = ret.ManifestBuilder()
-            builder = builder.call_method(
-                ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
-                'lock_fee',
-                [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100'))]
-            )
-            builder = builder.call_method(
-                ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
-                'free',
-                []
-            )
-            builder = deposit_all(builder, account)
+            if network_config['network_name'] == 'stokenet':
+                builder = ret.ManifestBuilder()
+                builder = builder.call_method(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
+                    'lock_fee',
+                    [ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100'))]
+                )
+                builder = builder.call_method(
+                    ret.ManifestBuilderAddress.STATIC(ret.Address(network_config['faucet'])),
+                    'free',
+                    []
+                )
+                builder = deposit_all(builder, account)
 
-            payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-            await gateway.submit_transaction(payload)
-
-        #     print('FUND ACCOUNT:', account.as_str())
-        #     qr = qrcode.QRCode()
-        #     qr.add_data(account.as_str())
-        #     f = io.StringIO()
-        #     qr.print_ascii(out=f)
-        #     f.seek(0)
-        #     print(f.read())
-        # while balance < 10000:
-        #     await asyncio.sleep(5)
-        #     balance = await gateway.get_xrd_balance(account)
+                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
+                await gateway.submit_transaction(payload)
+            else:
+                print('FUND ACCOUNT:', account.as_str())
+                qr = qrcode.QRCode()
+                qr.add_data(account.as_str())
+                f = io.StringIO()
+                qr.print_ascii(out=f)
+                f.seek(0)
+                print(f.read())
+            
+                while balance < 10000:
+                    await asyncio.sleep(5)
+                    balance = await gateway.get_xrd_balance(account)
 
         state_version = await gateway.get_state_version()
         print('STATE_VERSION:', state_version)
@@ -155,10 +157,11 @@ async def main():
             manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
                 [ret.ManifestBuilderValue.ENUM_VALUE(2, 
                     [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-                        [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-                            [ret.ManifestBuilderValue.ENUM_VALUE(1, 
-                                [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
-                            )]
+                        [ret.ManifestBuilderValue.ENUM_VALUE(1, 
+                            [   
+                                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('4')),
+                                ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))
+                            ]
                         )]
                     )]
                 )]
@@ -718,46 +721,6 @@ async def main():
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)
                 config_data['EXCHANGE_COMPONENT'] = addresses[0]
-            else:
-                exchange_component = config_data['EXCHANGE_COMPONENT']
-                
-                builder = ret.ManifestBuilder()
-                builder = lock_fee(builder, account, 100)
-                builder = builder.account_create_proof_of_amount(
-                    account,
-                    ret.Address(owner_resource),
-                    ret.Decimal('1')
-                )
-                builder = builder.call_method(
-                    ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-                    "withdraw_authority",
-                    []
-                )
-                builder = builder.take_all_from_worktop(
-                    ret.Address(authority_resource),
-                    ret.ManifestBuilderBucket("authority")
-                )
-                builder = builder.allocate_global_address(
-                    ret.Address(exchange_package),
-                    'Exchange',
-                    ret.ManifestBuilderAddressReservation('exchange_component_reservation'),
-                    ret.ManifestBuilderNamedAddress('exchange_component')
-                )
-                builder = builder.call_function(
-                    ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_package)),
-                    'Exchange',
-                    'new',
-                    [
-                        manifest_owner_role, 
-                        ret.ManifestBuilderValue.BUCKET_VALUE(ret.ManifestBuilderBucket("authority")),
-                        ret.ManifestBuilderValue.ENUM_VALUE(1, [ret.ManifestBuilderValue.ADDRESS_RESERVATION_VALUE(ret.ManifestBuilderAddressReservation('exchange_component_reservation'))]),
-                    ]
-                )
-
-                payload, intent = await gateway.build_transaction(builder, public_key, private_key)
-                await gateway.submit_transaction(payload)
-                addresses = await gateway.get_new_addresses(intent)
-                config_data['EXCHANGE_COMPONENT'] = addresses[0]
 
             exchange_component = config_data['EXCHANGE_COMPONENT']
             envs.append(('EXCHANGE_COMPONENT', exchange_component))
@@ -773,7 +736,7 @@ async def main():
                     Address("{account.as_str()}")
                     "create_proof_of_amount"
                     Address("{owner_resource}")
-                    Decimal("1")
+                    Decimal("4")
                 ;
                 CALL_METHOD
                     Address("{env_registry_component}")

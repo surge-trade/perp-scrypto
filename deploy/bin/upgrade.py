@@ -219,7 +219,7 @@ async def main():
         builder = builder.account_create_proof_of_amount(
             account,
             ret.Address(owner_resource),
-            ret.Decimal('1')
+            ret.Decimal('4')
         )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
@@ -268,7 +268,7 @@ async def main():
                 Address("{account.as_str()}")
                 "create_proof_of_amount"
                 Address("{owner_resource}")
-                Decimal("1")
+                Decimal("4")
             ;
             CALL_METHOD
                 Address("{env_registry_component}")

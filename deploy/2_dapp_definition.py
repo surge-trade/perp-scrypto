@@ -91,13 +91,7 @@ async def main():
                 Address("{account.as_str()}")
                 "create_proof_of_amount"
                 Address("{owner_resource}")
-                Decimal("1")
-            ;
-            CALL_METHOD
-                Address("{account.as_str()}")
-                "create_proof_of_amount"
-                Address("{faucet_owner_resource}")
-                Decimal("1")
+                Decimal("4")
             ;
             SET_METADATA
                 Address("{dapp_definition}")
@@ -134,6 +128,15 @@ async def main():
                 )
             ;
         '''
+        if network_config['network_name'] != 'stokenet':
+            manifest += f'''
+                CALL_METHOD
+                    Address("{account.as_str()}")
+                    "create_proof_of_amount"
+                    Address("{faucet_owner_resource}")
+                    Decimal("1")
+                ;
+            '''
         for entity in entities:
             if 'component' in entity or 'package' in entity:
                 manifest += f'''

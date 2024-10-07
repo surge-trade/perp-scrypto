@@ -52,7 +52,7 @@ async def main():
                 Address("{account.as_str()}")
                 "create_proof_of_amount"
                 Address("{owner_resource}")
-                Decimal("1")
+                Decimal("4")
             ;
             CALL_METHOD
                 Address("{env_registry_component}")
