@@ -120,7 +120,7 @@ async def main():
                 f.seek(0)
                 print(f.read())
             
-                while balance < 10000:
+                while balance < 3000:
                     await asyncio.sleep(5)
                     balance = await gateway.get_xrd_balance(account)
 
