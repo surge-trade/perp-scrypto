@@ -28,5 +28,6 @@
     "ENV_REGISTRY_PACKAGE": "package_rdx1pktlm8s2rtw368u3kusx94nzmduj7c4tujh45qwqz2g74x9q43g0dj",
     "ENV_REGISTRY_COMPONENT": "component_rdx1cr7gxwrvkjfh74f6w5hws7njt9z6ng5uqwdp23x972gx94lfg7cwn4",
     "EXCHANGE_PACKAGE": "package_rdx1php8qkjamupygmgnwettftrvevmx8t5k8twp8tmqkpxln2slxvx47q",
-    "EXCHANGE_COMPONENT": "component_rdx1cqrpn76ra5qf9xz5374mqduaw6r55dwzqeum85lm3ul2ct3eu2xc4n"
+    "EXCHANGE_COMPONENT": "component_rdx1cqrpn76ra5qf9xz5374mqduaw6r55dwzqeum85lm3ul2ct3eu2xc4n",
+    "USDC_RESOURCE": "resource_rdx1t4upr78guuapv5ept7d7ptekk9mqhy605zgms33mcszen8l9fac8vf"
 }
