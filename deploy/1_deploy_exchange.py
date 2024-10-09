@@ -69,7 +69,7 @@ async def main():
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         # oracle_key_0 = 'b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640'
-        oracle_key_1 = 'b60f1610a172790598c1b4cd4a4dc34daa4e972bb7a9fa77245357eab78471c15927a28af8779e021236ab68ff0c8bd3'
+        oracle_key_1 = 'afa0c61c68fd0f7dd8f389daf6f77b6b246155fe0ba02a0c9545798ba2572a184a9f705d77c51937e513b10e9a743a9f'
 
         clean('common')
         clean('faucet')
