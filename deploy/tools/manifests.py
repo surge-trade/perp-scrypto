@@ -101,11 +101,11 @@ def create_base(builder: ManifestBuilder, owner_role: OwnerRole, authority_resou
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=ResourceManagerRole(
             role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         burn_roles=ResourceManagerRole(
             role=AccessRule.allow_all(), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         freeze_roles=None,
         recall_roles=None,
@@ -137,11 +137,11 @@ def create_lp(builder: ManifestBuilder, owner_role: OwnerRole, authority_resourc
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=ResourceManagerRole(
             role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         burn_roles=ResourceManagerRole(
             role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         freeze_roles=None,
         recall_roles=None,
@@ -365,15 +365,15 @@ CREATE_NON_FUNGIBLE_RESOURCE
 ;
 '''
 
-def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole, mint_updater: AccessRule) -> ManifestBuilder:
+def mint_protocol_resource(builder: ManifestBuilder, owner_role: OwnerRole) -> ManifestBuilder:
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=ResourceManagerRole(
             role=AccessRule.deny_all(),
-            role_updater=mint_updater
+            role_updater=None
         ),
         burn_roles=ResourceManagerRole(
             role=AccessRule.allow_all(), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         freeze_roles=None,
         recall_roles=None,
@@ -405,11 +405,11 @@ def create_keeper_reward(builder: ManifestBuilder, owner_role: OwnerRole, author
     resource_roles: FungibleResourceRoles = FungibleResourceRoles(
         mint_roles=ResourceManagerRole(
             role=AccessRule.require(ResourceOrNonFungible.RESOURCE(Address(authority_resource))), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         burn_roles=ResourceManagerRole(
             role=AccessRule.allow_all(), 
-            role_updater=None
+            role_updater=AccessRule.deny_all()
         ),
         freeze_roles=None,
         recall_roles=None,

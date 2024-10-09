@@ -235,7 +235,7 @@ async def main():
             if 'PROTOCOL_RESOURCE' not in config_data:
                 builder = ret.ManifestBuilder()
                 builder = lock_fee(builder, account, 100)
-                builder = mint_protocol_resource(builder, owner_role, ret.AccessRule.require_amount(ret.Decimal('6'), ret.Address(owner_resource)))
+                builder = mint_protocol_resource(builder, owner_role)
                 builder = deposit_all(builder, account)
                 payload, intent = await gateway.build_transaction(builder, public_key, private_key)
                 await gateway.submit_transaction(payload)
@@ -817,6 +817,7 @@ async def main():
             print(f'BASE_RESOURCE={base_resource}')
             print(f'LP_RESOURCE={lp_resource}')
             print(f'REFERRAL_RESOURCE={referral_resource}')
+            print(f'PROTOCOL_RESOURCE={protocol_resource}')
             print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
             print(f'FEE_OATH_RESOURCE={fee_oath_resource}')
 
