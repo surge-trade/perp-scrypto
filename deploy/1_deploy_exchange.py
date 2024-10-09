@@ -154,7 +154,7 @@ async def main():
             print('OWNER_RESOURCE:', owner_resource)
 
             owner_amount = '4'
-            owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require_amount(ret.Decimal(owner_amount), ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
+            owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require_amount(ret.Decimal(owner_amount), ret.Address(owner_resource)))
             manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
                 [ret.ManifestBuilderValue.ENUM_VALUE(2, 
                     [ret.ManifestBuilderValue.ENUM_VALUE(0, 
