@@ -477,6 +477,9 @@ mod exchange_mod {
 
         pub fn mint_referral(
             &self,
+            name: String,
+            description: String,
+            key_image_url: Url,
             fee_referral: Decimal,
             fee_rebate: Decimal,
             max_referrals: u64,
@@ -493,6 +496,9 @@ mod exchange_mod {
                 );
 
                 let referral_data = ReferralData {
+                    name,
+                    description,
+                    key_image_url,
                     fee_referral,
                     fee_rebate,
                     referrals: 0,
@@ -508,6 +514,9 @@ mod exchange_mod {
 
         pub fn mint_referral_with_allocation(
             &self,
+            name: String,
+            description: String,
+            key_image_url: Url,
             fee_referral: Decimal,
             fee_rebate: Decimal,
             max_referrals: u64,
@@ -515,7 +524,7 @@ mod exchange_mod {
             allocation_claims: Vec<(ResourceAddress, Decimal)>,
             allocation_count: u64,
         ) -> (Bucket, Vec<Bucket>, ListIndex) {
-            let referral = self.mint_referral(fee_referral, fee_rebate, max_referrals);
+            let referral = self.mint_referral(name, description, key_image_url, fee_referral, fee_rebate, max_referrals);
             let referral_id = referral.as_non_fungible().non_fungible_local_id();
 
             let (remainder_tokens, allocation_index) = self.add_referral_allocation(referral_id, allocation_tokens, allocation_claims, allocation_count);
