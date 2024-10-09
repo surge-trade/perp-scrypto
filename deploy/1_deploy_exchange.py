@@ -153,13 +153,14 @@ async def main():
             envs.append(('OWNER_RESOURCE', owner_resource))
             print('OWNER_RESOURCE:', owner_resource)
 
-            owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
+            owner_amount = '4'
+            owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require_amount(ret.Decimal(owner_amount), ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
             manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
                 [ret.ManifestBuilderValue.ENUM_VALUE(2, 
                     [ret.ManifestBuilderValue.ENUM_VALUE(0, 
                         [ret.ManifestBuilderValue.ENUM_VALUE(1, 
                             [   
-                                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('4')),
+                                ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal(owner_amount)),
                                 ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))
                             ]
                         )]
@@ -222,7 +223,7 @@ async def main():
             print('LP_RESOURCE:', lp_resource)
 
             if 'REFERRAL_RESOURCE' not in config_data:
-                manifest = create_referral_str(account, owner_resource, authority_resource)
+                manifest = create_referral_str(account, owner_amount, owner_resource, authority_resource)
                 payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
                 await gateway.submit_transaction(payload)
                 addresses = await gateway.get_new_addresses(intent)

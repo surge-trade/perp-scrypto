@@ -169,7 +169,7 @@ def create_lp(builder: ManifestBuilder, owner_role: OwnerRole, authority_resourc
         address_reservation=None,
     )
 
-def create_referral_str(account: Address, owner_resource: str, authority_resource: str) -> str:
+def create_referral_str(account: Address, owner_amount: str, owner_resource: str, authority_resource: str) -> str:
     return f'''
 CALL_METHOD
     Address("{account.as_str()}")
@@ -180,10 +180,9 @@ CREATE_NON_FUNGIBLE_RESOURCE
     Enum<2u8>(
         Enum<2u8>(
             Enum<0u8>(
-                Enum<0u8>(
-                    Enum<1u8>(
-                        Address("{owner_resource}")
-                    )
+                Enum<1u8>(
+                    Decimal("{owner_amount}"),
+                    Address("{owner_resource}")
                 )
             )
         )
