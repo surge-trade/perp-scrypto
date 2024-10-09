@@ -8,10 +8,6 @@ from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
-
-path = dirname(dirname(realpath(__file__)))
-sys.path.append(path)
-chdir(path)
 load_dotenv()
 
 from tools.gateway import Gateway

@@ -8,10 +8,6 @@ from os import makedirs, chdir
 from aiohttp import ClientSession, TCPConnector
 from subprocess import run
 from dotenv import load_dotenv
-
-path = dirname(dirname(realpath(__file__)))
-sys.path.append(path)
-chdir(path)
 load_dotenv()
 
 from tools.gateway import Gateway
@@ -19,6 +15,9 @@ from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all
 
 async def main():
+    path = dirname(realpath(__file__))
+    chdir(path)
+
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
         network_config = await gateway.network_configuration()
@@ -60,13 +59,13 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.2')), # adl_offset
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.07')), # adl_a
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.07')), # adl_b
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # fee_liquidity_add
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # fee_liquidity_add
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')), # fee_liquidity_remove
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.22')), # fee_share_protocol
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.08')), # fee_share_treasury
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.2')), # fee_share_protocol
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # fee_share_treasury
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # fee_share_referral
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # fee_max
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('10000')), # protocol_burn_amount
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1000000')), # protocol_burn_amount
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # reward_keeper
                 ])
             ]
