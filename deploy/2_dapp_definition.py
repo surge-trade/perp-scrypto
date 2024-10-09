@@ -19,6 +19,9 @@ from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all
 
 async def main():
+    path = dirname(realpath(__file__))
+    chdir(path)
+
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
         network_config = await gateway.network_configuration()
@@ -32,7 +35,6 @@ async def main():
             config_data = json.load(config_file)
 
         owner_resource = config_data['OWNER_RESOURCE']
-        faucet_owner_resource = config_data['FAUCET_OWNER_RESOURCE']
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -48,7 +50,6 @@ async def main():
             "REFERRAL_RESOURCE": config_data['REFERRAL_RESOURCE'],
             "KEEPER_REWARD_RESOURCE": config_data['KEEPER_REWARD_RESOURCE'],
             "FEE_OATH_RESOURCE": config_data['FEE_OATH_RESOURCE'],
-            "FAUCET_COMPONENT": config_data['FAUCET_COMPONENT'],
             "TOKEN_WRAPPER_PACKAGE": config_data['TOKEN_WRAPPER_PACKAGE'],
             "TOKEN_WRAPPER_COMPONENT": config_data['TOKEN_WRAPPER_COMPONENT'],
             "ORACLE_PACKAGE": config_data['ORACLE_PACKAGE'],
@@ -71,6 +72,9 @@ async def main():
             "EXCHANGE_PACKAGE": config_data['EXCHANGE_PACKAGE'],
             "EXCHANGE_COMPONENT": config_data['EXCHANGE_COMPONENT']
         }
+        if network_config['network_name'] == 'stokenet':
+            faucet_owner_resource = config_data['FAUCET_OWNER_RESOURCE']
+            data['FAUCET_COMPONENT'] = config_data['FAUCET_COMPONENT']
 
         dapp_definition = account.as_str()
         entities = [f'Address("{entity}")' for entity in data.values()]
@@ -128,7 +132,7 @@ async def main():
                 )
             ;
         '''
-        if network_config['network_name'] != 'stokenet':
+        if network_config['network_name'] == 'stokenet':
             manifest += f'''
                 CALL_METHOD
                     Address("{account.as_str()}")
