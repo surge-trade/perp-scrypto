@@ -48,6 +48,24 @@ if __name__ == '__main__':
     asyncio.run(main())
 
 # CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "lock_fee"
+#     Decimal("10")
+# ;
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "create_proof_of_amount"
+#     Address("resource_rdx1t5av9jksz5a2952qmhv5h7t2k0xt4vkv4wj7ekdchjkq435ujudss5")
+#     Decimal("4")
+# ;
+# SET_ROLE
+#     Address("component_rdx1cqrpn76ra5qf9xz5374mqduaw6r55dwzqeum85lm3ul2ct3eu2xc4n")
+#     Enum<0u8>()
+#     "account_management_user"
+#     Enum<1u8>()
+# ;
+
+# CALL_METHOD
 #     Address("account_tdx_2_12yxkxw7zez00czzfdk2hp8f0pfxcqez4jgrj0x608h39470eyqd965")
 #     "lock_fee"
 #     Decimal("100")
