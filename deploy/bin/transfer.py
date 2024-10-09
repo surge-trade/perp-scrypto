@@ -41,7 +41,7 @@ async def main():
         print('ACCOUNT:', account.as_str())
 
         transfer_account = input('Input account to transfer to: ')
-        transfer_resource = config_data['BASE_RESOURCE']
+        transfer_resource = input('Input resource to transfer: ')
         transfer_amount = input('Input amount to transfer: ')
 
         builder = ret.ManifestBuilder()
