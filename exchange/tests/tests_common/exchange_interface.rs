@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use scrypto_test::prelude::*;
+use scrypto::prelude::Url;
 use super::*;
 
 use ::common::*;
@@ -409,12 +410,16 @@ impl ExchangeInterface {
         fee_rebate: Decimal,
         max_referrals: u64,
     ) -> TransactionReceiptV1 {
+        let name = "Referral";
+        let description = "Refer friends and earn rewards.";
+        let key_image_url = Url::of("https://surge.trade/images/referral_badge_1.png");
+
         let manifest = ManifestBuilder::new()
             .lock_fee_from_faucet()
             .call_method(
                 self.components.exchange_component, 
                 "mint_referral", 
-                manifest_args!(fee_referral, fee_rebate, max_referrals)
+                manifest_args!(name, description, key_image_url, fee_referral, fee_rebate, max_referrals)
             )
             .deposit_batch(self.test_account)
             .build();
@@ -431,6 +436,10 @@ impl ExchangeInterface {
         allocation_claims: Vec<(ResourceAddress, Decimal)>,
         allocation_count: u64,
     ) -> TransactionReceiptV1 {
+        let name = "Referral";
+        let description = "Refer friends and earn rewards.";
+        let key_image_url = Url::of("https://surge.trade/images/referral_badge_1.png");
+
         let mut builder = ManifestBuilder::new()
             .lock_fee_from_faucet();
         let mut bucket_names = vec![];
@@ -447,7 +456,7 @@ impl ExchangeInterface {
                 manifest.call_method(
                     self.components.exchange_component, 
                     "mint_referral_with_allocation", 
-                    manifest_args!(fee_referral, fee_rebate, max_referrals, buckets, allocation_claims, allocation_count)
+                    manifest_args!(name, description, key_image_url, fee_referral, fee_rebate, max_referrals, buckets, allocation_claims, allocation_count)
                 )
             })
             .deposit_batch(self.test_account)
