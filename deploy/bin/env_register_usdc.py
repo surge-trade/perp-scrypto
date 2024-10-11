@@ -32,7 +32,8 @@ async def main():
             config_data = json.load(config_file)
 
         owner_resource = config_data['OWNER_RESOURCE']
-        exchange_component = config_data['EXCHANGE_COMPONENT']
+        usdc_resource = config_data['USDC_RESOURCE']
+        # exchange_component = config_data['EXCHANGE_COMPONENT']
         env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
 
         balance = await gateway.get_xrd_balance(account)
@@ -59,8 +60,8 @@ async def main():
                 "set_variables"
                 Array<Tuple>(
                     Tuple(
-                        "exchange_component",
-                        "{exchange_component}"
+                        "xusdc_resource",
+                        "{usdc_resource}"
                     ),
                 )
             ;
@@ -68,8 +69,9 @@ async def main():
 
         payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
         await gateway.submit_transaction(payload)
+        print('Transaction id:', intent)
         status = await gateway.get_transaction_status(intent)
-        print('Register exchange:', status)
+        print('Register variables:', status)
 
 if __name__ == '__main__':
     asyncio.run(main())
