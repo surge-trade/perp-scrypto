@@ -141,7 +141,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),  # pub funding_2: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100')),  # pub funding_2_delta: Decimal,
@@ -160,7 +160,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),  # pub funding_2: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100')),  # pub funding_2_delta: Decimal,
@@ -179,7 +179,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),  # pub funding_2: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100')),  # pub funding_2_delta: Decimal,
@@ -198,7 +198,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),  # pub funding_2: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100')),  # pub funding_2_delta: Decimal,
