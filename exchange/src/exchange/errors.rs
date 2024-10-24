@@ -39,6 +39,7 @@ pub const ERROR_ACTIVE_REQUESTS_TOO_MANY: &str = "Too many active requests";
 pub const ERROR_INVALID_ACCOUNT: &str = "Invalid account";
 pub const ERROR_INVALID_MARGIN_ACCOUNT: &str = "Invalid margin account";
 pub const ERROR_INVALID_REQUEST_STATUS: &str = "Invalid request status";
+pub const ERROR_INVALID_AUTH_LEVEL: &str = "Invalid authorization level";
 
 pub const ERROR_INVALID_PRICE: &str = "Invalid price";
 pub const ERROR_PRICE_TOO_OLD: &str = "Price too old";

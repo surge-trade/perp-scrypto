@@ -69,6 +69,7 @@ fn main() {
     write_resource("BASE_RESOURCE", "_BASE_RESOURCE", &decoder, &mut f);
     write_resource("LP_RESOURCE", "_LP_RESOURCE", &decoder, &mut f);
     write_resource("REFERRAL_RESOURCE", "_REFERRAL_RESOURCE", &decoder, &mut f);
+    write_resource("RECOVERY_KEY_RESOURCE", "_RECOVERY_KEY_RESOURCE", &decoder, &mut f);
     write_resource("PROTOCOL_RESOURCE", "_PROTOCOL_RESOURCE", &decoder, &mut f);
     write_resource("KEEPER_REWARD_RESOURCE", "_KEEPER_REWARD_RESOURCE", &decoder, &mut f);
     write_resource("FEE_OATH_RESOURCE", "_FEE_OATH_RESOURCE", &decoder, &mut f);

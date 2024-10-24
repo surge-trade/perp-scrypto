@@ -14,7 +14,7 @@ load_dotenv()
 from tools.gateway import Gateway
 from tools.accounts import new_account, load_account
 from tools.manifests import lock_fee, deposit_all, mint_owner_badge, mint_authority, mint_base_authority
-from tools.manifests import create_base, mint_protocol_resource, create_keeper_reward, create_lp, create_referral_str
+from tools.manifests import create_base, mint_protocol_resource, create_keeper_reward, create_lp, create_referral_str, create_recovery_key_str
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H")
 
 def clean(name: str) -> None:
@@ -232,6 +232,17 @@ async def main():
             referral_resource = config_data['REFERRAL_RESOURCE']
             envs.append(('REFERRAL_RESOURCE', referral_resource))
             print('REFERRAL_RESOURCE:', referral_resource)
+
+            if 'RECOVERY_KEY_RESOURCE' not in config_data:
+                manifest = create_recovery_key_str(account, owner_amount, owner_resource, authority_resource)
+                payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
+                await gateway.submit_transaction(payload)
+                addresses = await gateway.get_new_addresses(intent)
+                config_data['RECOVERY_KEY_RESOURCE'] = addresses[0]
+
+            recovery_key_resource = config_data['RECOVERY_KEY_RESOURCE']
+            envs.append(('RECOVERY_KEY_RESOURCE', recovery_key_resource))
+            print('RECOVERY_KEY_RESOURCE:', recovery_key_resource)
 
             if 'PROTOCOL_RESOURCE' not in config_data:
                 builder = ret.ManifestBuilder()
@@ -752,6 +763,10 @@ async def main():
                             "{referral_resource}"
                         ),
                         Tuple(
+                            "recovery_key_resource",
+                            {recovery_key_resource}
+                        ),
+                        Tuple(
                             "base_resource",
                             "{base_resource}"
                         ),
@@ -818,6 +833,7 @@ async def main():
             print(f'BASE_RESOURCE={base_resource}')
             print(f'LP_RESOURCE={lp_resource}')
             print(f'REFERRAL_RESOURCE={referral_resource}')
+            print(f'RECOVERY_KEY_RESOURCE={recovery_key_resource}')
             print(f'PROTOCOL_RESOURCE={protocol_resource}')
             print(f'KEEPER_REWARD_RESOURCE={keeper_reward_resource}')
             print(f'FEE_OATH_RESOURCE={fee_oath_resource}')

@@ -134,6 +134,7 @@ async def main():
         base_resource = config_data['BASE_RESOURCE']
         lp_resource = config_data['LP_RESOURCE']
         referral_resource = config_data['REFERRAL_RESOURCE']
+        recovery_key_resource = config_data['RECOVERY_KEY_RESOURCE']
         protocol_resource = config_data['PROTOCOL_RESOURCE']
         keeper_reward_resource = config_data['KEEPER_REWARD_RESOURCE']
         fee_oath_resource = config_data['FEE_OATH_RESOURCE']
@@ -177,6 +178,7 @@ async def main():
             ('BASE_RESOURCE', base_resource),
             ('LP_RESOURCE', lp_resource),
             ('REFERRAL_RESOURCE', referral_resource),
+            ('RECOVERY_KEY_RESOURCE', recovery_key_resource),
             ('PROTOCOL_RESOURCE', protocol_resource),
             ('KEEPER_REWARD_RESOURCE', keeper_reward_resource),
             ('FEE_OATH_RESOURCE', fee_oath_resource),

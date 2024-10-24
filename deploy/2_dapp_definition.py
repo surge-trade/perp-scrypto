@@ -44,6 +44,7 @@ async def main():
             "LP_RESOURCE": config_data['LP_RESOURCE'],
             "PROTOCOL_RESOURCE": config_data['PROTOCOL_RESOURCE'],
             "REFERRAL_RESOURCE": config_data['REFERRAL_RESOURCE'],
+            "RECOVERY_KEY_RESOURCE": config_data['RECOVERY_KEY_RESOURCE'],
             "KEEPER_REWARD_RESOURCE": config_data['KEEPER_REWARD_RESOURCE'],
             "FEE_OATH_RESOURCE": config_data['FEE_OATH_RESOURCE'],
             "TOKEN_WRAPPER_PACKAGE": config_data['TOKEN_WRAPPER_PACKAGE'],
@@ -79,7 +80,7 @@ async def main():
         description = 'Feel the Surge!'
         icon_url = 'https://surge.trade/images/icon_dapp.png'
         claimed_entities = ', '.join(entities)
-        websites = ', '.join([f'"https://www.surge.trade"', '"https://ilovetesting.surge.trade"'])
+        websites = ', '.join([f'"https://www.surge.trade"', '"https://power.surge.trade"', '"https://ilovetesting.surge.trade"'])
 
         manifest = f'''
             CALL_METHOD

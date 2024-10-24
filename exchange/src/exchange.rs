@@ -50,6 +50,7 @@ mod exchange_mod {
     const PROTOCOL_RESOURCE: ResourceAddress = _PROTOCOL_RESOURCE;
     const KEEPER_REWARD_RESOURCE: ResourceAddress = _KEEPER_REWARD_RESOURCE;
     const REFERRAL_RESOURCE: ResourceAddress = _REFERRAL_RESOURCE;
+    const RECOVERY_KEY_RESOURCE: ResourceAddress = _RECOVERY_KEY_RESOURCE;
     const FEE_OATH_RESOURCE: ResourceAddress = _FEE_OATH_RESOURCE;
 
     const ORACLE_COMPONENT: ComponentAddress = _ORACLE_COMPONENT;
@@ -216,6 +217,7 @@ mod exchange_mod {
             protocol_swap_user => updatable_by: [OWNER, user_admin];
             liquidity_user => updatable_by: [OWNER, user_admin];
             referral_user => updatable_by: [OWNER, user_admin];
+            account_creation_user => updatable_by: [OWNER, user_admin];
             account_management_user => updatable_by: [OWNER, user_admin];
             remove_collateral_request_user => updatable_by: [OWNER, user_admin];
             margin_order_request_user => updatable_by: [OWNER, user_admin];
@@ -267,7 +269,9 @@ mod exchange_mod {
             create_referral_codes => restrict_to: [referral_user];
             create_referral_codes_from_allocation => restrict_to: [referral_user];
             collect_referral_rewards => restrict_to: [referral_user];
-            create_account => restrict_to: [account_management_user];
+            create_account => restrict_to: [account_creation_user];
+            create_recovery_key => restrict_to: [account_management_user];
+            add_auth_rule => restrict_to: [account_management_user];
             set_level_1_auth => restrict_to: [account_management_user];
             set_level_2_auth => restrict_to: [account_management_user];
             set_level_3_auth => restrict_to: [account_management_user];
@@ -336,6 +340,7 @@ mod exchange_mod {
                 protocol_swap_user => rule!(allow_all);
                 liquidity_user => rule!(allow_all);
                 referral_user => rule!(allow_all);
+                account_creation_user => rule!(allow_all);
                 account_management_user => rule!(allow_all);
                 remove_collateral_request_user => rule!(allow_all);
                 margin_order_request_user => rule!(allow_all);
@@ -912,6 +917,85 @@ mod exchange_mod {
                 });
 
                 account_global
+            })
+        }
+
+        pub fn create_recovery_key(
+            &self,
+            account: ComponentAddress,
+        ) -> Bucket {
+            authorize!(self, {
+                let mut account = VirtualMarginAccount::new(account);
+                account.verify_level_1_auth();
+
+                let recovery_key_manager = ResourceManager::from_address(RECOVERY_KEY_RESOURCE);
+
+                let recovery_key_data = RecoveryKeyData {
+                    name: "Recovery Key".to_string(),
+                    description: "Recovery key for your Surge trading account.".to_string(),
+                    key_image_url: Url::of("https://surge.trade/images/recovery_key_1.png"),
+                };
+                let recovery_key = recovery_key_manager.mint_ruid_non_fungible(recovery_key_data);
+                let recovery_key_id = recovery_key.as_non_fungible().non_fungible::<RecoveryKeyData>().global_id().clone();
+
+                let mut rule = account.get_level_1_auth();
+                match rule {
+                    AccessRule::AllowAll => {
+                        rule = AccessRule::from(require(recovery_key_id));
+                    }
+                    AccessRule::DenyAll => {
+                        rule = AccessRule::from(require(recovery_key_id));
+                    }
+                    AccessRule::Protected(rule_node) => {
+                        rule = AccessRule::from(rule_node.or(require(recovery_key_id)));
+                    }
+                }
+                account.set_level_1_auth(rule);
+
+                recovery_key
+            })
+        }
+
+        pub fn add_auth_rule(
+            &self,
+            account: ComponentAddress,
+            level: u8,
+            additional_rule: AccessRuleNode,
+        ) {
+            authorize!(self, {
+                let mut account = VirtualMarginAccount::new(account);
+                account.verify_level_1_auth();
+
+                assert!(
+                    vec![1, 2, 3].contains(&level),
+                    "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_AUTH_LEVEL, level, vec![1, 2, 3]
+                );
+
+                let mut rule = match level {
+                    1 => account.get_level_1_auth(),
+                    2 => account.get_level_2_auth(),
+                    3 => account.get_level_3_auth(),
+                    _ => unreachable!(),
+                };
+
+                match rule {
+                    AccessRule::AllowAll => {
+                        rule = AccessRule::from(additional_rule);
+                    }
+                    AccessRule::DenyAll => {
+                        rule = AccessRule::from(additional_rule);
+                    }
+                    AccessRule::Protected(rule_node) => {
+                        rule = AccessRule::from(rule_node.or(additional_rule));
+                    }
+                }
+                
+                match level {
+                    1 => account.set_level_1_auth(rule),
+                    2 => account.set_level_2_auth(rule),
+                    3 => account.set_level_3_auth(rule),
+                    _ => unreachable!(),
+                }
             })
         }
 

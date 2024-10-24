@@ -6,6 +6,13 @@ use account::*;
 use pool::*;
 use referral_generator::{ReferralData, ReferralAllocation};
 
+#[derive(ScryptoSbor, NonFungibleData, Clone, ManifestSbor)]
+pub struct RecoveryKeyData {
+    #[mutable] pub name: String,
+    #[mutable] pub description: String,
+    #[mutable] pub key_image_url: Url,
+}
+
 #[derive(ScryptoSbor, Clone, Debug)]
 pub struct PositionDetails {
     pub pair_id: PairId,

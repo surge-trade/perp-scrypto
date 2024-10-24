@@ -196,6 +196,15 @@ CREATE_NON_FUNGIBLE_RESOURCE
                     Enum<14u8>(
                         Array<Enum>(
                             Enum<0u8>(
+                                12u8
+                            ),
+                            Enum<0u8>(
+                                12u8
+                            ),
+                            Enum<0u8>(
+                                198u8
+                            ),
+                            Enum<0u8>(
                                 192u8
                             ),
                             Enum<0u8>(
@@ -224,6 +233,9 @@ CREATE_NON_FUNGIBLE_RESOURCE
                         Enum<1u8>(
                             Enum<0u8>(
                                 Array<String>(
+                                    "name",
+                                    "description",
+                                    "key_image_url",
                                     "fee_referral",
                                     "fee_rebate",
                                     "referrals",
@@ -244,6 +256,9 @@ CREATE_NON_FUNGIBLE_RESOURCE
             0u64
         ),
         Array<String>(
+            "name",
+            "description",
+            "key_image_url",
             "fee_referral",
             "fee_rebate",
             "referrals",
@@ -345,6 +360,158 @@ CREATE_NON_FUNGIBLE_RESOURCE
                 Enum<1u8>(
                     Enum<13u8>(
                         "https://surge.trade/images/referral_badge.png"
+                    )
+                ),
+                false
+            ),
+            "info_url" => Tuple(
+                Enum<1u8>(
+                    Enum<13u8>(
+                        "https://surge.trade"
+                    )
+                ),
+                false
+            )
+        ),
+        Map<String, Enum>()
+    )
+    Enum<0u8>()
+;
+'''
+
+def create_recovery_key_str(account: Address, owner_amount: str, owner_resource: str, authority_resource: str) -> str:
+    return f'''
+CALL_METHOD
+    Address("{account.as_str()}")
+    "lock_fee"
+    Decimal("10")
+;
+CREATE_NON_FUNGIBLE_RESOURCE
+    Enum<2u8>(
+        Enum<2u8>(
+            Enum<0u8>(
+                Enum<1u8>(
+                    Decimal("4"),
+                    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+                )
+            )
+        )
+    )
+    Enum<3u8>()
+    true
+    Enum<0u8>(
+        Enum<0u8>(
+            Tuple(
+                Array<Enum>(
+                    Enum<14u8>(
+                        Array<Enum>(
+                            Enum<0u8>(
+                                12u8
+                            ),
+                            Enum<0u8>(
+                                12u8
+                            ),
+                            Enum<0u8>(
+                                198u8
+                            )
+                        )
+                    )
+                ),
+                Array<Tuple>(
+                    Tuple(
+                        Enum<1u8>(
+                            "RecoveryKeyData"
+                        ),
+                        Enum<1u8>(
+                            Enum<0u8>(
+                                Array<String>(
+                                    "name",
+                                    "description",
+                                    "key_image_url"
+                                )
+                            )
+                        )
+                    )
+                ),
+                Array<Enum>(
+                    Enum<0u8>()
+                )
+            )
+        ),
+        Enum<1u8>(
+            0u64
+        ),
+        Array<String>(
+            "name",
+            "description",
+            "key_image_url"
+        )
+    )
+    Tuple(
+        Enum<1u8>(
+            Tuple(
+                Enum<1u8>(
+                    Enum<2u8>(
+                        Enum<0u8>(
+                            Enum<0u8>(
+                                Enum<1u8>(
+                                    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+                                )
+                            )
+                        )
+                    )
+                ),
+                Enum<1u8>(
+                    Enum<1u8>()
+                )
+            )
+        ),
+        Enum<0u8>(),
+        Enum<0u8>(),
+        Enum<0u8>(),
+        Enum<0u8>(),
+        Enum<0u8>(),
+        Enum<1u8>(
+            Tuple(
+                Enum<1u8>(
+                    Enum<2u8>(
+                        Enum<0u8>(
+                            Enum<0u8>(
+                                Enum<1u8>(
+                                    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+                                )
+                            )
+                        )
+                    )
+                ),
+                Enum<1u8>(
+                    Enum<1u8>()
+                )
+            )
+        )
+    )
+    Tuple(
+        Map<String, Tuple>(
+            "name" => Tuple(
+                Enum<1u8>(
+                    Enum<0u8>(
+                        "Surge Recovery Key"
+                    )
+                ),
+                false
+            ),
+            "description" => Tuple(
+                Enum<1u8>(
+                    Enum<0u8>(
+                        "Surge recovery key that can be used to update permissions for your trading account."
+                    )
+                ),
+                false
+            ),
+            "icon_url" => Tuple(
+                Enum<1u8>(
+                    Enum<13u8>(
+                        "https://surge.trade/images/recovery_key.png"
                     )
                 ),
                 false
