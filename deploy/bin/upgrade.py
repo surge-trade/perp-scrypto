@@ -158,14 +158,16 @@ async def main():
         env_registry_component = config_data['ENV_REGISTRY_COMPONENT']
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
-        owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require(ret.ResourceOrNonFungible.RESOURCE(ret.Address(owner_resource))))
+        owner_amount = '4'
+        owner_role = ret.OwnerRole.UPDATABLE(ret.AccessRule.require_amount(ret.Decimal(owner_amount), ret.Address(owner_resource)))
         manifest_owner_role = ret.ManifestBuilderValue.ENUM_VALUE(2, 
             [ret.ManifestBuilderValue.ENUM_VALUE(2, 
                 [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-                    [ret.ManifestBuilderValue.ENUM_VALUE(0, 
-                        [ret.ManifestBuilderValue.ENUM_VALUE(1, 
-                            [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))]
-                        )]
+                    [ret.ManifestBuilderValue.ENUM_VALUE(1, 
+                        [   
+                            ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal(owner_amount)),
+                            ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(owner_resource)))
+                        ]
                     )]
                 )]
             )]

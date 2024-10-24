@@ -391,8 +391,8 @@ CREATE_NON_FUNGIBLE_RESOURCE
         Enum<2u8>(
             Enum<0u8>(
                 Enum<1u8>(
-                    Decimal("4"),
-                    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+                    Decimal("{owner_amount}"),
+                    Address("{owner_resource}")
                 )
             )
         )
@@ -455,7 +455,7 @@ CREATE_NON_FUNGIBLE_RESOURCE
                         Enum<0u8>(
                             Enum<0u8>(
                                 Enum<1u8>(
-                                    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+                                    Address("{authority_resource}")
                                 )
                             )
                         )
@@ -478,7 +478,7 @@ CREATE_NON_FUNGIBLE_RESOURCE
                         Enum<0u8>(
                             Enum<0u8>(
                                 Enum<1u8>(
-                                    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+                                    Address("{authority_resource}")
                                 )
                             )
                         )
