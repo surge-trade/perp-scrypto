@@ -58,7 +58,7 @@ async def main():
             oi_long = float(pool_position[0]['value'])
             oi_short = float(pool_position[1]['value'])
             cost = float(pool_position[2]['value'])
-            funding_2 = float(pool_position[5]['value'])
+            funding_2_raw = float(pool_position[5]['value'])
 
             pair_config = elem[2]['fields']
             pair_config = {
@@ -87,8 +87,8 @@ async def main():
 
             funding_1 = skew * pair_config['funding_1']
             funding_2_max = oi_long * price
-            funding_2_min = oi_short * price
-            funding_2 = min(max(funding_2, funding_2_min), funding_2_max) * pair_config['funding_2']
+            funding_2_min = -oi_short * price
+            funding_2 = min(max(funding_2_raw, funding_2_min), funding_2_max) * pair_config['funding_2']
             
             if oi_long == 0 or oi_short == 0:
                 funding_long = 0
@@ -126,6 +126,7 @@ async def main():
                 'skew': skew,
                 'funding_1': funding_1,
                 'funding_2': funding_2,
+                'funding_2_raw': funding_2_raw,
                 'funding_2_max': funding_2_max,
                 'funding_2_min': funding_2_min,
                 'funding_long_apr': funding_long,
