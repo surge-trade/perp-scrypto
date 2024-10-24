@@ -107,11 +107,6 @@ async def main():
         config_data['REFERRAL_RESOURCE'] = referral_resource
         config_data['RECOVERY_KEY_RESOURCE'] = recovery_key_resource
 
-        release_path = join(dirname(dirname(realpath(__file__))), 'releases')
-        release_path = join(release_path, timestamp + '_' + network_config['network_name'])
-        
-        with open(join(release_path, f'config.json'), 'w') as config_file:
-            json.dump(config_data, config_file, indent=4)
         with open(join(path, f'config.json'), 'w') as config_file:
             json.dump(config_data, config_file, indent=4)
         print(f'Config saved')

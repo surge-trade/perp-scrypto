@@ -57,7 +57,7 @@ def build(name: str, envs: list, network: str) -> (bytes, bytes):
     with open(join(path, f'target/wasm32-unknown-unknown/release/{name}.rpd'), 'rb') as f:
         definition = f.read()
 
-    release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+    release_path = join(dirname(path), 'releases')
     makedirs(release_path, exist_ok=True)
 
     release_path = join(release_path, timestamp + '_' + network)
@@ -299,7 +299,7 @@ async def main():
         config_data['EXCHANGE_PACKAGE'] = exchange_package
         config_data['EXCHANGE_COMPONENT'] = exchange_component
 
-        release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+        release_path = join(dirname(dirname(dirname(realpath(__file__)))), 'releases')
         release_path = join(release_path, timestamp + '_' + network_config['network_name'])
         
         with open(join(release_path, f'config.json'), 'w') as config_file:

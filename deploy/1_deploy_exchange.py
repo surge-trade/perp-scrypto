@@ -867,7 +867,7 @@ async def main():
             import traceback
             print('TRACEBACK:', traceback.format_exc())
         finally:
-            release_path = join(dirname(dirname(realpath(__file__))), 'releases')
+            release_path = join(dirname(path), 'releases')
             makedirs(release_path, exist_ok=True)
             release_path = join(release_path, timestamp + '_' + network_config['network_name'])
             makedirs(release_path, exist_ok=True)
