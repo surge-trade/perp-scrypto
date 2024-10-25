@@ -86,7 +86,19 @@ impl ExchangeInterface {
         &mut self, 
         resource: ResourceAddress,
     ) -> Decimal {
-        self.ledger.get_component_balance(self.test_account, resource)
+       self.ledger.get_component_balance(self.test_account, resource)
+    }
+
+    pub fn test_account_nft_ids(
+        &mut self,
+        resource: ResourceAddress,
+    ) -> Vec<NonFungibleGlobalId> {
+        let vault_id = self.ledger.get_component_vaults(self.test_account, resource)[0];
+        if let Some((_, ids)) = self.ledger.inspect_non_fungible_vault(vault_id) {
+            ids.into_iter().map(|id| NonFungibleGlobalId::new(resource, id)).collect()
+        } else {
+            vec![]
+        }
     }
 
     pub fn test_account_restrict_deposits(
@@ -835,6 +847,63 @@ impl ExchangeInterface {
                     )
                 )
             })    
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
+    }
+
+    pub fn create_recovery_key(
+        &mut self,
+        proof: Option<(ResourceAddress, NonFungibleLocalId)>,
+        margin_account_component: ComponentAddress,
+    ) -> TransactionReceiptV1 {
+        let fee_oath: Option<ManifestBucket> = None;
+
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        if let Some(proof) = proof {
+            builder = builder
+                .create_proof_from_account_of_non_fungible(
+                    self.test_account, 
+                    NonFungibleGlobalId::new(proof.0, proof.1)
+                );
+        }
+        let manifest = builder
+            .call_method(
+                self.components.exchange_component, 
+                "create_recovery_key", 
+                manifest_args!(fee_oath, margin_account_component)
+            )
+            .deposit_batch(self.test_account)
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
+    }
+
+    pub fn add_auth_rule(
+        &mut self,
+        proof: Option<(ResourceAddress, NonFungibleLocalId)>,
+        margin_account_component: ComponentAddress,
+        level: u8,
+        additional_rule: AccessRuleNode,
+    ) -> TransactionReceiptV1 {
+        let fee_oath: Option<ManifestBucket> = None;
+
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        if let Some(proof) = proof {
+            builder = builder
+                .create_proof_from_account_of_non_fungible(
+                    self.test_account, 
+                    NonFungibleGlobalId::new(proof.0, proof.1)
+                );
+        }
+        let manifest = builder
+            .call_method(
+                self.components.exchange_component, 
+                "add_auth_rule", 
+                manifest_args!(fee_oath, margin_account_component, level, additional_rule)
+            )
             .build();
         let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
         receipt

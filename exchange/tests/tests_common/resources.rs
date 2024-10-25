@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use exchange::RecoveryKeyData;
 use referral_generator::ReferralData;
 use scrypto::prelude::Url;
 use scrypto_test::prelude::*;
@@ -14,6 +15,7 @@ pub struct Resources {
     pub lp_resource: ResourceAddress,
     pub protocol_resource: ResourceAddress,
     pub referral_resource: ResourceAddress,
+    pub recovery_key_resource: ResourceAddress,
     pub keeper_reward_resource: ResourceAddress,
 }
 
@@ -30,6 +32,7 @@ pub fn create_resources(
     let lp_resource = create_lp_resource(owner_role.clone(), authority_resource, ledger);
     let protocol_resource = mint_protocol_resource(account, owner_role.clone(), ledger);
     let referral_resource = create_referral_resource(owner_role.clone(), authority_resource, ledger);
+    let recovery_key_resource = create_recovery_key_resource(owner_role.clone(), authority_resource, ledger);
     let keeper_reward_resource = create_keeper_reward_resource(owner_role.clone(), authority_resource, ledger);
 
     Resources {
@@ -41,6 +44,7 @@ pub fn create_resources(
         lp_resource,
         protocol_resource,
         referral_resource,
+        recovery_key_resource,
         keeper_reward_resource,
     }
 }
@@ -189,8 +193,14 @@ fn create_referral_resource(
             burner => rule!(deny_all);
             burner_updater => OWNER;
         },
-        freeze_roles: None,
-        recall_roles: None,
+        freeze_roles: freeze_roles! {
+            freezer => rule!(deny_all);
+            freezer_updater => OWNER;
+        },
+        recall_roles: recall_roles! {
+            recaller => rule!(deny_all);
+            recaller_updater => OWNER;
+        },
         withdraw_roles: withdraw_roles! {
             withdrawer => rule!(deny_all);
             withdrawer_updater => OWNER;
@@ -205,6 +215,48 @@ fn create_referral_resource(
     let manifest = ManifestBuilder::new()
         .lock_fee_from_faucet()
         .create_non_fungible_resource::<Vec<(NonFungibleLocalId, ReferralData)>, ReferralData>(
+            owner_role, 
+            NonFungibleIdType::RUID, 
+            true, 
+            resource_roles, 
+            metadata, 
+            None
+        )
+        .build();
+
+    let receipt = ledger.execute_manifest(manifest, vec![]);
+    receipt.expect_commit_success().new_resource_addresses()[0]
+}
+
+fn create_recovery_key_resource(
+    owner_role: OwnerRole,
+    authority_resource: ResourceAddress,
+    ledger: &mut LedgerSimulator<NoExtension, InMemorySubstateDatabase>
+) -> ResourceAddress {
+    let metadata = metadata!(
+        init {
+            "name" => "Surge Recovery Key", updatable;
+            "description" => "Surge recovery key that can be used to update permissions for your trading account.", updatable;
+            "icon_url" => Url::of("https://surge.trade/images/recovery_key_badge.png"), updatable;
+            "info_url" => Url::of("https://surge.trade"), updatable;
+        }
+    );
+
+    let resource_roles = NonFungibleResourceRoles {
+        mint_roles: mint_roles! {
+            minter => rule!(require(authority_resource));
+            minter_updater => rule!(deny_all);
+        },
+        non_fungible_data_update_roles: non_fungible_data_update_roles! {
+            non_fungible_data_updater => rule!(require(authority_resource));
+            non_fungible_data_updater_updater => rule!(deny_all);
+        },
+        ..Default::default()
+    };
+
+    let manifest = ManifestBuilder::new()
+        .lock_fee_from_faucet()
+        .create_non_fungible_resource::<Vec<(NonFungibleLocalId, RecoveryKeyData)>, RecoveryKeyData>(
             owner_role, 
             NonFungibleIdType::RUID, 
             true, 

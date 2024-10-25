@@ -86,6 +86,7 @@ pub fn create_components(
         "BASE_RESOURCE".to_owned() => resources.base_resource.to_string(encoder),
         "LP_RESOURCE".to_owned() => resources.lp_resource.to_string(encoder),
         "REFERRAL_RESOURCE".to_owned() => resources.referral_resource.to_string(encoder),
+        "RECOVERY_KEY_RESOURCE".to_owned() => resources.recovery_key_resource.to_string(encoder),
         "PROTOCOL_RESOURCE".to_owned() => resources.protocol_resource.to_string(encoder),
         "KEEPER_REWARD_RESOURCE".to_owned() => resources.keeper_reward_resource.to_string(encoder),
     };

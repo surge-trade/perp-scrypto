@@ -888,7 +888,17 @@ mod exchange_mod {
                 permissions.level_1.insert(account_component);
                 permissions.level_2.insert(account_component);
                 permissions.level_3.insert(account_component);
-                permission_registry.set_permissions(initial_rule, permissions);
+                permission_registry.set_permissions(initial_rule.clone(), permissions);
+                if let AccessRule::Protected(AccessRuleNode::AnyOf(rule_nodes)) = initial_rule {
+                    for rule_node in rule_nodes {
+                        let sub_rule = AccessRule::from(rule_node.clone());
+                        let mut permissions = permission_registry.get_permissions(sub_rule.clone());
+                        permissions.level_1.insert(account_component);
+                        permissions.level_2.insert(account_component);
+                        permissions.level_3.insert(account_component);
+                        permission_registry.set_permissions(sub_rule, permissions);
+                    }
+                }
 
                 let mut account = VirtualMarginAccount::new(account_component);
                 if let Some(fee_oath) = fee_oath {
@@ -922,11 +932,21 @@ mod exchange_mod {
 
         pub fn create_recovery_key(
             &self,
+            fee_oath: Option<Bucket>,
             account: ComponentAddress,
         ) -> Bucket {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
+
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
 
                 let recovery_key_manager = ResourceManager::from_address(RECOVERY_KEY_RESOURCE);
 
@@ -950,7 +970,9 @@ mod exchange_mod {
                         rule = AccessRule::from(rule_node.or(require(recovery_key_id)));
                     }
                 }
-                account.set_level_1_auth(rule);
+                self._set_level_1_auth(&mut account, rule);
+
+                account.realize();
 
                 recovery_key
             })
@@ -958,6 +980,7 @@ mod exchange_mod {
 
         pub fn add_auth_rule(
             &self,
+            fee_oath: Option<Bucket>,
             account: ComponentAddress,
             level: u8,
             additional_rule: AccessRuleNode,
@@ -965,6 +988,15 @@ mod exchange_mod {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
+
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
 
                 assert!(
                     vec![1, 2, 3].contains(&level),
@@ -991,11 +1023,13 @@ mod exchange_mod {
                 }
                 
                 match level {
-                    1 => account.set_level_1_auth(rule),
-                    2 => account.set_level_2_auth(rule),
-                    3 => account.set_level_3_auth(rule),
+                    1 => self._set_level_1_auth(&mut account, rule),
+                    2 => self._set_level_2_auth(&mut account, rule),
+                    3 => self._set_level_3_auth(&mut account, rule),
                     _ => unreachable!(),
                 }
+
+                account.realize();
             })
         }
 
@@ -1008,7 +1042,6 @@ mod exchange_mod {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
-                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
                 if let Some(fee_oath) = fee_oath {
                     let pair_ids = account.position_ids();
@@ -1019,16 +1052,7 @@ mod exchange_mod {
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
                 
-                let old_rule = account.get_level_1_auth();
-                let mut permissions = permission_registry.get_permissions(old_rule.clone());
-                permissions.level_1.shift_remove(&account.address());
-                permission_registry.set_permissions(old_rule, permissions);
-
-                account.set_level_1_auth(rule.clone());
-
-                let mut permissions = permission_registry.get_permissions(rule.clone());
-                permissions.level_1.insert(account.address());
-                permission_registry.set_permissions(rule, permissions);
+                self._set_level_1_auth(&mut account, rule);
 
                 account.realize();
             })
@@ -1043,7 +1067,6 @@ mod exchange_mod {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
-                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
                 if let Some(fee_oath) = fee_oath {
                     let pair_ids = account.position_ids();
@@ -1054,16 +1077,7 @@ mod exchange_mod {
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
 
-                let old_rule = account.get_level_2_auth();
-                let mut permissions = permission_registry.get_permissions(old_rule.clone());
-                permissions.level_2.shift_remove(&account.address());
-                permission_registry.set_permissions(old_rule, permissions);
-
-                account.set_level_2_auth(rule.clone());
-
-                let mut permissions = permission_registry.get_permissions(rule.clone());
-                permissions.level_2.insert(account.address());
-                permission_registry.set_permissions(rule, permissions);
+                self._set_level_2_auth(&mut account, rule);
 
                 account.realize();
             })
@@ -1078,7 +1092,6 @@ mod exchange_mod {
             authorize!(self, {
                 let mut account = VirtualMarginAccount::new(account);
                 account.verify_level_1_auth();
-                let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
 
                 if let Some(fee_oath) = fee_oath {
                     let pair_ids = account.position_ids();
@@ -1089,16 +1102,7 @@ mod exchange_mod {
                     self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
                 }
 
-                let old_rule = account.get_level_3_auth();
-                let mut permissions = permission_registry.get_permissions(old_rule.clone());
-                permissions.level_3.shift_remove(&account.address());
-                permission_registry.set_permissions(old_rule, permissions);
-
-                account.set_level_3_auth(rule.clone());
-
-                let mut permissions = permission_registry.get_permissions(rule.clone());
-                permissions.level_3.insert(account.address());
-                permission_registry.set_permissions(rule, permissions);
+                self._set_level_3_auth(&mut account, rule);
 
                 account.realize();
             })
@@ -1917,6 +1921,111 @@ mod exchange_mod {
             });
 
             token
+        }
+
+        fn _set_level_1_auth(
+            &self,
+            account: &mut VirtualMarginAccount,
+            rule: AccessRule,
+        ) {
+            let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
+            
+            let old_rule = account.get_level_1_auth();
+            let mut permissions = permission_registry.get_permissions(old_rule.clone());
+            permissions.level_1.shift_remove(&account.address());
+            permission_registry.set_permissions(old_rule.clone(), permissions);
+            if let AccessRule::Protected(AccessRuleNode::AnyOf(old_rule_nodes)) = old_rule {
+                for old_rule_node in old_rule_nodes {
+                    let old_sub_rule = AccessRule::from(old_rule_node.clone());
+                    let mut permissions = permission_registry.get_permissions(old_sub_rule.clone());
+                    permissions.level_1.shift_remove(&account.address());
+                    permission_registry.set_permissions(old_sub_rule, permissions);
+                }
+            }
+
+            account.set_level_1_auth(rule.clone());
+
+            let mut permissions = permission_registry.get_permissions(rule.clone());
+            permissions.level_1.insert(account.address());
+            permission_registry.set_permissions(rule.clone(), permissions);
+            if let AccessRule::Protected(AccessRuleNode::AnyOf(rule_nodes)) = rule {
+                for rule_node in rule_nodes {
+                    let sub_rule = AccessRule::from(rule_node.clone());
+                    let mut permissions = permission_registry.get_permissions(sub_rule.clone());
+                    permissions.level_1.insert(account.address());
+                    permission_registry.set_permissions(sub_rule, permissions);
+                }
+            }
+        }
+
+        fn _set_level_2_auth(
+            &self,
+            account: &mut VirtualMarginAccount,
+            rule: AccessRule,
+        ) {
+            let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
+
+            let old_rule = account.get_level_2_auth();
+            let mut permissions = permission_registry.get_permissions(old_rule.clone());
+            permissions.level_2.shift_remove(&account.address());
+            permission_registry.set_permissions(old_rule.clone(), permissions);
+            if let AccessRule::Protected(AccessRuleNode::AnyOf(old_rule_nodes)) = old_rule {
+                for old_rule_node in old_rule_nodes {
+                    let old_sub_rule = AccessRule::from(old_rule_node.clone());
+                    let mut permissions = permission_registry.get_permissions(old_sub_rule.clone());
+                    permissions.level_2.shift_remove(&account.address());
+                    permission_registry.set_permissions(old_sub_rule, permissions);
+                }
+            }
+
+            account.set_level_2_auth(rule.clone());
+
+            let mut permissions = permission_registry.get_permissions(rule.clone());
+            permissions.level_2.insert(account.address());
+            permission_registry.set_permissions(rule.clone(), permissions);
+            if let AccessRule::Protected(AccessRuleNode::AnyOf(rule_nodes)) = rule {
+                for rule_node in rule_nodes {
+                    let sub_rule = AccessRule::from(rule_node.clone());
+                    let mut permissions = permission_registry.get_permissions(sub_rule.clone());
+                    permissions.level_2.insert(account.address());
+                    permission_registry.set_permissions(sub_rule, permissions);
+                }
+            }
+        }
+
+        fn _set_level_3_auth(
+            &self,
+            account: &mut VirtualMarginAccount,
+            rule: AccessRule,
+        ) {
+            let permission_registry = Global::<PermissionRegistry>::from(PERMISSION_REGISTRY_COMPONENT);
+
+            let old_rule = account.get_level_3_auth();
+            let mut permissions = permission_registry.get_permissions(old_rule.clone());
+            permissions.level_3.shift_remove(&account.address());
+            permission_registry.set_permissions(old_rule.clone(), permissions);
+            if let AccessRule::Protected(AccessRuleNode::AnyOf(old_rule_nodes)) = old_rule {
+                for old_rule_node in old_rule_nodes {
+                    let old_sub_rule = AccessRule::from(old_rule_node.clone());
+                    let mut permissions = permission_registry.get_permissions(old_sub_rule.clone());
+                    permissions.level_3.shift_remove(&account.address());
+                    permission_registry.set_permissions(old_sub_rule, permissions);
+                }
+            }
+
+            account.set_level_3_auth(rule.clone());
+
+            let mut permissions = permission_registry.get_permissions(rule.clone());
+            permissions.level_3.insert(account.address());
+            permission_registry.set_permissions(rule.clone(), permissions);
+            if let AccessRule::Protected(AccessRuleNode::AnyOf(rule_nodes)) = rule {
+                for rule_node in rule_nodes {
+                    let sub_rule = AccessRule::from(rule_node.clone());
+                    let mut permissions = permission_registry.get_permissions(sub_rule.clone());
+                    permissions.level_3.insert(account.address());
+                    permission_registry.set_permissions(sub_rule, permissions);
+                }
+            }
         }
 
         fn _add_collateral(
