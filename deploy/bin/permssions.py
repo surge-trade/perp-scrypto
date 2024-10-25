@@ -35,7 +35,7 @@ async def main():
         config_path = join(path, 'config.json')
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
-        print('Config loaded:', config_data)
+        # print('Config loaded:', config_data)
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
@@ -55,6 +55,7 @@ async def main():
 
         public_key_hash = ret.hash(public_key.value).as_str()[-58:]
         rule = f'{network_config["ed25519_virtual_badge"]}:[{public_key_hash}]'
+        rule = 'resource_tdx_2_1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxx3e2cpa:[f9945f0fef7b7ea8e769bbb073b3e362155e5df6d2ea7eb4efd028f1ec]'
 
         manifest = f'''
             CALL_METHOD
