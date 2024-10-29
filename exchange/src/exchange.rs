@@ -1624,8 +1624,8 @@ mod exchange_mod {
             let margin = result_value_positions.margin_positions + result_value_collateral.margin_collateral;
 
             assert!(
-                account_value > margin,
-                "{}, VALUE:{}, REQUIRED:{}, OP:> |", ERROR_INSUFFICIENT_MARGIN, account_value, margin
+                account_value >= margin,
+                "{}, VALUE:{}, REQUIRED:{}, OP:>= |", ERROR_INSUFFICIENT_MARGIN, account_value, margin
             );
         }
 
