@@ -26,7 +26,13 @@ async def main():
             account_details = new_account(network_config['network_id'])
         private_key, public_key, account = account_details
 
-        config_path = join(path, 'config.json')
+        if network_config['network_name'] == 'stokenet':
+            config_path = join(path, 'stokenet.config.json')
+        elif network_config['network_name'] == 'mainnet':
+            config_path = join(path, 'mainnet.config.json')
+        else:
+            raise ValueError(f'Unsupported network: {network_config["network_name"]}')
+        
         with open(config_path, 'r') as config_file:
             config_data = json.load(config_file)
 

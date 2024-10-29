@@ -127,7 +127,13 @@ async def main():
         state_version = await gateway.get_state_version()
         print('STATE_VERSION:', state_version)
 
-        config_path = join(path, 'config.json')
+        if network_config['network_name'] == 'stokenet':
+            config_path = join(path, 'stokenet.config.json')
+        elif network_config['network_name'] == 'mainnet':
+            config_path = join(path, 'mainnet.config.json')
+        else:
+            raise ValueError(f'Unsupported network: {network_config["network_name"]}')
+
         try:
             with open(config_path, 'r') as config_file:
                 config_data = json.load(config_file)
@@ -876,9 +882,9 @@ async def main():
             release_path = join(release_path, timestamp + '_' + network_config['network_name'])
             makedirs(release_path, exist_ok=True)
         
-            with open(join(release_path, f'config.json'), 'w') as config_file:
+            with open(join(release_path, network_config['network_name'] + '.config.json'), 'w') as config_file:
                 json.dump(config_data, config_file, indent=4)
-            with open(join(path, f'config.json'), 'w') as config_file:
+            with open(config_path, 'w') as config_file:
                 json.dump(config_data, config_file, indent=4)
             print(f'Config saved')
 
