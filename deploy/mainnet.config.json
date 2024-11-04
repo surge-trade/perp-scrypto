@@ -33,5 +33,6 @@
     "ETH_RESOURCE": "resource_rdx1th88qcj5syl9ghka2g9l7tw497vy5x6zaatyvgfkwcfe8n9jt2npww",
     "LSULP_RESOURCE": "resource_rdx1thksg5ng70g9mmy9ne7wz0sc7auzrrwy7fmgcxzel2gvp8pj0xxfmf",
     "REFERRAL_RESOURCE": "resource_rdx1nf9zs5csyzw02506ulhh98jt4f845dvjm4wfkltwv0q8rkqtk0exl4",
-    "RECOVERY_KEY_RESOURCE": "resource_rdx1nt5m0wnnf3td8uhrg8nvzlwd4qvhqecfsc5vh899z83s7e33872rxn"
+    "RECOVERY_KEY_RESOURCE": "resource_rdx1nt5m0wnnf3td8uhrg8nvzlwd4qvhqecfsc5vh899z83s7e33872rxn",
+    "LSU_POOL_COMPONENT": "component_rdx1cppy08xgra5tv5melsjtj79c0ngvrlmzl8hhs7vwtzknp9xxs63mfp"
 }

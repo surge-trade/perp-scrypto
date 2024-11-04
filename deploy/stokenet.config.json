@@ -36,5 +36,6 @@
     "EXCHANGE_PACKAGE": "package_tdx_2_1phxp4m0c66gguddtqjywngz46hwpqujhp04dlv6627qnxnmemjwud9",
     "EXCHANGE_COMPONENT": "component_tdx_2_1cqk05406xuax5gtwgsw5n2m43malwv6acxdkjhqzhayth9cdhzaltm",
     "REFERRAL_RESOURCE": "resource_tdx_2_1nglgr5694cr9aykw33tfzsz3q5fa92p4ngkyfcwuasgd9uum72fwxp",
-    "RECOVERY_KEY_RESOURCE": "resource_tdx_2_1nf20g0u40wvdmyt0jwsr4e2g4zsfy07f9t5nzmg9456fa56nzmh7xd"
+    "RECOVERY_KEY_RESOURCE": "resource_tdx_2_1nf20g0u40wvdmyt0jwsr4e2g4zsfy07f9t5nzmg9456fa56nzmh7xd",
+    "LSU_POOL_COMPONENT": ""
 }
