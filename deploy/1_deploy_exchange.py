@@ -68,7 +68,7 @@ async def main():
     chdir(path)
 
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
-        # oracle_key_0 = 'b9dca0b122bc34356550c32beb31c726f993fcf1fb16aecdbe95b5181e8505b98c5f1286969664d69c4358dc16261640'
+        oracle_key_0 = '891fa1c6410621dfb3a693fcbb5663025d564f2a6584d8446b608fc74a4083ab7ee0e767e3a8e987b95bc18df6090536'
         oracle_key_1 = 'afa0c61c68fd0f7dd8f389daf6f77b6b246155fe0ba02a0c9545798ba2572a184a9f705d77c51937e513b10e9a743a9f'
 
         clean('common')
@@ -393,8 +393,8 @@ async def main():
             print('ORACLE_PACKAGE:', oracle_package)
 
             if 'ORACLE_COMPONENT' not in config_data:
-                # oracle_key_bytes_0 = ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, 
-                #     [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key_0)])
+                oracle_key_bytes_0 = ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, 
+                    [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key_0)])
                 oracle_key_bytes_1 = ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.U8_VALUE, 
                     [ret.ManifestBuilderValue.U8_VALUE(b) for b in bytes.fromhex(oracle_key_1)])
                 builder = ret.ManifestBuilder()
@@ -406,7 +406,7 @@ async def main():
                     [
                         manifest_owner_role, 
                         ret.ManifestBuilderValue.MAP_VALUE(ret.ManifestBuilderValueKind.U64_VALUE, ret.ManifestBuilderValueKind.ARRAY_VALUE, [
-                            # ret.ManifestBuilderMapEntry(ret.ManifestBuilderValue.U64_VALUE(0), oracle_key_bytes_0),
+                            ret.ManifestBuilderMapEntry(ret.ManifestBuilderValue.U64_VALUE(0), oracle_key_bytes_0),
                             ret.ManifestBuilderMapEntry(ret.ManifestBuilderValue.U64_VALUE(1), oracle_key_bytes_1)
                         ])
                     ]
