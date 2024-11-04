@@ -41,7 +41,7 @@ async def main():
         exchange_component = config_data['EXCHANGE_COMPONENT']
         btc_resource = config_data['BTC_RESOURCE']
         eth_resource = config_data['ETH_RESOURCE']
-
+        lsulp_resource = config_data['LSULP_RESOURCE']
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
             print('FUND ACCOUNT:', account.as_str())
@@ -77,6 +77,15 @@ async def main():
                     ])
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(lsulp_resource))),
+                    ret.ManifestBuilderValue.TUPLE_VALUE([
+                        ret.ManifestBuilderValue.STRING_VALUE("LSULP/USD"), # pair_id
+                        ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.90')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')), # margin
+                    ])
+                ]),
+                ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(btc_resource))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # pair_id
@@ -93,7 +102,7 @@ async def main():
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.95')), # discount
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
                     ])
-                ])
+                ]),
             ])]
         )
 
