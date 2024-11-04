@@ -58,6 +58,24 @@ if __name__ == '__main__':
 #     Address("resource_rdx1t5av9jksz5a2952qmhv5h7t2k0xt4vkv4wj7ekdchjkq435ujudss5")
 #     Decimal("4")
 # ;
+# CALL_METHOD
+#     Address("component_rdx1cpeszqnemrmdmmftznvg6rwv75jxlr5cnrvwypuag0mfcnesu8ls95")
+#     "add_key"
+#     0u64
+#     Bytes("891fa1c6410621dfb3a693fcbb5663025d564f2a6584d8446b608fc74a4083ab7ee0e767e3a8e987b95bc18df6090536")
+# ;
+
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "lock_fee"
+#     Decimal("10")
+# ;
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "create_proof_of_amount"
+#     Address("resource_rdx1t5av9jksz5a2952qmhv5h7t2k0xt4vkv4wj7ekdchjkq435ujudss5")
+#     Decimal("4")
+# ;
 # SET_ROLE
 #     Address("component_rdx1cqrpn76ra5qf9xz5374mqduaw6r55dwzqeum85lm3ul2ct3eu2xc4n")
 #     Enum<0u8>()
