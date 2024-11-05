@@ -81,7 +81,7 @@ async def main():
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("LSULP/USD"), # pair_id
                         ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.90')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.88')), # discount
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')), # margin
                     ])
                 ]),
