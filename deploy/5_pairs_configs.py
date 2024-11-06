@@ -199,7 +199,7 @@ async def main():
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('XRD/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('4000000')), # pub oi_max: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('5000000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
