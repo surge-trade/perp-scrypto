@@ -50,6 +50,9 @@ async def main():
                     "ETH/USD",
                     "SOL/USD",
                     "XRD/USD",
+                    "SUI/USD",
+                    "DOGE/USD",
+                    "ADA/USD",
                 )
             ;
         '''
