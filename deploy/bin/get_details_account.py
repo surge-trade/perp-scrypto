@@ -127,6 +127,7 @@ def parse_request(elem):
 async def main():
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
+        network_config = await gateway.network_configuration()
 
         if network_config['network_name'] == 'stokenet':
             config_path = join(path, 'stokenet.config.json')

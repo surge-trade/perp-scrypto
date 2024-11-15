@@ -27,7 +27,7 @@ def clean(name: str) -> None:
     print(f'Clean: {path}')
     run(['cargo', 'clean'], cwd=path, check=True)
 
-def build(name: str, envs: list, network: str) -> (bytes, bytes):
+def build(name: str, envs: list, network: str) -> tuple[bytes, bytes]:
     path = join(dirname(dirname(dirname(realpath(__file__)))), name)
     print(f'Build: {path}')
     

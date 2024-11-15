@@ -23,6 +23,7 @@ from tools.manifests import lock_fee, deposit_all, withdraw_to_bucket
 async def main():
     async with ClientSession(connector=TCPConnector(ssl=False)) as session:
         gateway = Gateway(session)
+        network_config = await gateway.network_configuration()
 
         if network_config['network_name'] == 'stokenet':
             config_path = join(path, 'stokenet.config.json')
