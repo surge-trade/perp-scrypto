@@ -54,6 +54,7 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
+        price_age_max = 5
         update_price_delta_ratio = ret.Decimal('0.005')
         update_period_seconds = 3600
         margin_initial_low_leverage = ret.Decimal('0.1')
@@ -84,7 +85,7 @@ async def main():
             [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('BTC/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('10')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
@@ -103,7 +104,7 @@ async def main():
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('ETH/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
@@ -122,7 +123,7 @@ async def main():
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('SOL/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2500')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
@@ -141,7 +142,7 @@ async def main():
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('XRD/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('5000000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
@@ -160,7 +161,7 @@ async def main():
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('SUI/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
@@ -179,7 +180,7 @@ async def main():
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('DOGE/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1000000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
@@ -198,7 +199,7 @@ async def main():
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('ADA/USD'), # pub pair_id: PairId,
-                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('750000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
