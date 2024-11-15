@@ -54,53 +54,22 @@ async def main():
             await asyncio.sleep(5)
             balance = await gateway.get_xrd_balance(account)
 
-        # manifest = f'''
-        #         CALL_METHOD
-        #             Address("{account.as_str()}")
-        #             "lock_fee"
-        #             Decimal("10")
-        #         ;
-        #         CALL_METHOD
-        #             Address("{account.as_str()}")
-        #             "create_proof_of_amount"
-        #             Address("{owner_resource}")
-        #             Decimal("1")
-        #         ;
-        #         CALL_METHOD
-        #             Address("{oracle_component}")
-        #             "update_pairs"
-        #             Bytes("5c202114030c074254432f555344a0000072fa3b722504db0d000000000000000000000000000005d8c2736600000000030c074554482f555344a00020d89f237caecac100000000000000000000000000000005d8c2736600000000030c075852442f555344a00040db87a7bc75000000000000000000000000000000000005d8c2736600000000030c07424e422f555344a000c0fb137d72b49d2000000000000000000000000000000005d8c2736600000000030c07534f4c2f555344a000405897e0bfcc5b0700000000000000000000000000000005d8c2736600000000030c075852502f555344a000343d11b7b9dd060000000000000000000000000000000005d8c2736600000000030c08444f47452f555344a000345c7f8fcfb7010000000000000000000000000000000005d8c2736600000000030c074144412f555344a0001818d76c1f6c050000000000000000000000000000000005d8c2736600000000030c08415641582f555344a0d0d324e2ab291e7e0100000000000000000000000000000005d8c2736600000000030c084c494e4b2f555344a00018280c3a429fc90000000000000000000000000000000005d8c2736600000000030c07444f542f555344a0e81f1646f8ec87510000000000000000000000000000000005d8c2736600000000030c084e4541522f555344a000c0af17cc62e8470000000000000000000000000000000005d8c2736600000000030c094d415449432f555344a00024308549a917080000000000000000000000000000000005d8c2736600000000030c074c54432f555344a000446411794d3e060400000000000000000000000000000005d8c2736600000000030c0841544f4d2f555344a000e441a40f47dd600000000000000000000000000000000005d8c2736600000000030c075355492f555344a00070dad8035a2c0c0000000000000000000000000000000005d8c2736600000000030c074150542f555344a0e83fc2a8190d17610000000000000000000000000000000005d8c2736600000000030c074152422f555344a00068dd4c1a99720b0000000000000000000000000000000005d8c2736600000000030c07494e4a2f555344a000a8372c2820642d0100000000000000000000000000000005d8c2736600000000030c075345492f555344a000b079abe30519050000000000000000000000000000000005d8c2736600000000")
-        #             Bytes("81712c4d0bda15de30006d571853e5ec41a06363bc23a594e24a9d90b46de97cac920d2ca9704ee80acb944675be94b7158b7b7c08f38291636fc55124319890baa21431d12964365228ba41c3c685f6155355b8b8a451999785f719f49c1535")
-        #         ;
-        #     '''
-
-        # payload, intent = await gateway.build_transaction_str(manifest, public_key, private_key)
-        # print('Transaction id:', intent)
-        # await gateway.submit_transaction(payload)
-        # status = await gateway.get_transaction_status(intent)
-        # print('Transaction status:', status)
-
-        # pairs = [
-        #     'BTC/USD', 
-        #     'ETH/USD', 
-        #     'XRD/USD', 
-        #     # 'BNB/USD', 
-        #     'SOL/USD', 
-        #     # 'XRP/USD', 
-        #     # 'DOGE/USD', 
-        #     # 'ADA/USD', 
-        #     # 'AVAX/USD', 
-        #     # 'LINK/USD', 
-        #     # 'DOT/USD', 
-        #     # 'NEAR/USD', 
-        #     # 'LTC/USD', 
-        #     # 'ATOM/USD', 
-        #     # 'SUI/USD', 
-        #     # 'APT/USD', 
-        #     # 'ARB/USD', 
-        #     # 'INJ/USD', 
-        #     # 'SEI/USD',
-        # ]
+        update_price_delta_ratio = ret.Decimal('0.005')
+        update_period_seconds = 3600
+        margin_initial_low_leverage = ret.Decimal('0.1')
+        margin_initial_high_leverage = ret.Decimal('0.05')
+        margin_maintenance = ret.Decimal('0.01')
+        funding_1 = ret.Decimal('0.5')
+        funding_2 = ret.Decimal('2')
+        funding_2_delta = ret.Decimal('200')
+        funding_2_decay = ret.Decimal('500')
+        funding_pool_0 = ret.Decimal('0.02')
+        funding_pool_1 = ret.Decimal('0.5')
+        funding_share = ret.Decimal('0.1')
+        fee_0 = ret.Decimal('0.001')
+        fee_1_low = ret.Decimal('0.00000001')
+        fee_1_mid = ret.Decimal('0.00000002')
+        fee_1_high = ret.Decimal('0.00000008')
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
@@ -109,32 +78,6 @@ async def main():
             ret.Address(owner_resource),
             ret.Decimal('4')
         )
-        # builder = builder.call_method(
-        #     ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
-        #     'update_pair_configs',
-        #     [ret.ManifestBuilderValue.ARRAY_VALUE(ret.ManifestBuilderValueKind.TUPLE_VALUE, [
-        #         ret.ManifestBuilderValue.TUPLE_VALUE([
-        #             ret.ManifestBuilderValue.STRING_VALUE(pair), # pub pair_id: PairId,
-        #             ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('10000000')), # pub oi_max: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-        #             ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_initial: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # pub margin_maintenance: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')),  # pub funding_2: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100')),  # pub funding_2_delta: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('100')),  # pub funding_2_decay: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.25')),  # pub funding_pool_1: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')),  # pub funding_share: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0005')),  # pub fee_0: Decimal,
-        #             ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000002'))  # pub fee_1: Decimal,
-        #         ])
-        #         for pair in pairs
-        #     ])]
-        # )
         builder = builder.call_method(
             ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
             'update_pair_configs',
@@ -144,114 +87,133 @@ async def main():
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('10')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('500')),  # pub funding_2_decay: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.25')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000001'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_high_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_low)  # pub fee_1: Decimal,
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('ETH/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('500')),  # pub funding_2_decay: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.25')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000001'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_high_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_low)  # pub fee_1: Decimal,
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('SOL/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2500')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('500')),  # pub funding_2_decay: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.25')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000001'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_high_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_low)  # pub fee_1: Decimal,
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('XRD/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('5000000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('500')),  # pub funding_2_decay: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.25')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.001')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000008'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_low_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_high)  # pub fee_1: Decimal,
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('SUI/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('500')),  # pub funding_2_decay: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.5')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0015')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000002'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_high_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_mid)  # pub fee_1: Decimal,
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('DOGE/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2000000')), # pub oi_max: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1000000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.005')), # update_price_delta_ratio
-                    ret.ManifestBuilderValue.I64_VALUE(3600), # update_period_seconds
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.05')), # pub margin_initial: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # pub margin_maintenance: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1')), # pub funding_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('2')),  # pub funding_2: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('200')),  # pub funding_2_delta: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('500')),  # pub funding_2_decay: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')),  # pub funding_pool_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.5')),  # pub funding_pool_1: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.1')),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.0015')),  # pub fee_0: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.00000002'))  # pub fee_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_high_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_mid)  # pub fee_1: Decimal,
+                ]),
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.STRING_VALUE('ADA/USD'), # pub pair_id: PairId,
+                    ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('750000')), # pub oi_max: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
+                    ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_initial_high_leverage), # pub margin_initial: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(margin_maintenance), # pub margin_maintenance: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_1), # pub funding_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2),  # pub funding_2: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_delta),  # pub funding_2_delta: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_2_decay),  # pub funding_2_decay: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_mid)  # pub fee_1: Decimal,
                 ]),
             ])]
         )
