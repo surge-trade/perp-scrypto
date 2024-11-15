@@ -38,7 +38,7 @@ async def main():
 
         exchange_component = config_data['EXCHANGE_COMPONENT']
 
-        pair_ids = ['BTC/USD', 'ETH/USD', 'SOL/USD', 'XRD/USD']
+        pair_ids = ['BTC/USD', 'ETH/USD', 'SOL/USD', 'XRD/USD', 'SUI/USD', 'DOGE/USD', 'ADA/USD']
         prices = await get_prices(session, pair_ids)
 
         manifest = f'''
