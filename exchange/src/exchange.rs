@@ -2511,17 +2511,33 @@ mod exchange_mod {
             let funding_pool_delta = if !period.is_zero() {
                 let funding_2_max = oi_long * price;
                 let funding_2_min = -oi_short * price;
+                let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
                 
                 if pool_position.funding_2_rate > funding_2_max {
                     let excess = pool_position.funding_2_rate - funding_2_max;
                     let decay = excess * (pair_config.funding_2_decay * period).min(dec!(1));
                     pool_position.funding_2_rate -= decay;
+
+                    if funding_2_rate_delta.is_negative() {
+                        if pool_position.funding_2_rate + funding_2_rate_delta < funding_2_min {
+                            pool_position.funding_2_rate = funding_2_min;
+                        } else {
+                            pool_position.funding_2_rate += funding_2_rate_delta;
+                        }
+                    }
                 } else if pool_position.funding_2_rate < funding_2_min {
                     let excess = pool_position.funding_2_rate - funding_2_min;
                     let decay = excess * (pair_config.funding_2_decay * period).min(dec!(1));
                     pool_position.funding_2_rate -= decay;
+
+                    if funding_2_rate_delta.is_positive() {
+                        if pool_position.funding_2_rate + funding_2_rate_delta > funding_2_max {
+                            pool_position.funding_2_rate = funding_2_max;
+                        } else {
+                            pool_position.funding_2_rate += funding_2_rate_delta;
+                        }
+                    }
                 } else {
-                    let funding_2_rate_delta = skew * pair_config.funding_2_delta * period;
                     if pool_position.funding_2_rate + funding_2_rate_delta > funding_2_max {
                         pool_position.funding_2_rate = funding_2_max;
                     } else if pool_position.funding_2_rate + funding_2_rate_delta < funding_2_min {
