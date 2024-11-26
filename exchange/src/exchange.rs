@@ -2220,8 +2220,11 @@ mod exchange_mod {
                 "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_SWAP_NO_DEBT, account.virtual_balance(), dec!(0)
             );
 
+            let collateral_config = config.collateral_configs().get(resource).unwrap();
+            let discount = collateral_config.discount * dec!(0.1) + dec!(0.9);
+
             let value = payment_token.amount().min(-account.virtual_balance());
-            let price_resource = oracle.price_resource(*resource);
+            let price_resource = oracle.price_resource(*resource) * discount;
             let amount = value / price_resource;
 
             let available = account.collateral_amount(resource);
@@ -2239,7 +2242,7 @@ mod exchange_mod {
             Runtime::emit_event(EventSwapDebt {
                 account: account.address(),
                 resource: *resource,
-                amount,
+                amount: token.amount(),
                 price: price_resource,
             });
 

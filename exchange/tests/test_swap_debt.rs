@@ -80,6 +80,7 @@ fn test_swap_debt_more_than_debt() {
     
     let price_5 = dec!(9000);
     let btc_price_5 = dec!(100000);
+    let btc_price_discounted_5 = btc_price_5 * dec!(0.99);
     let time_5 = interface.increment_ledger_time(10000);
     interface.process_request(
         margin_account_component,
@@ -115,7 +116,7 @@ fn test_swap_debt_more_than_debt() {
     let btc_output_7 = btc_balance_7 - btc_balance_6;
 
     assert_eq!(base_output_7, base_input_6 + account_details_6.virtual_balance);
-    assert_eq!(btc_output_7, -account_details_6.virtual_balance / btc_price_5);
+    assert_eq!(btc_output_7, (-account_details_6.virtual_balance / btc_price_discounted_5).checked_round(8, RoundingMode::ToZero).unwrap());
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.virtual_balance, dec!(0));
@@ -124,7 +125,7 @@ fn test_swap_debt_more_than_debt() {
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.resource, btc_resource);
     assert_eq!(event.amount, btc_output_7);
-    assert_eq!(event.price, btc_price_5);
+    assert_eq!(event.price, btc_price_discounted_5);
 }
 
 #[test]
@@ -205,6 +206,7 @@ fn test_swap_debt_less_than_debt() {
     
     let price_5 = dec!(9000);
     let btc_price_5 = dec!(100000);
+    let btc_price_discounted_5 = btc_price_5 * dec!(0.99);
     let time_5 = interface.increment_ledger_time(10000);
     interface.process_request(
         margin_account_component,
@@ -240,7 +242,7 @@ fn test_swap_debt_less_than_debt() {
     let btc_output_7 = btc_balance_7 - btc_balance_6;
 
     assert_eq!(base_output_7, dec!(0));
-    assert_eq!(btc_output_7, base_input_6 / btc_price_5);
+    assert_eq!(btc_output_7, (base_input_6 / btc_price_discounted_5).checked_round(8, RoundingMode::ToZero).unwrap());
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
     assert_eq!(account_details.virtual_balance, base_input_6 + account_details_6.virtual_balance);
@@ -249,7 +251,7 @@ fn test_swap_debt_less_than_debt() {
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.resource, btc_resource);
     assert_eq!(event.amount, btc_output_7);
-    assert_eq!(event.price, btc_price_5);
+    assert_eq!(event.price, btc_price_discounted_5);
 }
 
 #[test]
@@ -349,6 +351,7 @@ fn test_swap_debt_more_than_token() {
     let price_5 = dec!(9000);
     let btc_price_5 = dec!(100000);
     let xrd_price_5 = dec!(0.05);
+    let xrd_price_discounted_5 = xrd_price_5 * dec!(0.99);
     let time_5 = interface.increment_ledger_time(10000);
     interface.process_request(
         margin_account_component,
@@ -388,17 +391,17 @@ fn test_swap_debt_more_than_token() {
     let base_output_7 = base_balance_7 - base_balance_6 + base_input_6;
     let xrd_output_7 = xrd_balance_7 - xrd_balance_6;
 
-    assert_eq!(base_output_7, base_input_6 - (xrd_input_2 * xrd_price_5));
+    assert_eq!(base_output_7, base_input_6 - (xrd_input_2 * xrd_price_discounted_5));
     assert_eq!(xrd_output_7, xrd_input_2);
 
     let account_details = interface.get_account_details(margin_account_component, 0, None);
-    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + (xrd_input_2 * xrd_price_5));
+    assert_eq!(account_details.virtual_balance, account_details_6.virtual_balance + (xrd_input_2 * xrd_price_discounted_5));
     
     let event: EventSwapDebt = interface.parse_event(&result_6);
     assert_eq!(event.account, margin_account_component);
     assert_eq!(event.resource, xrd_resource);
     assert_eq!(event.amount, xrd_output_7);
-    assert_eq!(event.price, xrd_price_5);
+    assert_eq!(event.price, xrd_price_discounted_5);
 }
 
 #[test]
