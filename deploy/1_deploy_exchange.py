@@ -770,7 +770,7 @@ async def main():
                         ),
                         Tuple(
                             "recovery_key_resource",
-                            {recovery_key_resource}
+                            "{recovery_key_resource}"
                         ),
                         Tuple(
                             "base_resource",
@@ -833,7 +833,7 @@ async def main():
             status = await gateway.get_transaction_status(intent)
             print('Register exchange:', status)
 
-            print('---------- DEPLOY COMPLETE ----------')
+            print(f'---------- DEPLOY {network_config["network_name"].upper()} COMPLETE ----------')
 
             print(f'STATE_VERSION={state_version}')
 
