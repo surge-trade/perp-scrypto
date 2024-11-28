@@ -297,13 +297,15 @@ async def main():
         status = await gateway.get_transaction_status(intent)
         print('Register exchange:', status)
 
-        print('---------- DEPLOY COMPLETE ----------')
+        print(f'---------- DEPLOY {network_config["network_name"].upper()} COMPLETE ----------')
 
         print(f'EXCHANGE_PACKAGE={exchange_package}')
         print(f'EXCHANGE_COMPONENT={exchange_component}')
 
         config_data['EXCHANGE_PACKAGE'] = exchange_package
         config_data['EXCHANGE_COMPONENT'] = exchange_component
+
+        print('-------------------------------------')
 
         release_path = join(dirname(dirname(dirname(realpath(__file__)))), 'releases')
         release_path = join(release_path, timestamp + '_' + network_config['network_name'])
@@ -314,7 +316,6 @@ async def main():
             json.dump(config_data, config_file, indent=4)
         print(f'Config saved')
 
-        print('-------------------------------------')
 
         # withdraw_account = input("Please enter your address to withdraw: ")
         # balance = await gateway.get_xrd_balance(account)
