@@ -761,6 +761,10 @@ async def main():
                     "set_variables"
                     Array<Tuple>(
                         Tuple(
+                            "protocol_resource",
+                            "{protocol_resource}"
+                        ),
+                        Tuple(
                             "lp_resource",
                             "{lp_resource}"
                         ),
