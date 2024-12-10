@@ -19,6 +19,7 @@ pub const ERROR_WITHDRAWAL_INSUFFICIENT_BALANCE: &str = "Insufficient balance fo
 pub const ERROR_WITHDRAWAL_INSUFFICIENT_POOL_TOKENS: &str = "Insufficient pool balance for withdrawal";
 
 pub const ERROR_LIQUIDATION_SUFFICIENT_MARGIN: &str = "Sufficient margin, can not liquidate";
+pub const ERROR_LIQUIDATION_RECEIVER_SAME_AS_ACCOUNT: &str = "Receiver same as account";
 
 pub const ERROR_ADL_SKEW_TOO_LOW: &str = "Skew ratio is too low for ADL";
 pub const ERROR_ADL_PNL_BELOW_THRESHOLD: &str = "PnL below required threshold";

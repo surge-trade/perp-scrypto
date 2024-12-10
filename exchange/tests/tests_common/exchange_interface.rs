@@ -1264,6 +1264,34 @@ impl ExchangeInterface {
         receipt
     }
 
+    pub fn liquidate_v2(
+        &mut self,
+        margin_account_component: ComponentAddress,
+        receiver: ComponentAddress,
+        prices: Option<Vec<Price>>,
+    ) -> TransactionReceiptV1 {
+        let price_updates = if let Some(prices) = prices {
+            let price_data = scrypto_encode(&prices).unwrap();
+            let price_data_hash = keccak256_hash(&price_data).to_vec();
+            let price_signature = Bls12381G1PrivateKey::from_u64(self.components.oracle_key_seed).unwrap().sign_v1(&price_data_hash);
+            Some((price_data, price_signature, 0 as ListIndex))
+        } else {
+            None
+        };
+
+        let manifest = ManifestBuilder::new()
+            .lock_fee_from_faucet()
+            .call_method(
+                self.components.exchange_component, 
+                "liquidate_v2", 
+                manifest_args!(margin_account_component, receiver, price_updates)
+            )
+            .deposit_batch(self.test_account)
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
+    }
+
     pub fn auto_deleverage(
         &mut self,
         margin_account_component: ComponentAddress,
