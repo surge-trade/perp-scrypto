@@ -12,7 +12,7 @@ fn test_liquidate_to_margin_long() {
 
     let receiver_component = interface.create_account(
         rule!(allow_all), 
-        vec![(base_resource, dec!(10000))], 
+        vec![(base_resource, dec!(10))], 
         None,
     ).expect_commit_success().new_component_addresses()[0];
     
@@ -136,6 +136,8 @@ fn test_liquidate_to_margin_long() {
 
     let receiver_details = interface.get_account_details(receiver_component, 0, None);
     assert_eq!(receiver_details.positions.len(), 0);
+    println!("receiver_details_6.virtual_balance: {:?}", receiver_details_6.virtual_balance);
+    println!("receiver_details.virtual_balance: {:?}", receiver_details.virtual_balance);
     assert_eq!(receiver_details.virtual_balance, receiver_details_6.virtual_balance - collateral_value_discounted);
     assert_eq!(receiver_details.collaterals.len(), 1);
     assert_eq!(receiver_details.collaterals[0].resource, btc_resource);
@@ -175,7 +177,7 @@ fn test_liquidate_to_margin_short() {
 
     let receiver_component = interface.create_account(
         rule!(allow_all), 
-        vec![(base_resource, dec!(10000))], 
+        vec![(base_resource, dec!(10))], 
         None,
     ).expect_commit_success().new_component_addresses()[0];
     
@@ -338,7 +340,7 @@ fn test_liquidate_to_margin_pool_loss() {
 
     let receiver_component = interface.create_account(
         rule!(allow_all), 
-        vec![(base_resource, dec!(10000))], 
+        vec![(base_resource, dec!(10))], 
         None,
     ).expect_commit_success().new_component_addresses()[0];
     
@@ -501,7 +503,7 @@ fn test_liquidate_to_margin_sufficient_margin() {
 
     let receiver_component = interface.create_account(
         rule!(allow_all), 
-        vec![(base_resource, dec!(10000))], 
+        vec![(base_resource, dec!(10))], 
         None,
     ).expect_commit_success().new_component_addresses()[0];
 
