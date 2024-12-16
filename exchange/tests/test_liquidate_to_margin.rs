@@ -136,8 +136,6 @@ fn test_liquidate_to_margin_long() {
 
     let receiver_details = interface.get_account_details(receiver_component, 0, None);
     assert_eq!(receiver_details.positions.len(), 0);
-    println!("receiver_details_6.virtual_balance: {:?}", receiver_details_6.virtual_balance);
-    println!("receiver_details.virtual_balance: {:?}", receiver_details.virtual_balance);
     assert_eq!(receiver_details.virtual_balance, receiver_details_6.virtual_balance - collateral_value_discounted);
     assert_eq!(receiver_details.collaterals.len(), 1);
     assert_eq!(receiver_details.collaterals[0].resource, btc_resource);
