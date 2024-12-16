@@ -1264,7 +1264,7 @@ impl ExchangeInterface {
         receipt
     }
 
-    pub fn liquidate_v2(
+    pub fn liquidate_to_margin(
         &mut self,
         margin_account_component: ComponentAddress,
         receiver: ComponentAddress,
@@ -1283,7 +1283,7 @@ impl ExchangeInterface {
             .lock_fee_from_faucet()
             .call_method(
                 self.components.exchange_component, 
-                "liquidate_v2", 
+                "liquidate_to_margin", 
                 manifest_args!(margin_account_component, receiver, price_updates)
             )
             .deposit_batch(self.test_account)

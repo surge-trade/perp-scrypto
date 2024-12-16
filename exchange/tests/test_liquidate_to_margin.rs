@@ -3,7 +3,7 @@ mod tests_common;
 use tests_common::*;
 
 #[test]
-fn test_liquidate_v2_long() {
+fn test_liquidate_to_margin_long() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
@@ -90,7 +90,7 @@ fn test_liquidate_v2_long() {
     let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(55000);
     let time_6 = interface.increment_ledger_time(30);
-    let result_6 = interface.liquidate_v2(
+    let result_6 = interface.liquidate_to_margin(
         margin_account_component, 
         receiver_component, 
         Some(vec![
@@ -166,7 +166,7 @@ fn test_liquidate_v2_long() {
 }
 
 #[test]
-fn test_liquidate_v2_short() {
+fn test_liquidate_to_margin_short() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
@@ -253,7 +253,7 @@ fn test_liquidate_v2_short() {
     let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(65000);
     let time_6 = interface.increment_ledger_time(30);
-    let result_6 = interface.liquidate_v2(
+    let result_6 = interface.liquidate_to_margin(
         margin_account_component, 
         receiver_component, 
         Some(vec![
@@ -329,7 +329,7 @@ fn test_liquidate_v2_short() {
 }
 
 #[test]
-fn test_liquidate_v2_pool_loss() {
+fn test_liquidate_to_margin_pool_loss() {
     let mut interface = get_setup();
     let exchange_config = interface.get_exchange_config();
     let base_resource = interface.resources.base_resource;
@@ -416,7 +416,7 @@ fn test_liquidate_v2_pool_loss() {
     let cost_6 = account_details_6.positions[0].cost;
     let price_6 = dec!(55000);
     let time_6 = interface.increment_ledger_time(30);
-    let result_6 = interface.liquidate_v2(
+    let result_6 = interface.liquidate_to_margin(
         margin_account_component, 
         receiver_component, 
         Some(vec![
@@ -493,7 +493,7 @@ fn test_liquidate_v2_pool_loss() {
 }
 
 #[test]
-fn test_liquidate_v2_sufficient_margin() {
+fn test_liquidate_to_margin_sufficient_margin() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
     let btc_resource = interface.mint_test_token(dec!(100), 8);
@@ -575,7 +575,7 @@ fn test_liquidate_v2_sufficient_margin() {
 
     let price_6 = dec!(55000);
     let time_6 = interface.increment_ledger_time(30);
-    interface.liquidate_v2(
+    interface.liquidate_to_margin(
         margin_account_component, 
         receiver_component, 
         Some(vec![
@@ -589,7 +589,7 @@ fn test_liquidate_v2_sufficient_margin() {
 }
 
 #[test]
-fn test_liquidate_v2_receiver_insufficient_margin() {
+fn test_liquidate_to_margin_receiver_insufficient_margin() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
     let btc_resource = interface.mint_test_token(dec!(100), 8);
@@ -671,7 +671,7 @@ fn test_liquidate_v2_receiver_insufficient_margin() {
 
     let price_6 = dec!(55000);
     let time_6 = interface.increment_ledger_time(30);
-    interface.liquidate_v2(
+    interface.liquidate_to_margin(
         margin_account_component, 
         receiver_component, 
         Some(vec![
@@ -685,7 +685,7 @@ fn test_liquidate_v2_receiver_insufficient_margin() {
 }
 
 #[test]
-fn test_liquidate_v2_receiver_same_as_margin_account() {
+fn test_liquidate_to_margin_receiver_same_as_margin_account() {
     let mut interface = get_setup();
     let base_resource = interface.resources.base_resource;
     let btc_resource = interface.mint_test_token(dec!(100), 8);
@@ -761,7 +761,7 @@ fn test_liquidate_v2_receiver_same_as_margin_account() {
 
     let price_6 = dec!(55000);
     let time_6 = interface.increment_ledger_time(30);
-    interface.liquidate_v2(
+    interface.liquidate_to_margin(
         margin_account_component, 
         margin_account_component, 
         Some(vec![

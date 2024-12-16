@@ -285,7 +285,7 @@ mod exchange_mod {
             process_request => restrict_to: [keeper_process];
             swap_debt => restrict_to: [keeper_swap_debt];
             liquidate => restrict_to: [keeper_liquidate];
-            liquidate_v2 => restrict_to: [keeper_liquidate];
+            liquidate_to_margin => restrict_to: [keeper_liquidate];
             auto_deleverage => restrict_to: [keeper_auto_deleverage];
             update_pairs => restrict_to: [keeper_update_pairs];
         }
@@ -1487,7 +1487,7 @@ mod exchange_mod {
             })
         }
 
-        pub fn liquidate_v2(
+        pub fn liquidate_to_margin(
             &self,
             account: ComponentAddress,
             receiver: ComponentAddress,
@@ -1508,7 +1508,7 @@ mod exchange_mod {
                 let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
                 let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds(&config, pair_ids.clone()), price_updates);
 
-                self._liquidate_v2(&config, &mut pool, &mut account, &mut receiver, &oracle);
+                self._liquidate_to_margin(&config, &mut pool, &mut account, &mut receiver, &oracle);
 
                 account.realize();
                 receiver.realize();
@@ -2350,7 +2350,7 @@ mod exchange_mod {
             tokens
         }
 
-        fn _liquidate_v2(
+        fn _liquidate_to_margin(
             &self,
             config: &VirtualConfig,
             pool: &mut VirtualLiquidityPool,
