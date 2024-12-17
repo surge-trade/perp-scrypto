@@ -285,6 +285,7 @@ mod exchange_mod {
             process_request => restrict_to: [keeper_process];
             swap_debt => restrict_to: [keeper_swap_debt];
             liquidate => restrict_to: [keeper_liquidate];
+            liquidate_to_margin => restrict_to: [keeper_liquidate];
             auto_deleverage => restrict_to: [keeper_auto_deleverage];
             update_pairs => restrict_to: [keeper_update_pairs];
         }
@@ -1486,6 +1487,38 @@ mod exchange_mod {
             })
         }
 
+        pub fn liquidate_to_margin(
+            &self,
+            account: ComponentAddress,
+            receiver: ComponentAddress,
+            price_updates: Option<(Vec<u8>, Bls12381G2Signature, ListIndex)>,
+        ) -> Bucket {
+            authorize!(self, {
+                assert!(
+                    account != receiver,
+                    "{}, VALUE:{}, REQUIRED:{}, OP:!= |", ERROR_LIQUIDATION_RECEIVER_SAME_AS_ACCOUNT, Runtime::bech32_encode_address(receiver), Runtime::bech32_encode_address(account)
+                );
+
+                let mut receiver = VirtualMarginAccount::new(receiver);
+                receiver.verify_level_3_auth();
+
+                let mut account = VirtualMarginAccount::new(account);
+                let pair_ids: HashSet<PairId> = account.position_ids().union(&receiver.position_ids()).cloned().collect();
+                let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                let mut pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds(&config, pair_ids.clone()), price_updates);
+
+                self._liquidate_to_margin(&config, &mut pool, &mut account, &mut receiver, &oracle);
+
+                account.realize();
+                receiver.realize();
+                pool.realize();
+
+                let reward = ResourceManager::from_address(KEEPER_REWARD_RESOURCE).mint(config.exchange_config().reward_keeper);
+                reward
+            })
+        }
+
         pub fn auto_deleverage(
             &self, 
             account: ComponentAddress, 
@@ -2315,6 +2348,67 @@ mod exchange_mod {
             });
 
             tokens
+        }
+
+        fn _liquidate_to_margin(
+            &self,
+            config: &VirtualConfig,
+            pool: &mut VirtualLiquidityPool,
+            account: &mut VirtualMarginAccount,
+            receiver: &mut VirtualMarginAccount,
+            oracle: &VirtualOracle,
+        ) {
+            let result_positions = self._liquidate_positions(config, pool, account, oracle); 
+            let result_collateral = self._liquidate_collateral(config, account, oracle); 
+            
+            let virtual_balance = account.virtual_balance();
+            let account_value = result_positions.pnl + result_collateral.collateral_value_discounted + virtual_balance;
+            let margin = result_positions.margin_positions + result_collateral.margin_collateral;
+
+            assert!(
+                account_value < margin,
+                "{}, VALUE:{}, REQUIRED:{}, OP:< |", ERROR_LIQUIDATION_SUFFICIENT_MARGIN, account_value, margin
+            );
+
+            let value = result_collateral.collateral_value_discounted;
+
+            let tokens = account.withdraw_collateral_batch(result_collateral.collateral_amounts.clone(), TO_ZERO);
+            receiver.deposit_collateral_batch(tokens);
+            self._settle_account(pool, receiver, -value);
+            self._assert_account_integrity(config, pool, receiver, oracle);
+
+            let settlement = result_positions.pnl + value;
+            self._settle_account(pool, account, settlement);
+            let pool_loss = if account.virtual_balance().is_negative() {
+                let pool_loss = account.virtual_balance();
+                self._settle_account(pool, account, -pool_loss);
+                pool_loss
+            } else {
+                dec!(0)
+            };
+            let (fee_pool, fee_protocol, fee_treasury, fee_referral) = self._settle_fees_referral(config, pool, account, result_positions.fee_paid);
+
+            account.update_valid_requests_start();
+
+            Runtime::emit_event(EventLiquidate {
+                account: account.address(),
+                position_prices: result_positions.position_prices,
+                collateral_prices: result_collateral.collateral_prices,
+                account_value,
+                margin,
+                virtual_balance,
+                position_amounts: result_positions.position_amounts,
+                positions_pnl: result_positions.pnl,
+                collateral_amounts: result_collateral.collateral_amounts,
+                collateral_value: result_collateral.collateral_value,
+                collateral_value_discounted: result_collateral.collateral_value_discounted,
+                funding: result_positions.funding_paid,
+                fee_pool,
+                fee_protocol,
+                fee_treasury,
+                fee_referral,
+                pool_loss,
+            });
         }
 
         fn _auto_deleverage(
