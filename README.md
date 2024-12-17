@@ -111,6 +111,7 @@ The `env registry` component acts as an on-ledger store for variables used by th
 - `process_request`: Process a pending request.
 - `swap_debt`: Swap debt to pay off an account debt in return for collateral.
 - `liquidate`: Liquidate an account.
+- `liquidate_to_margin`: Liquidate an account by moving the collateral and debt to another margin account.
 - `auto_deleverage`: Automatically deleverage positions.
 - `update_pairs`: Update trading pair information.
 
