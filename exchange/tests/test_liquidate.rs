@@ -508,6 +508,19 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
         pair_ids.insert(pair_id.clone());
         collateral_configs.push((collateral_resource, collateral_config));
     }
+    let mut collateral_configs_extra = vec![];
+    for i in exchange_config.collaterals_max..exchange_config.collaterals_max + 50 {
+        let collateral_resource = interface.mint_test_token(dec!(100), 8);
+        let pair_id = format!("TEST{}/USD", i);
+        let collateral_config = CollateralConfig {
+            pair_id: pair_id.clone(),
+            price_age_max: 5,
+            discount: dec!(0.90),
+            margin: dec!(0.01),
+        };
+        pair_ids.insert(pair_id.clone());
+        collateral_configs_extra.push((collateral_resource, collateral_config));
+    }
     for i in 0..exchange_config.positions_max {
         let pair_id = format!("TEST{}/USD", i);
         let pair_config = PairConfig {
@@ -534,7 +547,7 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
         pair_configs.push(pair_config);
     }
     let pair_ids = pair_ids.into_iter().collect::<Vec<_>>();
-    interface.update_collateral_configs(collateral_configs.clone()).expect_commit_success();
+    interface.update_collateral_configs(collateral_configs.iter().chain(collateral_configs_extra.iter()).cloned().collect()).expect_commit_success();
     interface.update_pair_configs(pair_configs.clone()).expect_commit_success();
 
     let fee_referral_0 = dec!(0.10);
@@ -591,7 +604,7 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
             i as ListIndex, 
             Some(prices_5.clone()),
         );
-        // println!("transaction: {:?}", transaction.fee_summary);
+        println!("transaction: {:?}", transaction.fee_summary);
         transaction.expect_commit_success();
     }
     for _ in 0..exchange_config.active_requests_max {
@@ -608,7 +621,7 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
             vec![RequestIndexRef::Index(3), RequestIndexRef::Index(4)], 
             STATUS_ACTIVE
         );
-        // println!("transaction: {:?}", transaction.fee_summary);
+        println!("transaction: {:?}", transaction.fee_summary);
         transaction.expect_commit_success();
     }
 
@@ -630,7 +643,7 @@ fn test_liquidate_many_positions_collaterals_and_orders() {
         (base_resource, base_input_6), 
         Some(prices_6),
     );
-    // println!("transaction_6: {:?}", transaction_6.fee_summary);
+    println!("transaction_6: {:?}", transaction_6.fee_summary);
     let result_6 = transaction_6.expect_commit_success().clone();
 
     let base_balance_7 = interface.test_account_balance(base_resource);
