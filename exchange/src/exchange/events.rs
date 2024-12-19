@@ -126,6 +126,16 @@ pub struct EventLiquidate {
 }
 
 #[derive(ScryptoSbor, ScryptoEvent, Clone, Debug)]
+pub struct EventLiquidateToMargin {
+    pub account: ComponentAddress,
+    pub receiver: ComponentAddress,
+    pub collateral_prices: Vec<(ResourceAddress, Decimal)>,
+    pub collateral_amounts: Vec<(ResourceAddress, Decimal)>,
+    pub collateral_value: Decimal,
+    pub collateral_value_discounted: Decimal,
+}
+
+#[derive(ScryptoSbor, ScryptoEvent, Clone, Debug)]
 pub struct EventAutoDeleverage {
     pub account: ComponentAddress,
     pub pair_id: PairId,

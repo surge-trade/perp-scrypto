@@ -160,6 +160,13 @@ fn test_liquidate_to_margin_long() {
     assert_eq!(event_liquidate.fee_referral, -fee_referral);
     assert_eq!(event_liquidate.pool_loss, dec!(0));
 
+    let event_liquidate_to_margin: EventLiquidateToMargin = interface.parse_event(&result_6);
+    assert_eq!(event_liquidate_to_margin.account, margin_account_component);
+    assert_eq!(event_liquidate_to_margin.receiver, receiver_component);
+    assert_eq!(event_liquidate_to_margin.collateral_amounts, vec![(btc_resource, btc_input_3)]);
+    assert_eq!(event_liquidate_to_margin.collateral_value, collateral_value);
+    assert_eq!(event_liquidate_to_margin.collateral_value_discounted, collateral_value_discounted);
+
     let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
     assert_eq!(event_requests_start.account, margin_account_component);
     assert_eq!(event_requests_start.valid_requests_start, 1);
@@ -322,6 +329,13 @@ fn test_liquidate_to_margin_short() {
     assert_eq!(event_liquidate.fee_treasury, -fee_treasury);
     assert_eq!(event_liquidate.fee_referral, -fee_referral);
     assert_eq!(event_liquidate.pool_loss, dec!(0));
+
+    let event_liquidate_to_margin: EventLiquidateToMargin = interface.parse_event(&result_6);
+    assert_eq!(event_liquidate_to_margin.account, margin_account_component);
+    assert_eq!(event_liquidate_to_margin.receiver, receiver_component);
+    assert_eq!(event_liquidate_to_margin.collateral_amounts, vec![(btc_resource, btc_input_3)]);
+    assert_eq!(event_liquidate_to_margin.collateral_value, collateral_value);
+    assert_eq!(event_liquidate_to_margin.collateral_value_discounted, collateral_value_discounted);
 
     let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
     assert_eq!(event_requests_start.account, margin_account_component);
@@ -486,6 +500,13 @@ fn test_liquidate_to_margin_pool_loss() {
     assert_eq!(event_liquidate.fee_treasury, -fee_treasury);
     assert_eq!(event_liquidate.fee_referral, -fee_referral);
     assert_eq!(event_liquidate.pool_loss, pool_loss);
+
+    let event_liquidate_to_margin: EventLiquidateToMargin = interface.parse_event(&result_6);
+    assert_eq!(event_liquidate_to_margin.account, margin_account_component);
+    assert_eq!(event_liquidate_to_margin.receiver, receiver_component);
+    assert_eq!(event_liquidate_to_margin.collateral_amounts, vec![(btc_resource, btc_input_3)]);
+    assert_eq!(event_liquidate_to_margin.collateral_value, collateral_value);
+    assert_eq!(event_liquidate_to_margin.collateral_value_discounted, collateral_value_discounted);
 
     let event_requests_start: EventValidRequestsStart = interface.parse_event(&result_6);
     assert_eq!(event_requests_start.account, margin_account_component);
