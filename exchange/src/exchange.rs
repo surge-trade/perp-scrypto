@@ -41,6 +41,7 @@ use self::virtual_oracle::*;
     EventMarginOrder,
     EventSwapDebt,
     EventLiquidate,
+    EventLiquidateToMargin,
     EventAutoDeleverage,
 )]
 mod exchange_mod {
@@ -2393,13 +2394,13 @@ mod exchange_mod {
             Runtime::emit_event(EventLiquidate {
                 account: account.address(),
                 position_prices: result_positions.position_prices,
-                collateral_prices: result_collateral.collateral_prices,
+                collateral_prices: result_collateral.collateral_prices.clone(),
                 account_value,
                 margin,
                 virtual_balance,
                 position_amounts: result_positions.position_amounts,
                 positions_pnl: result_positions.pnl,
-                collateral_amounts: result_collateral.collateral_amounts,
+                collateral_amounts: result_collateral.collateral_amounts.clone(),
                 collateral_value: result_collateral.collateral_value,
                 collateral_value_discounted: result_collateral.collateral_value_discounted,
                 funding: result_positions.funding_paid,
@@ -2408,6 +2409,14 @@ mod exchange_mod {
                 fee_treasury,
                 fee_referral,
                 pool_loss,
+            });
+            Runtime::emit_event(EventLiquidateToMargin {
+                account: account.address(),
+                receiver: receiver.address(),
+                collateral_prices: result_collateral.collateral_prices,
+                collateral_amounts: result_collateral.collateral_amounts,
+                collateral_value: result_collateral.collateral_value,
+                collateral_value_discounted: result_collateral.collateral_value_discounted,
             });
         }
 
