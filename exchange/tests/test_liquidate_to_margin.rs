@@ -795,6 +795,127 @@ fn test_liquidate_to_margin_receiver_same_as_margin_account() {
     ).expect_specific_failure(|err| check_error_msg(err, ERROR_LIQUIDATION_RECEIVER_SAME_AS_ACCOUNT));
 }
 
+#[test]
+fn test_liquidate_to_margin_collaterals_too_many() {
+    let mut interface = get_setup();
+    let exchange_config = interface.get_exchange_config();
+    let base_resource = interface.resources.base_resource;
+    let btc_resource = interface.mint_test_token(dec!(100), 8);
+    let referral_resource = interface.resources.referral_resource;
+    
+    let collateral_config = CollateralConfig {
+        pair_id: "BTC/USD".to_string(),
+        price_age_max: 5,
+        discount: dec!(0.90),
+        margin: dec!(0.01),
+    };
+    interface.update_collateral_configs(vec![
+        (btc_resource, collateral_config.clone()),
+    ]).expect_commit_success();
 
+    let mut test_pair_ids = vec![];
+    let mut test_collateral_resources = vec![];
+    let mut test_collateral_configs = vec![];
+    for i in 0..exchange_config.collaterals_max {
+        let collateral_resource = interface.mint_test_token(dec!(100), 8);
+        let pair_id = format!("TEST{}/USD", i);
+        let collateral_config = CollateralConfig {
+            pair_id: pair_id.clone(),
+            price_age_max: 5,
+            discount: dec!(0.90),
+            margin: dec!(0.01),
+        };
+        test_collateral_resources.push(collateral_resource);
+        test_pair_ids.push(pair_id.clone());
+        test_collateral_configs.push((collateral_resource, collateral_config));
+    }
+    interface.update_collateral_configs(test_collateral_configs.clone()).expect_commit_success();
+
+    let receiver_component = interface.create_account(
+        rule!(allow_all), 
+        vec![(base_resource, dec!(10))].into_iter().chain(test_collateral_resources.iter().map(|r| (*r, dec!(1)))).collect(), 
+        None,
+    ).expect_commit_success().new_component_addresses()[0];
+
+    let pair_config = default_pair_config("BTC/USD".into());
+    interface.update_pair_configs(vec![pair_config.clone()]).expect_commit_success();
+
+    let fee_referral_0 = dec!(0.10);
+    let fee_rebate_0 = dec!(0.05);
+    let result_0 = interface.mint_referral(fee_referral_0, fee_rebate_0, 1).expect_commit_success().clone();
+    
+    let referral_id_1 = parse_added_nft_ids(&result_0, referral_resource).first().unwrap().clone();
+    let referral_code_1 = "test".to_string();
+    let referral_hash_1 = keccak256_hash(referral_code_1.clone().into_bytes());
+    let referral_hashes_1 = hashmap!(
+        referral_hash_1 => (vec![], 1u64),
+    );
+    interface.create_referral_codes((referral_resource, referral_id_1), vec![], referral_hashes_1).expect_commit_success();
+
+    let base_input_2 = dec!(1000000);
+    interface.add_liquidity((base_resource, base_input_2)).expect_commit_success();
+
+    let base_input_3 = dec!(75);
+    let btc_input_3 = dec!(0.0006);
+    let result_3 = interface.create_account(
+        rule!(allow_all), 
+        vec![
+            (base_resource, base_input_3),
+            (btc_resource, btc_input_3),
+        ], 
+        Some(referral_code_1),
+    ).expect_commit_success().clone();
+    let margin_account_component = result_3.new_component_addresses()[0];
+
+    let trade_size_4 = dec!(0.02);
+    interface.margin_order_tp_sl_request(
+        0,
+        10000000000,
+        margin_account_component,
+        pair_config.pair_id.clone(),
+        trade_size_4,
+        false,
+        PriceLimit::None,
+        SlippageLimit::None,
+        None,
+        None,
+    ).expect_commit_success();
+
+    let price_5 = dec!(60000);
+    let time_5 = interface.increment_ledger_time(1);
+    interface.process_request(
+        margin_account_component,
+        0, 
+        Some(vec![
+            Price {
+                pair: pair_config.pair_id.clone(),
+                quote: price_5,
+                timestamp: time_5,
+            },
+        ].into_iter().chain(test_pair_ids.iter().map(|pair_id| Price {
+            pair: pair_id.clone(),
+            quote: dec!(1),
+            timestamp: time_5,
+        })).collect::<Vec<Price>>())
+    ).expect_commit_success();
+
+    let price_6 = dec!(55000);
+    let time_6 = interface.increment_ledger_time(30);
+    interface.liquidate_to_margin(
+        margin_account_component, 
+        receiver_component, 
+        Some(vec![
+            Price {
+                pair: pair_config.pair_id.clone(),
+                quote: price_6,
+                timestamp: time_6,
+            }
+        ].into_iter().chain(test_pair_ids.iter().map(|pair_id| Price {
+            pair: pair_id.clone(),
+            quote: dec!(1),
+            timestamp: time_6,
+        })).collect::<Vec<Price>>()),
+    ).expect_specific_failure(|err| check_error_msg(err, ERROR_COLLATERALS_TOO_MANY));
+}
 
 // TODO: test funding
