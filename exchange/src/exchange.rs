@@ -2375,6 +2375,8 @@ mod exchange_mod {
 
             let tokens = account.withdraw_collateral_batch(result_collateral.collateral_amounts.clone(), TO_ZERO);
             receiver.deposit_collateral_batch(tokens);
+            self._assert_collaterals_limit(config, receiver);
+            
             self._settle_account(pool, receiver, -value);
             self._assert_account_integrity(config, pool, receiver, oracle);
 
