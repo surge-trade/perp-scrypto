@@ -4,7 +4,7 @@ use common::*;
 use ::config::*;
 use account::*;
 use pool::*;
-use referral_generator::{ReferralData, ReferralAllocation};
+use referral_generator::{ReferralData, ReferralAllocation, ReferralCode};
 
 #[derive(ScryptoSbor, NonFungibleData, Clone, ManifestSbor)]
 pub struct RecoveryKeyData {
@@ -76,6 +76,12 @@ pub struct PairDetails {
 pub struct ReferralDetails {
     pub referral: ReferralData,
     pub allocations: Vec<ReferralAllocation>,
+}
+
+#[derive(ScryptoSbor, Clone, Debug)]
+pub struct ReferralCodeDetails {
+    pub referral_code: ReferralCode,
+    pub referral: ReferralData,
 }
 
 pub struct ResultValuePositions {

@@ -143,7 +143,7 @@ mod exchange_mod {
 
             // Getter methods
             fn get_allocations(&self, referral_id: NonFungibleLocalId) -> Vec<ReferralAllocation>;
-            // fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
+            fn get_referral_code(&self, hash: Hash) -> Option<ReferralCode>;
 
             // Authority protected methods
             fn add_allocation(&self, tokens: Vec<Bucket>, referral_id: NonFungibleLocalId, claims: Vec<(ResourceAddress, Decimal)>, count: u64) -> (Vec<Bucket>, ListIndex);
@@ -255,6 +255,7 @@ mod exchange_mod {
             get_pool_details => PUBLIC;
             get_pair_details => PUBLIC;
             get_referral_details => PUBLIC;
+            get_referral_code_details => PUBLIC;
             get_exchange_config => PUBLIC;
             get_pair_configs => PUBLIC;
             get_pair_configs_len => PUBLIC;
@@ -663,6 +664,26 @@ mod exchange_mod {
             ReferralDetails {
                 allocations,
                 referral,
+            }
+        }
+
+        pub fn get_referral_code_details(
+            &self,
+            hash: Hash,
+        ) -> Option<ReferralCodeDetails> {
+            let referral_generator = Global::<ReferralGenerator>::from(REFERRAL_GENERATOR_COMPONENT);
+            let referral_code = referral_generator.get_referral_code(hash);
+
+            if let Some(referral_code) = referral_code {
+                let referral_manager = ResourceManager::from_address(REFERRAL_RESOURCE);
+                let referral: ReferralData = referral_manager.get_non_fungible_data(&referral_code.referral_id);
+
+                Some(ReferralCodeDetails {
+                    referral_code,
+                    referral,
+                })
+            } else {
+                None
             }
         }
 
