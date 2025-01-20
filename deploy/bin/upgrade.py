@@ -31,9 +31,9 @@ def build(name: str, envs: list, network: str) -> tuple[bytes, bytes]:
     path = join(dirname(dirname(dirname(realpath(__file__)))), name)
     print(f'Build: {path}')
     
-    env = environ.copy()
-    env.update({str(key): str(value) for key, value in envs})
-    run(['scrypto', 'build'], env=env, cwd=path, check=True)
+    # env = environ.copy()
+    # env.update({str(key): str(value) for key, value in envs})
+    # run(['scrypto', 'build'], env=env, cwd=path, check=True)
 
     run(['docker', 'run', 
         '-v', f'/root/surge-scrypto/{name}:/src',
