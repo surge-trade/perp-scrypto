@@ -258,7 +258,7 @@ async def main():
                 ret.ManifestBuilderValue.TUPLE_VALUE([
                     ret.ManifestBuilderValue.STRING_VALUE('PEPE/USD'), # pub pair_id: PairId,
                     ret.ManifestBuilderValue.I64_VALUE(price_age_max), # price_age_max
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('1000000')), # pub oi_max: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('10000000000')), # pub oi_max: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0')), # pub trade_size_min: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(update_price_delta_ratio), # update_price_delta_ratio
                     ret.ManifestBuilderValue.I64_VALUE(update_period_seconds), # update_period_seconds
