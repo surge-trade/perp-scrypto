@@ -47,6 +47,51 @@ async def main():
 if __name__ == '__main__':
     asyncio.run(main())
 
+
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "lock_fee"
+#     Decimal("10")
+# ;
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "create_proof_of_amount"
+#     Address("resource_rdx1t5av9jksz5a2952qmhv5h7t2k0xt4vkv4wj7ekdchjkq435ujudss5")
+#     Decimal("4")
+# ;
+# SET_ROLE
+#     Address("component_rdx1cqrfmpkp96hvlykahmhmu2w48kk2w7w35396vkrze9jwufxtvdzlkk")
+#     Enum<0u8>()
+#     "keeper_process"
+#     Enum<2u8>(
+#         Enum<1u8>(
+#             Array<Enum>(
+#                 Enum<0u8>(
+#                     Enum<0u8>(
+#                         Enum<0u8>(
+#                             NonFungibleGlobalId("resource_rdx1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxxed25sg:[38482c29c0a3e1ad84ee5ad45e09501ae7133fe94e916ec38c7af7fa8f]")
+#                         )
+#                     )
+#                 ),
+#                 Enum<0u8>(
+#                     Enum<0u8>(
+#                         Enum<0u8>(
+#                             NonFungibleGlobalId("resource_rdx1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxxed25sg:[d3ad5455ba9cb61b1bd41a932c285168428c4a4ab47dadc40941dab32b]")
+#                         )
+#                     )
+#                 ),
+#                 Enum<0u8>(
+#                     Enum<0u8>(
+#                         Enum<0u8>(
+#                             NonFungibleGlobalId("resource_rdx1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxxed25sg:[6f1d138cd61baa02faaca78a9e3759ba65b99e7c672979bb2fd365008c]")
+#                         )
+#                     )
+#                 )
+#             )
+#         )
+#     )
+# ;
+
 # CALL_METHOD
 #     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
 #     "lock_fee"
