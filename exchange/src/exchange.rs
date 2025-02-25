@@ -499,8 +499,8 @@ mod exchange_mod {
                     "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_referral, "[0, 0.1]"
                 );
                 assert!(
-                    fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
-                    "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_rebate, "[0, 0.1]"
+                    fee_rebate >= dec!(0) && fee_rebate <= dec!(0.3),
+                    "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_rebate, "[0, 0.3]"
                 );
 
                 let referral_data = ReferralData {
