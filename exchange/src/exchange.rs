@@ -559,8 +559,8 @@ mod exchange_mod {
                 }
                 if let Some(fee_rebate) = fee_rebate {
                     assert!(
-                        fee_rebate >= dec!(0) && fee_rebate <= dec!(0.1),
-                        "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_rebate, "[0, 0.1]"
+                        fee_rebate >= dec!(0) && fee_rebate <= dec!(0.3),
+                        "{}, VALUE:{}, REQUIRED:{}, OP:bounds |", ERROR_INVALID_REFERRAL_DATA, fee_rebate, "[0, 0.3]"
                     );
                     referral_manager.update_non_fungible_data(&referral_id, "fee_rebate", fee_rebate);
                 }
