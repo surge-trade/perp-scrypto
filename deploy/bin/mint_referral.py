@@ -40,7 +40,7 @@ async def main():
         owner_resource = config_data['OWNER_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
         base_resource = config_data['BASE_RESOURCE']
-        receiver_account = 'account_rdx12x0jjurn8njg3wmpyj93s95tcst4r0qtjxrqj30rr9uaplsj7ym4uh'
+        receiver_account = ''
 
         balance = await gateway.get_xrd_balance(account)
         if balance < 1000:
@@ -65,7 +65,7 @@ async def main():
                 Address("{account.as_str()}")
                 "withdraw"
                 Address("{base_resource}")
-                Decimal("10")
+                Decimal("100")
             ;
             TAKE_ALL_FROM_WORKTOP
                 Address("{base_resource}")
@@ -74,19 +74,19 @@ async def main():
             CALL_METHOD
                 Address("{exchange_component}")
                 "mint_referral_with_allocation"
-                "Test Surge Referral"
-                "It heralds great things to come!"
-                "https://www.surge.trade/images/referral_badge_test.png"
-                Decimal("0.03")
-                Decimal("0")
-                20u64
+                "Jack of Hearts"
+                "Can be used to invite your friends to the Surge!"
+                "https://www.surge.trade/images/card_H_J.png"
+                Decimal("0.035")
+                Decimal("0.14")
+                100u64
                 Array<Bucket>(
                     Bucket("tokens")
                 )
                 Array<Tuple>(
                     Tuple(
                         Address("{base_resource}"),
-                        Decimal("2")
+                        Decimal("20")
                     )
                 )
                 5u64
