@@ -82,6 +82,7 @@ fn main() {
     write_package("FEE_DISTRIBUTOR_PACKAGE", "FEE_DISTRIBUTOR_PACKAGE", &decoder, &mut f);
     write_package("FEE_DELEGATOR_PACKAGE", "FEE_DELEGATOR_PACKAGE", &decoder, &mut f);
     write_package("PERMISSION_REGISTRY_PACKAGE", "PERMISSION_REGISTRY_PACKAGE", &decoder, &mut f);
+    write_package("TOKEN_WRAPPER_PACKAGE", "TOKEN_WRAPPER_PACKAGE", &decoder, &mut f);
 
     write_component("ORACLE_COMPONENT", "_ORACLE_COMPONENT", &decoder, &mut f);
     write_component("CONFIG_COMPONENT", "_CONFIG_COMPONENT", &decoder, &mut f);
@@ -90,4 +91,5 @@ fn main() {
     write_component("FEE_DISTRIBUTOR_COMPONENT", "_FEE_DISTRIBUTOR_COMPONENT", &decoder, &mut f);
     write_component("FEE_DELEGATOR_COMPONENT", "_FEE_DELEGATOR_COMPONENT", &decoder, &mut f);
     write_component("PERMISSION_REGISTRY_COMPONENT", "_PERMISSION_REGISTRY_COMPONENT", &decoder, &mut f);
+    write_component("TOKEN_WRAPPER_COMPONENT", "_TOKEN_WRAPPER_COMPONENT", &decoder, &mut f);
 }

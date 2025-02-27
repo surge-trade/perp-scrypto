@@ -55,6 +55,8 @@ async def main():
             "FEE_OATH_RESOURCE": config_data['FEE_OATH_RESOURCE'],
             "TOKEN_WRAPPER_PACKAGE": config_data['TOKEN_WRAPPER_PACKAGE'],
             "TOKEN_WRAPPER_COMPONENT": config_data['TOKEN_WRAPPER_COMPONENT'],
+            "TOKEN_WRAPPER_2_PACKAGE": config_data['TOKEN_WRAPPER_2_PACKAGE'],
+            "TOKEN_WRAPPER_2_COMPONENT": config_data['TOKEN_WRAPPER_2_COMPONENT'],
             "ORACLE_PACKAGE": config_data['ORACLE_PACKAGE'],
             "ORACLE_COMPONENT": config_data['ORACLE_COMPONENT'],
             "CONFIG_PACKAGE": config_data['CONFIG_PACKAGE'],
