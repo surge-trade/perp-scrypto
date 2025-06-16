@@ -180,3 +180,20 @@ if __name__ == '__main__':
 #     1u64
 #     Bytes("b60f1610a172790598c1b4cd4a4dc34daa4e972bb7a9fa77245357eab78471c15927a28af8779e021236ab68ff0c8bd3")
 # ;
+
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "lock_fee"
+#     Decimal("10")
+# ;
+# CALL_METHOD
+#     Address("account_rdx12yn43ckkkre9un54424nvck48vf70cgyq8np4ajsrwkc9q3m20ndmd")
+#     "create_proof_of_amount"
+#     Address("resource_rdx1t5av9jksz5a2952qmhv5h7t2k0xt4vkv4wj7ekdchjkq435ujudss5")
+#     Decimal("4")
+# ;
+# CALL_METHOD
+#     Address("component_rdx1cp92uemllvxuewz93s5h8f36plsmrysssjjl02vve3zvsdlyxhmne7")
+#     "remove_collateral_config"
+#     Address("resource_rdx1t58k9jlygcw27sx7peza34jtk65qhe8y7qxmyp9l09pz5sjgadkcq3")
+# ;

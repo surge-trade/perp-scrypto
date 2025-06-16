@@ -85,7 +85,7 @@ async def main():
         entities = [f'Address("{entity}")' for entity in data.values()]
 
         name = 'Surge'
-        description = 'Feel the Surge!'
+        description = 'Perpetual DEX - trade all top assets with up to 100x leverage.'
         icon_url = 'https://surge.trade/images/icon_dapp.png'
         claimed_entities = ', '.join(entities)
         websites = ', '.join([f'"https://www.surge.trade"', '"https://power.surge.trade"', '"https://ilovetesting.surge.trade"'])

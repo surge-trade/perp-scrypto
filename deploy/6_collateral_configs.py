@@ -105,15 +105,6 @@ async def main():
                         ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
                     ])
                 ]),
-                ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(link_resource))),
-                    ret.ManifestBuilderValue.TUPLE_VALUE([
-                        ret.ManifestBuilderValue.STRING_VALUE("LINK/USD"), # pair_id
-                        ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.90')), # discount
-                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.02')), # margin
-                    ])
-                ]),
             ])]
         )
 

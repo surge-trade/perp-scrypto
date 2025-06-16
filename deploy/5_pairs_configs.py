@@ -57,9 +57,9 @@ async def main():
         price_age_max = 5
         update_price_delta_ratio = ret.Decimal('0.005')
         update_period_seconds = 3600
-        margin_initial_low_leverage = ret.Decimal('0.1')
-        margin_initial_high_leverage = ret.Decimal('0.05')
-        margin_maintenance = ret.Decimal('0.01')
+        margin_initial_low_leverage = ret.Decimal('0.05')
+        margin_initial_high_leverage = ret.Decimal('0.02')
+        margin_maintenance = ret.Decimal('0.005')
         funding_1 = ret.Decimal('0.5')
         funding_2 = ret.Decimal('2')
         funding_2_delta = ret.Decimal('200')
