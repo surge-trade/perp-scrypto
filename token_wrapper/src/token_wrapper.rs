@@ -156,6 +156,11 @@ mod token_wrapper_mod {
         }
 
         pub fn unwrap(&mut self, parent_token: Bucket, child_resource: ResourceAddress) -> Bucket {
+            assert!(
+                parent_token.resource_address() == BASE_RESOURCE,
+                "{}, VALUE:{}, REQUIRED:{}, OP:== |", ERROR_INVALID_PAYMENT_TOKEN, Runtime::bech32_encode_address(parent_token.resource_address()), Runtime::bech32_encode_address(BASE_RESOURCE)
+            );
+            
             let mut child_vault = self.inputs.get_mut(&child_resource).expect(ERROR_INVALID_CHILD_TOKEN);
 
             let child_token = child_vault.vault.take_advanced(parent_token.amount(), TO_ZERO);
