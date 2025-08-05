@@ -274,6 +274,7 @@ mod exchange_mod {
             create_account => restrict_to: [account_creation_user];
             create_recovery_key => restrict_to: [account_management_user];
             add_auth_rule => restrict_to: [account_management_user];
+            remove_auth_rule => restrict_to: [account_management_user];
             set_level_1_auth => restrict_to: [account_management_user];
             set_level_2_auth => restrict_to: [account_management_user];
             set_level_3_auth => restrict_to: [account_management_user];
@@ -1042,6 +1043,69 @@ mod exchange_mod {
                     }
                     AccessRule::Protected(rule_node) => {
                         rule = AccessRule::from(rule_node.or(additional_rule));
+                    }
+                }
+                
+                match level {
+                    1 => self._set_level_1_auth(&mut account, rule),
+                    2 => self._set_level_2_auth(&mut account, rule),
+                    3 => self._set_level_3_auth(&mut account, rule),
+                    _ => unreachable!(),
+                }
+
+                account.realize();
+            })
+        }
+
+        pub fn remove_auth_rule(
+            &self,
+            fee_oath: Option<Bucket>,
+            account: ComponentAddress,
+            level: u8,
+            removed_rule: AccessRuleNode,
+        ) {
+            authorize!(self, {
+                let mut account = VirtualMarginAccount::new(account);
+                account.verify_level_1_auth();
+
+                if let Some(fee_oath) = fee_oath {
+                    let pair_ids = account.position_ids();
+                    let config = VirtualConfig::new(Global::<Config>::from(CONFIG_COMPONENT), pair_ids.clone());
+                    let pool = VirtualLiquidityPool::new(Global::<MarginPool>::from(POOL_COMPONENT), pair_ids.clone());
+                    let oracle = VirtualOracle::new(Global::<Oracle>::from(ORACLE_COMPONENT), config.collateral_feeds(), self._pair_feeds_no_max_age(pair_ids), None);
+
+                    self._settle_fee_oath(&config, &pool, &mut account, &oracle, fee_oath);
+                }
+
+                assert!(
+                    vec![1, 2, 3].contains(&level),
+                    "{}, VALUE:{}, REQUIRED:{:?}, OP:contains |", ERROR_INVALID_AUTH_LEVEL, level, vec![1, 2, 3]
+                );
+
+                let mut rule = match level {
+                    1 => account.get_level_1_auth(),
+                    2 => account.get_level_2_auth(),
+                    3 => account.get_level_3_auth(),
+                    _ => unreachable!(),
+                };
+
+                match rule {
+                    AccessRule::AllowAll => {}
+                    AccessRule::DenyAll => {}
+                    AccessRule::Protected(ref rule_node) => {
+                        let rule_node = rule_node.clone();
+                        if rule_node == removed_rule {
+                            rule = AccessRule::DenyAll;
+                        } else if let AccessRuleNode::AnyOf(rule_nodes) = rule_node.clone() {
+                            let new_rule_nodes: Vec<AccessRuleNode> = rule_nodes.into_iter().filter(|r| r != &removed_rule).collect();
+                            if new_rule_nodes.is_empty() {
+                                rule = AccessRule::DenyAll;
+                            } else if new_rule_nodes.len() == 1 {
+                                rule = AccessRule::from(new_rule_nodes[0].clone());
+                            } else {
+                                rule = AccessRule::from(AccessRuleNode::AnyOf(new_rule_nodes));
+                            }
+                        }
                     }
                 }
                 

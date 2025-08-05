@@ -909,6 +909,35 @@ impl ExchangeInterface {
         receipt
     }
 
+    pub fn remove_auth_rule(
+        &mut self,
+        proof: Option<(ResourceAddress, NonFungibleLocalId)>,
+        margin_account_component: ComponentAddress,
+        level: u8,
+        removed_rule: AccessRuleNode,
+    ) -> TransactionReceiptV1 {
+        let fee_oath: Option<ManifestBucket> = None;
+
+        let mut builder = ManifestBuilder::new()
+            .lock_fee_from_faucet();
+        if let Some(proof) = proof {
+            builder = builder
+                .create_proof_from_account_of_non_fungible(
+                    self.test_account, 
+                    NonFungibleGlobalId::new(proof.0, proof.1)
+                );
+        }
+        let manifest = builder
+            .call_method(
+                self.components.exchange_component, 
+                "remove_auth_rule", 
+                manifest_args!(fee_oath, margin_account_component, level, removed_rule)
+            )
+            .build();
+        let receipt = self.ledger.execute_manifest(manifest, vec![NonFungibleGlobalId::from_public_key(&self.public_key)]);
+        receipt
+    }
+
     pub fn set_level_1_auth(
         &mut self,
         proof: Option<(ResourceAddress, NonFungibleLocalId)>,
