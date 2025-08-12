@@ -71,7 +71,7 @@ async def main():
         fee_0_high = ret.Decimal('0.003')
         fee_1_low = ret.Decimal('0.00000001')
         fee_1_mid = ret.Decimal('0.00000002')
-        fee_1_high = ret.Decimal('0.0000003')
+        fee_1_high = ret.Decimal('0.0000005')
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)
