@@ -68,10 +68,10 @@ async def main():
         funding_pool_1 = ret.Decimal('0.5')
         funding_share = ret.Decimal('0.1')
         fee_0 = ret.Decimal('0.001')
-        fee_0_high = ret.Decimal('0.002')
+        fee_0_high = ret.Decimal('0.003')
         fee_1_low = ret.Decimal('0.00000001')
         fee_1_mid = ret.Decimal('0.00000002')
-        fee_1_high = ret.Decimal('0.00000015')
+        fee_1_high = ret.Decimal('0.0000003')
 
         builder = ret.ManifestBuilder()
         builder = lock_fee(builder, account, 100)

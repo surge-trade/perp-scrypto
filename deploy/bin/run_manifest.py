@@ -60,7 +60,7 @@ if __name__ == '__main__':
 #     Decimal("4")
 # ;
 # SET_ROLE
-#     Address("component_rdx1cqrfmpkp96hvlykahmhmu2w48kk2w7w35396vkrze9jwufxtvdzlkk")
+#     Address("component_rdx1cz5dduz6flgsmx7frc0854nk545s69nryvgq0y02r2mlm3tsryk6xx")
 #     Enum<0u8>()
 #     "keeper_process"
 #     Enum<2u8>(
