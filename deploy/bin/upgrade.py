@@ -261,6 +261,16 @@ async def main():
             'signal_upgrade',
             [ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.NAMED(ret.ManifestBuilderNamedAddress('exchange_component')))]
         )
+        builder = builder.role_assignment_set(
+            ret.ManifestBuilderAddress.STATIC(ret.Address(exchange_component)),
+            ret.ModuleId.MAIN,
+            "keeper_process",
+            ret.AccessRule.require_any_of(
+                ret.ResourceOrNonFungible.NON_FUNGIBLE(ret.NonFungibleGlobalId("resource_rdx1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxxed25sg:[38482c29c0a3e1ad84ee5ad45e09501ae7133fe94e916ec38c7af7fa8f]")),
+                ret.ResourceOrNonFungible.NON_FUNGIBLE(ret.NonFungibleGlobalId("resource_rdx1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxxed25sg:[d3ad5455ba9cb61b1bd41a932c285168428c4a4ab47dadc40941dab32b]")),
+                ret.ResourceOrNonFungible.NON_FUNGIBLE(ret.NonFungibleGlobalId("resource_rdx1nfxxxxxxxxxxed25sgxxxxxxxxx002236757237xxxxxxxxxed25sg:[6f1d138cd61baa02faaca78a9e3759ba65b99e7c672979bb2fd365008c]")),
+            )
+        )
 
         payload, intent = await gateway.build_transaction(builder, public_key, private_key)
         await gateway.submit_transaction(payload)
