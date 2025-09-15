@@ -31,6 +31,8 @@
     "USDC_RESOURCE": "resource_rdx1t4upr78guuapv5ept7d7ptekk9mqhy605zgms33mcszen8l9fac8vf",
     "BTC_RESOURCE": "resource_rdx1t580qxc7upat7lww4l2c4jckacafjeudxj5wpjrrct0p3e82sq4y75",
     "ETH_RESOURCE": "resource_rdx1th88qcj5syl9ghka2g9l7tw497vy5x6zaatyvgfkwcfe8n9jt2npww",
+    "HBTC_RESOURCE": "resource_rdx1t58kkcqdz0mavfz98m98qh9m4jexyl9tacsvlhns6yxs4r6hrm5re5",
+    "HETH_RESOURCE": "resource_rdx1th09yvv7tgsrv708ffsgqjjf2mhy84mscmj5jwu4g670fh3e5zgef0",
     "LSULP_RESOURCE": "resource_rdx1thksg5ng70g9mmy9ne7wz0sc7auzrrwy7fmgcxzel2gvp8pj0xxfmf",
     "REFERRAL_RESOURCE": "resource_rdx1nf9zs5csyzw02506ulhh98jt4f845dvjm4wfkltwv0q8rkqtk0exl4",
     "RECOVERY_KEY_RESOURCE": "resource_rdx1nt5m0wnnf3td8uhrg8nvzlwd4qvhqecfsc5vh899z83s7e33872rxn",

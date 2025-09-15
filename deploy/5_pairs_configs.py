@@ -67,6 +67,7 @@ async def main():
         funding_pool_0 = ret.Decimal('0.02')
         funding_pool_1 = ret.Decimal('0.5')
         funding_share = ret.Decimal('0.1')
+        fee_0_promo = ret.Decimal('0.0001')
         fee_0 = ret.Decimal('0.001')
         fee_0_high = ret.Decimal('0.003')
         fee_1_low = ret.Decimal('0.00000001')
@@ -100,7 +101,7 @@ async def main():
                     ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_0),  # pub funding_pool_0: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(funding_pool_1),  # pub funding_pool_1: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(funding_share),  # pub funding_share: Decimal,
-                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0),  # pub fee_0: Decimal,
+                    ret.ManifestBuilderValue.DECIMAL_VALUE(fee_0_promo),  # pub fee_0: Decimal,
                     ret.ManifestBuilderValue.DECIMAL_VALUE(fee_1_low)  # pub fee_1: Decimal,
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([

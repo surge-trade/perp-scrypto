@@ -39,8 +39,10 @@ async def main():
 
         owner_resource = config_data['OWNER_RESOURCE']
         exchange_component = config_data['EXCHANGE_COMPONENT']
-        btc_resource = config_data['BTC_RESOURCE']
-        eth_resource = config_data['ETH_RESOURCE']
+        xbtc_resource = config_data['BTC_RESOURCE']
+        xeth_resource = config_data['ETH_RESOURCE']
+        hbtc_resource = config_data['HBTC_RESOURCE']
+        heth_resource = config_data['HETH_RESOURCE']
         lsulp_resource = config_data['LSULP_RESOURCE']
         link_resource = config_data['LINK_RESOURCE']
 
@@ -88,7 +90,7 @@ async def main():
                     ])
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(btc_resource))),
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xbtc_resource))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # pair_id
                         ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
@@ -97,7 +99,25 @@ async def main():
                     ])
                 ]),
                 ret.ManifestBuilderValue.TUPLE_VALUE([
-                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(eth_resource))),
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(xeth_resource))),
+                    ret.ManifestBuilderValue.TUPLE_VALUE([
+                        ret.ManifestBuilderValue.STRING_VALUE("ETH/USD"), # pair_id
+                        ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.95')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
+                    ])
+                ]),
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(hbtc_resource))),
+                    ret.ManifestBuilderValue.TUPLE_VALUE([
+                        ret.ManifestBuilderValue.STRING_VALUE("BTC/USD"), # pair_id
+                        ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.95')), # discount
+                        ret.ManifestBuilderValue.DECIMAL_VALUE(ret.Decimal('0.01')), # margin
+                    ])
+                ]),
+                ret.ManifestBuilderValue.TUPLE_VALUE([
+                    ret.ManifestBuilderValue.ADDRESS_VALUE(ret.ManifestBuilderAddress.STATIC(ret.Address(heth_resource))),
                     ret.ManifestBuilderValue.TUPLE_VALUE([
                         ret.ManifestBuilderValue.STRING_VALUE("ETH/USD"), # pair_id
                         ret.ManifestBuilderValue.I64_VALUE(5), # price_age_max
